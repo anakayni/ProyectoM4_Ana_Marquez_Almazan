@@ -1,0 +1,14 @@
+.toast {
+  position: fixed; left: var(--space-4); right: var(--space-4); bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+  background: var(--color-surface-inverse); color: var(--color-text-inverse); z-index: 20;
+}
+.error { background: var(--color-status-danger); }
+.message { flex: 1; }
+.action { background: none; border: 0; color: inherit; font-weight: var(--weight-semibold); text-decoration: underline; cursor: pointer; }
+.close { background: none; border: 0; color: inherit; font-size: var(--text-3xl); line-height: 1; cursor: pointer; }
+
+@media (min-width: 640px) {
+  .toast { left: auto; max-width: 420px; }
+}

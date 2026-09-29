@@ -1,0 +1,8 @@
+.dialog {
+  width: calc(100% - var(--space-8)); max-width: 520px; padding: var(--space-6);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+}
+.dialog::backdrop { background: rgba(20, 21, 26, 0.45); }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.title { font-size: var(--text-3xl); font-weight: var(--weight-semibold); }
+.close { background: none; border: 0; font-size: var(--text-4xl); line-height: 1; cursor: pointer; color: var(--color-text-secondary); }

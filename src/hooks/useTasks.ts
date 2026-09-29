@@ -16,8 +16,6 @@ export function useTasks(uid: string) {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
     return subscribeToTasks(
       uid,
       (next) => {
@@ -31,7 +29,12 @@ export function useTasks(uid: string) {
     );
   }, [uid, attempt]);
 
-  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  // Reinicia el estado y fuerza una nueva suscripción (el efecto depende de `attempt`).
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setAttempt((n) => n + 1);
+  }, []);
   const create = useCallback((input: TaskInput) => createTask(uid, input), [uid]);
   const update = useCallback((id: string, patch: TaskPatch) => updateTask(id, patch), []);
   const remove = useCallback((id: string) => deleteTask(id), []);
