@@ -31,3 +31,12 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué no funcionó o tuve que corregir:**
   - Primero corrí `cp .env.example .env` en Google Cloud Shell en vez de la terminal local: el archivo solo existe en mi computadora.
   - Login y registro repetían el mismo `try/catch`; se extrajo al hook `useAuthAction` (no estaba en el plan).
+
+## Fase 3 — CRUD de tareas
+- **Qué pedí:** CRUD persistente en Firestore, filtrado por usuario, con estados de carga/error y UI que se actualice sola.
+- **Qué generó / propuso:** `tasks.service` con `onSnapshot` + `where('userId', '==', uid)`, hook `useTasks`, componentes `TodoForm`, `TodoList`, `TodoItem`, `Modal` (con `<dialog>` nativo), `Toast` y Security Rules que validan dueño, campos y largos.
+- **Qué revisé o cambié yo:** publiqué las reglas en la consola de Firebase y probé el CRUD, el tiempo real con dos pestañas y el aislamiento entre dos cuentas.
+- **Qué aprendí:** <!-- completar con tus palabras -->
+- **Qué no funcionó o tuve que corregir:**
+  - oxlint marcó `set-state-in-effect` en `useTasks`: se movió el reinicio de `loading`/`error` al callback `retry` en vez de hacerlo dentro del `useEffect`.
+  - Se ordena la lista en el cliente para no necesitar un índice compuesto de Firestore (`where` + `orderBy`).
