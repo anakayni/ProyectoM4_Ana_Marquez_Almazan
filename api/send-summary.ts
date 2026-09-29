@@ -1,16 +1,21 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getTasksForUser, verifyIdToken } from '../functions/firebaseAdmin.js';
-import { createSendSummaryHandler } from '../functions/sendSummary.js';
+import { processSendSummary } from '../functions/sendSummary.js';
 import { sendEmail } from '../functions/ses.js';
 
-// Punto de entrada de la Vercel Function: conecta el handler con Firebase Admin y SES reales.
-const handler = createSendSummaryHandler({
-  verifyIdToken,
-  getTasksForUser,
-  sendEmail,
-  appUrl: process.env.APP_URL ?? '',
-});
+/**
+ * Vercel Function: POST /api/send-summary
+ * Conecta la lógica (functions/sendSummary.ts) con Firebase Admin y AWS SES reales.
+ */
+export default async function handler(request: VercelRequest, response: VercelResponse): Promise<void> {
+  const result = await processSendSummary(
+    { verifyIdToken, getTasksForUser, sendEmail, appUrl: process.env.APP_URL ?? '' },
+    { method: request.method, authorization: request.headers.authorization },
+  );
 
-// Vercel Functions aceptan exports por método HTTP con Request/Response estándar.
-export function POST(request: Request): Promise<Response> {
-  return handler(request);
+  if (result.status === 405) {
+    response.setHeader('Allow', 'POST');
+  }
+
+  response.status(result.status).json(result.body);
 }
