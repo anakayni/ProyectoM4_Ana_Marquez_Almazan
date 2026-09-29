@@ -40,3 +40,10 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué no funcionó o tuve que corregir:**
   - oxlint marcó `set-state-in-effect` en `useTasks`: se movió el reinicio de `loading`/`error` al callback `retry` en vez de hacerlo dentro del `useEffect`.
   - Se ordena la lista en el cliente para no necesitar un índice compuesto de Firestore (`where` + `orderBy`).
+
+### Depuración: "No pudimos guardar la tarea"
+- **Síntoma:** al crear una tarea aparecía el aviso de error y la lista no cargaba; la consola no mostraba nada útil.
+- **Proceso:** en vez de cambiar código a ciegas, primero se agregó `console.error` donde se atrapaban los errores → apareció `FirebaseError: Missing or insufficient permissions`. Luego se probó la API de Firestore con un usuario temporal: una tarea con los campos de la app era rechazada, pero una con `priority`/`order`/`dueDate` se aceptaba.
+- **Causa raíz:** había publicado en Firebase las reglas de la carpeta `_referencia/` (proyecto viejo) en vez de `firestore.rules` del proyecto nuevo.
+- **Qué aprendí:** A rec¿visar y leer lo que estoy colocando, tratando de entender los porque.
+- **Buena práctica:** no "tragarse" errores en un `catch` vacío; mostrar un mensaje amigable al usuario pero dejar el error real en consola. Y aislar la causa con una prueba mínima antes de tocar código.
