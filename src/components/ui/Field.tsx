@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import styles from './Field.module.css';
 
+// eslint-disable-next-line react/only-export-components -- clase CSS compartida para inputs y textareas
 export const fieldInputClass = styles.input;
 
 type FieldProps = { id: string; label: string; error?: string; children: ReactNode };
