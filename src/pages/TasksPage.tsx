@@ -30,7 +30,8 @@ function TasksView({ user, onLogout }: { user: AppUser; onLogout: () => Promise<
     try {
       await action();
       if (success) setToast({ kind: 'success', message: success });
-    } catch {
+    } catch (err) {
+      console.error('Error al actualizar la tarea:', err);
       setToast({ kind: 'error', message: 'No pudimos guardar el cambio. Inténtalo de nuevo.' });
     }
   }

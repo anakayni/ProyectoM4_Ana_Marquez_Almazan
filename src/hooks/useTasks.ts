@@ -22,7 +22,9 @@ export function useTasks(uid: string) {
         setTasks(next);
         setLoading(false);
       },
-      () => {
+      (err) => {
+        // El usuario ve un mensaje amigable; en consola queda el error real para depurar.
+        console.error('Error al escuchar tareas de Firestore:', err);
         setError(LOAD_ERROR);
         setLoading(false);
       },

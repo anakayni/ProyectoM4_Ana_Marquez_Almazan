@@ -33,7 +33,8 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmi
     try {
       await onSubmit({ title: values.title.trim(), description: values.description.trim() });
       if (!initialValues) setValues(EMPTY);
-    } catch {
+    } catch (err) {
+      console.error('Error al guardar la tarea:', err);
       setSubmitError('No pudimos guardar la tarea. Inténtalo de nuevo.');
     } finally {
       setSubmitting(false);
