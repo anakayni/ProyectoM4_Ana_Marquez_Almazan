@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
 import { TodoForm } from '@/components/tasks/TodoForm';
 import { TodoList } from '@/components/tasks/TodoList';
 import { Alert } from '@/components/ui/Alert';
@@ -59,6 +60,7 @@ function TasksView({ user, onLogout }: { user: AppUser; onLogout: () => Promise<
           )}
         </div>
         <div className={styles.headerActions}>
+          <SendSummaryButton onResult={setToast} />
           <Button variant="secondary" size="sm" onClick={() => void onLogout()}>Cerrar sesión</Button>
         </div>
       </header>
