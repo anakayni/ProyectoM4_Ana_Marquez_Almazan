@@ -12,3 +12,7 @@ export interface Task {
 export type TaskInput = Pick<Task, 'title' | 'description'>;
 
 export type TaskPatch = Partial<TaskInput & Pick<Task, 'completed'>>;
+
+export type TaskFilter = 'all' | 'pending' | 'done';
+
+export type TaskCounts = Record<TaskFilter, number>;

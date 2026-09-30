@@ -28,6 +28,11 @@ describe('TodoList', () => {
     expect(screen.getByText('Todavía no tienes tareas')).toBeInTheDocument();
   });
 
+  it('acepta un mensaje vacío personalizado (p. ej. para filtros)', () => {
+    render(<TodoList tasks={[]} emptyTitle="No hay tareas en este filtro" onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByText('No hay tareas en este filtro')).toBeInTheDocument();
+  });
+
   it('marca una tarea como completada', async () => {
     const { onToggle } = setup();
     await userEvent.click(screen.getByRole('checkbox', { name: /completar "comprar yerba"/i }));
