@@ -17,7 +17,9 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** analizar el enunciado y hacerme preguntas antes de programar.
 - **Qué generó / propuso:** documento de diseño con alternativas (p. ej. que el servidor lea las tareas vs. que el cliente las envíe) y un plan por fases con tests y commits por tarea.
 - **Qué revisé o cambié yo:** elegí empezar desde cero, auth con email + Google, CSS propio y dejar los extras para después del núcleo.
-- **Qué aprendí:** <!-- completar con tus palabras -->
+- **Qué aprendí:** Me sirvió mucho que antes de escribir código me hiciera preguntas. Me obligó a pensar qué quería que hiciera la app, qué no iba a hacer y cómo se iba a ver y usar. Normalmente yo empiezo a programar directo, y aquí sentí que tenía un mapa antes de arrancar.
+  También conocí el TDD, que no sabía qué era: primero escribes una prueba de lo que quieres que pase, ves que falla, y después haces el código hasta que la prueba pase. Al principio me pareció dar una vuelta de más, pero me dio tranquilidad saber que cada parte funcionaba antes de pasar a la siguiente.
+  Y me quedé con ganas de trabajar más el diseño visual, siento que este proyecto tiene mucho potencial.
 - **Qué no funcionó o tuve que corregir:**
   - El plan asumía ESLint, pero la plantilla actual de Vite trae **oxlint**; se mantuvo oxlint.
   - La plantilla fija TypeScript 6 (no 7) y ya no incluye `vite-env.d.ts`.
@@ -27,7 +29,9 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** implementar registro/login con email y Google, rutas protegidas y errores claros, siguiendo el plan con TDD.
 - **Qué generó / propuso:** servicio `auth.service` que envuelve Firebase, contexto `useAuth`, rutas `ProtectedRoute`/`PublicOnlyRoute`, páginas de login/registro y tests con Firebase mockeado.
 - **Qué revisé o cambié yo:** creé el proyecto en Firebase, activé los proveedores y cargué el `.env` sin compartir las claves en el chat. Probé manualmente todo el flujo (registro, login incorrecto, Google, recarga con sesión, vista móvil).
-- **Qué aprendí:** <!-- completar con tus palabras -->
+- **Qué aprendí:** Entendí el Context como un contenedor donde se guarda quién inició sesión, y que cualquier parte de la app puede consultar sin tener que ir pasándolo de componente en componente. Yo pensaba que también se encargaba de los permisos, pero no: eso lo cuidan las reglas de Firestore.
+  El `ProtectedRoute` lo veo como un guardia en la puerta de la página de tareas: si no iniciaste sesión, no pasas y te manda al login. Me sorprendió que no viene con React, lo armamos nosotros.
+  Algo que no había pensado es que al abrir la app, Firebase tarda un momento en revisar si ya tenías sesión. Por eso existe el "cargando": sin eso, cada vez que recargaba la página me sacaba un segundo al login aunque ya estuviera dentro.
 - **Qué no funcionó o tuve que corregir:**
   - Primero corrí `cp .env.example .env` en Google Cloud Shell en vez de la terminal local: el archivo solo existe en mi computadora.
   - Login y registro repetían el mismo `try/catch`; se extrajo al hook `useAuthAction` (no estaba en el plan).
@@ -36,7 +40,8 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** CRUD persistente en Firestore, filtrado por usuario, con estados de carga/error y UI que se actualice sola.
 - **Qué generó / propuso:** `tasks.service` con `onSnapshot` + `where('userId', '==', uid)`, hook `useTasks`, componentes `TodoForm`, `TodoList`, `TodoItem`, `Modal` (con `<dialog>` nativo), `Toast` y Security Rules que validan dueño, campos y largos.
 - **Qué revisé o cambié yo:** publiqué las reglas en la consola de Firebase y probé el CRUD, el tiempo real con dos pestañas y el aislamiento entre dos cuentas.
-- **Qué aprendí:** <!-- completar con tus palabras -->
+- **Qué aprendí:** Lo que más me gustó fue ver que al crear una tarea en una pestaña aparecía sola en la otra. Eso lo hace `onSnapshot`: la app se queda "escuchando" a la base de datos y se entera de cada cambio, así que no hay que recargar nada.
+  También entendí que filtrar las tareas por usuario en el código no es suficiente para protegerlas, porque lo que corre en el navegador se puede modificar. La protección de verdad son las reglas de Firestore, que deciden en el servidor quién puede ver o cambiar cada tarea.
 - **Qué no funcionó o tuve que corregir:**
   - oxlint marcó `set-state-in-effect` en `useTasks`: se movió el reinicio de `loading`/`error` al callback `retry` en vez de hacerlo dentro del `useEffect`.
   - Se ordena la lista en el cliente para no necesitar un índice compuesto de Firestore (`where` + `orderBy`).
@@ -45,14 +50,17 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Síntoma:** al crear una tarea aparecía el aviso de error y la lista no cargaba; la consola no mostraba nada útil.
 - **Proceso:** en vez de cambiar código a ciegas, primero se agregó `console.error` donde se atrapaban los errores → apareció `FirebaseError: Missing or insufficient permissions`. Luego se probó la API de Firestore con un usuario temporal: una tarea con los campos de la app era rechazada, pero una con `priority`/`order`/`dueDate` se aceptaba.
 - **Causa raíz:** había publicado en Firebase las reglas de la carpeta `_referencia/` (proyecto viejo) en vez de `firestore.rules` del proyecto nuevo.
-- **Qué aprendí:** A rec¿visar y leer lo que estoy colocando, tratando de entender los porque.
+- **Qué aprendí:** A revisar y leer lo que estoy colocando, tratando de entender los porqués. Copié las reglas del archivo que tenía abierto sin fijarme que era el del proyecto viejo, y eso me costó un buen rato. También me di cuenta de que un mensaje de error bonito para el usuario puede esconder el problema real si no dejas el error completo en la consola.
 - **Buena práctica:** no "tragarse" errores en un `catch` vacío; mostrar un mensaje amigable al usuario pero dejar el error real en consola. Y aislar la causa con una prueba mínima antes de tocar código.
 
 ## Fases 4–5 — Deploy y email con AWS SES
 - **Qué pedí:** desplegar en Vercel y enviar un resumen de tareas por email con SES desde una Vercel Function, sin exponer secretos.
 - **Qué generó / propuso:** plantilla del email (HTML + texto, con escape de HTML), lógica del endpoint con dependencias inyectadas para testearla, integración con `firebase-admin` y SES v2, botón en la UI y carga de variables en Vercel leyendo `.env` sin mostrar los valores.
 - **Qué revisé o cambié yo:** configuré SES (email verificado), el usuario IAM con mínimo privilegio, la cuenta de servicio de Firebase y el dominio autorizado. Pedí adaptar la función al estilo de clase (`VercelRequest`/`VercelResponse`).
-- **Qué aprendí:** <!-- completar con tus palabras -->
+- **Qué aprendí:** Entendí por qué el email lo manda el servidor y no la página: si lo hiciera el navegador, cualquiera podría ver las claves de AWS o usar la función para mandar lo que quisiera. Así, la página solo dice "soy yo" con su token, y el servidor revisa quién es, busca sus tareas y le escribe solo a esa persona.
+  Esta fue la parte con más tropiezos, y casi ninguno era del código: un permiso que faltaba en AWS, un espacio de más en el `.env`, una configuración de Vercel. Aprendí a leer el mensaje de error completo y los logs antes de cambiar cosas a ciegas.
+  Otra lección: que algo funcione en mi computadora no significa que funcione publicado. La función andaba perfecto en local y en Vercel fallaba por una incompatibilidad entre librerías.
+  Por último, pedí cambiar la función al estilo que vimos en clase para que se pareciera a lo que conozco, y entendí por qué la lógica quedó en otro archivo: así se puede probar sin tener que mandar emails de verdad.
 - **Qué no funcionó o tuve que corregir:**
   - Vercel agregó `.env*` al final del `.gitignore`, lo que anulaba `!.env.example`: se revirtió.
   - La app no cargaba con `vercel dev`: el rewrite de SPA también reescribía los archivos de Vite. Se limitó a rutas sin extensión.
