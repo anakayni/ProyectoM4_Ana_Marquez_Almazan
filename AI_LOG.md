@@ -47,3 +47,16 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Causa raíz:** había publicado en Firebase las reglas de la carpeta `_referencia/` (proyecto viejo) en vez de `firestore.rules` del proyecto nuevo.
 - **Qué aprendí:** A rec¿visar y leer lo que estoy colocando, tratando de entender los porque.
 - **Buena práctica:** no "tragarse" errores en un `catch` vacío; mostrar un mensaje amigable al usuario pero dejar el error real en consola. Y aislar la causa con una prueba mínima antes de tocar código.
+
+## Fases 4–5 — Deploy y email con AWS SES
+- **Qué pedí:** desplegar en Vercel y enviar un resumen de tareas por email con SES desde una Vercel Function, sin exponer secretos.
+- **Qué generó / propuso:** plantilla del email (HTML + texto, con escape de HTML), lógica del endpoint con dependencias inyectadas para testearla, integración con `firebase-admin` y SES v2, botón en la UI y carga de variables en Vercel leyendo `.env` sin mostrar los valores.
+- **Qué revisé o cambié yo:** configuré SES (email verificado), el usuario IAM con mínimo privilegio, la cuenta de servicio de Firebase y el dominio autorizado. Pedí adaptar la función al estilo de clase (`VercelRequest`/`VercelResponse`).
+- **Qué aprendí:** <!-- completar con tus palabras -->
+- **Qué no funcionó o tuve que corregir:**
+  - Vercel agregó `.env*` al final del `.gitignore`, lo que anulaba `!.env.example`: se revirtió.
+  - La app no cargaba con `vercel dev`: el rewrite de SPA también reescribía los archivos de Vite. Se limitó a rutas sin extensión.
+  - Un error de configuración (faltaban variables) se reportaba como "sesión expirada": se separó 401 (token inválido) de 500 (error del servidor) con un test nuevo.
+  - SES respondía `AccessDenied`: la política IAM con `ses:SendEmail` no estaba asignada al usuario.
+  - Un espacio después del `=` en `.env` hacía fallar la carga por terminal (Vite lo toleraba).
+  - En Vercel la función fallaba con `ERR_REQUIRE_ESM`: `firebase-admin` 14 → `jose` 6 (solo ESM). En local funcionaba porque Node 24 lo permite. Se leyeron los logs de Vercel y se fijó `firebase-admin` 13.
