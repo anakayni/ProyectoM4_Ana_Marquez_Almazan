@@ -5,8 +5,8 @@ import { TodoList } from '@/components/tasks/TodoList';
 import type { Task } from '@/types/task';
 
 const tasks: Task[] = [
-  { id: '1', userId: 'u', title: 'Comprar yerba', description: 'Dos kilos', completed: false, createdAt: 2 },
-  { id: '2', userId: 'u', title: 'Pagar luz', description: '', completed: true, createdAt: 1 },
+  { id: '1', userId: 'u', title: 'Comprar yerba', description: 'Dos kilos', completed: false, priority: 'media', dueDate: null, createdAt: 2 },
+  { id: '2', userId: 'u', title: 'Pagar luz', description: '', completed: true, priority: 'media', dueDate: null, createdAt: 1 },
 ];
 
 function setup(list: Task[] = tasks) {
@@ -21,6 +21,12 @@ describe('TodoList', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.getByText('Dos kilos')).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /completar "pagar luz"/i })).toBeChecked();
+  });
+
+  it('muestra prioridad y vencimiento', () => {
+    setup([{ ...tasks[0], priority: 'alta', dueDate: '2020-01-01' }]);
+    expect(screen.getByText('Alta')).toBeInTheDocument();
+    expect(screen.getByText(/vencida/i)).toBeInTheDocument();
   });
 
   it('muestra un estado vacío', () => {

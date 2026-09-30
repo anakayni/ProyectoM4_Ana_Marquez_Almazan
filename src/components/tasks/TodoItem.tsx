@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import type { Task } from '@/types/task';
+import { PRIORITY_LABEL, type Task } from '@/types/task';
+import { dueStatus, formatDueDate } from '@/utils/formatDate';
 import styles from './TodoItem.module.css';
 
 export type TodoItemHandlers = {
@@ -27,6 +28,14 @@ export function TodoItem({ task, onToggle, onEdit, onDelete }: TodoItemProps) {
       <div className={styles.body}>
         <h3 className={styles.title}>{task.title}</h3>
         {task.description && <p className={styles.description}>{task.description}</p>}
+        <p className={styles.meta}>
+          <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
+          {task.dueDate && (
+            <span className={`${styles.due} ${task.completed ? '' : styles[dueStatus(task.dueDate)]}`}>
+              {formatDueDate(task.dueDate)}
+            </span>
+          )}
+        </p>
       </div>
       <div className={styles.actions}>
         {confirming ? (

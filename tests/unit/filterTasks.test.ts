@@ -3,9 +3,9 @@ import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
 import type { Task } from '@/types/task';
 
 const tasks: Task[] = [
-  { id: '1', userId: 'u', title: 'A', description: '', completed: false, createdAt: 3 },
-  { id: '2', userId: 'u', title: 'B', description: '', completed: true, createdAt: 2 },
-  { id: '3', userId: 'u', title: 'C', description: '', completed: false, createdAt: 1 },
+  { id: '1', userId: 'u', title: 'A', description: '', completed: false, priority: 'media', dueDate: null, createdAt: 3 },
+  { id: '2', userId: 'u', title: 'B', description: '', completed: true, priority: 'media', dueDate: null, createdAt: 2 },
+  { id: '3', userId: 'u', title: 'C', description: '', completed: false, priority: 'media', dueDate: null, createdAt: 1 },
 ];
 
 describe('filterTasks', () => {

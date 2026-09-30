@@ -9,10 +9,11 @@ import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
+import { sortTasks } from '@/features/tasks/sortTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import type { AppUser } from '@/types/auth';
-import type { Task, TaskFilter, TaskInput } from '@/types/task';
+import type { SortMode, Task, TaskFilter, TaskInput } from '@/types/task';
 import styles from './TasksPage.module.css';
 
 export function TasksPage() {
@@ -26,10 +27,11 @@ function TasksView({ user, onLogout }: { user: AppUser; onLogout: () => Promise<
   const [editing, setEditing] = useState<Task | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [filter, setFilter] = useState<TaskFilter>('all');
+  const [sort, setSort] = useState<SortMode>('recent');
   const dismissToast = useCallback(() => setToast(null), []);
 
   const counts = countTasks(tasks);
-  const visibleTasks = filterTasks(tasks, filter);
+  const visibleTasks = sortTasks(filterTasks(tasks, filter), sort);
 
   async function safely(action: () => Promise<void>, success?: string) {
     try {
@@ -84,7 +86,17 @@ function TasksView({ user, onLogout }: { user: AppUser; onLogout: () => Promise<
             </Alert>
           )}
           {!loading && !error && tasks.length > 0 && (
-            <TaskFilters value={filter} counts={counts} onChange={setFilter} />
+            <div className={styles.toolbar}>
+              <TaskFilters value={filter} counts={counts} onChange={setFilter} />
+              <label className={styles.sort}>
+                Ordenar por
+                <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
+                  <option value="recent">Más recientes</option>
+                  <option value="due">Vencimiento</option>
+                  <option value="priority">Prioridad</option>
+                </select>
+              </label>
+            </div>
           )}
           {!loading && !error && (
             <TodoList
@@ -101,7 +113,12 @@ function TasksView({ user, onLogout }: { user: AppUser; onLogout: () => Promise<
       {editing && (
         <Modal title="Editar tarea" onClose={() => setEditing(null)}>
           <TodoForm
-            initialValues={{ title: editing.title, description: editing.description }}
+            initialValues={{
+              title: editing.title,
+              description: editing.description,
+              priority: editing.priority,
+              dueDate: editing.dueDate,
+            }}
             submitLabel="Guardar cambios"
             onSubmit={handleEdit}
             onCancel={() => setEditing(null)}

@@ -25,6 +25,9 @@ function toTask(snapshot: QueryDocumentSnapshot): Task {
     title: data.title,
     description: data.description,
     completed: data.completed,
+    // Las tareas creadas antes de agregar estos campos no los tienen: se usan valores por defecto.
+    priority: data.priority ?? 'media',
+    dueDate: data.dueDate ?? null,
     createdAt: (data.createdAt as Timestamp | null)?.toMillis() ?? Date.now(),
   };
 }
@@ -51,6 +54,8 @@ export async function createTask(uid: string, input: TaskInput): Promise<void> {
     userId: uid,
     title: input.title.trim(),
     description: input.description.trim(),
+    priority: input.priority,
+    dueDate: input.dueDate,
     completed: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),

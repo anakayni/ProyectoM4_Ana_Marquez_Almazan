@@ -11,10 +11,13 @@ service cloud.firestore {
     }
 
     function validTask(data) {
-      return data.keys().hasOnly(['userId', 'title', 'description', 'completed', 'createdAt', 'updatedAt'])
+      return data.keys().hasOnly(['userId', 'title', 'description', 'completed', 'priority', 'dueDate', 'createdAt', 'updatedAt'])
         && data.title is string && data.title.size() > 0 && data.title.size() <= 80
         && data.description is string && data.description.size() <= 500
-        && data.completed is bool;
+        && data.completed is bool
+        // priority y dueDate son opcionales para aceptar tareas creadas antes de agregarlos
+        && (!('priority' in data) || data.priority in ['alta', 'media', 'baja'])
+        && (!('dueDate' in data) || data.dueDate == null || (data.dueDate is string && data.dueDate.size() == 10));
     }
 
     match /tasks/{taskId} {

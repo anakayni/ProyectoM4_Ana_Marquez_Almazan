@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field, fieldInputClass } from '@/components/ui/Field';
-import type { TaskInput } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, type Priority, type TaskInput } from '@/types/task';
 import { DESCRIPTION_MAX, hasErrors, validateTask, type FieldErrors } from '@/utils/validators';
 import styles from './TodoForm.module.css';
 
@@ -14,7 +14,7 @@ type TodoFormProps = {
   onCancel?: () => void;
 };
 
-const EMPTY: TaskInput = { title: '', description: '' };
+const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null };
 
 export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmit, onCancel }: TodoFormProps) {
   const [values, setValues] = useState<TaskInput>(initialValues ?? EMPTY);
@@ -31,7 +31,7 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmi
     setSubmitError(null);
     setSubmitting(true);
     try {
-      await onSubmit({ title: values.title.trim(), description: values.description.trim() });
+      await onSubmit({ ...values, title: values.title.trim(), description: values.description.trim() });
       if (!initialValues) setValues(EMPTY);
     } catch (err) {
       console.error('Error al guardar la tarea:', err);
@@ -60,6 +60,22 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmi
         />
       </Field>
       <p className={styles.counter}>{values.description.length}/{DESCRIPTION_MAX}</p>
+      <div className={styles.row}>
+        <Field id="task-priority" label="Prioridad">
+          <select
+            id="task-priority" className={fieldInputClass}
+            value={values.priority} onChange={(e) => setValues((v) => ({ ...v, priority: e.target.value as Priority }))}
+          >
+            {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
+          </select>
+        </Field>
+        <Field id="task-due" label="Vence">
+          <input
+            id="task-due" type="date" className={fieldInputClass}
+            value={values.dueDate ?? ''} onChange={(e) => setValues((v) => ({ ...v, dueDate: e.target.value || null }))}
+          />
+        </Field>
+      </div>
       <div className={styles.actions}>
         {onCancel && <Button variant="ghost" onClick={onCancel}>Cancelar</Button>}
         <Button type="submit" loading={submitting}>{submitLabel}</Button>

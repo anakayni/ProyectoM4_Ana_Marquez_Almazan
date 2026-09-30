@@ -20,7 +20,7 @@ vi.mock('@/services/tasks.service', () => ({
 import * as service from '@/services/tasks.service';
 import { useTasks } from '@/hooks/useTasks';
 
-const task: Task = { id: 't1', userId: 'u1', title: 'Comprar yerba', description: '', completed: false, createdAt: 1 };
+const task: Task = { id: 't1', userId: 'u1', title: 'Comprar yerba', description: '', completed: false, priority: 'media', dueDate: null, createdAt: 1 };
 
 describe('useTasks', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -44,10 +44,10 @@ describe('useTasks', () => {
 
   it('delega las acciones CRUD al servicio', async () => {
     const { result } = renderHook(() => useTasks('u1'));
-    await result.current.create({ title: 'Nueva', description: '' });
+    await result.current.create({ title: 'Nueva', description: '', priority: 'alta', dueDate: null });
     await result.current.toggle('t1', true);
     await result.current.remove('t1');
-    expect(service.createTask).toHaveBeenCalledWith('u1', { title: 'Nueva', description: '' });
+    expect(service.createTask).toHaveBeenCalledWith('u1', { title: 'Nueva', description: '', priority: 'alta', dueDate: null });
     expect(service.updateTask).toHaveBeenCalledWith('t1', { completed: true });
     expect(service.deleteTask).toHaveBeenCalledWith('t1');
   });
