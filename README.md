@@ -15,6 +15,7 @@ SPA de gestión de tareas para los empleados de una pyme. Cada persona se regist
 - Cada usuario solo ve y modifica sus propias tareas (filtro por `userId` + Security Rules).
 - Actualización en tiempo real de la lista tras cualquier cambio (`onSnapshot`), estados de carga, error con reintento y lista vacía.
 - Botón **Enviar resumen por email**: una Vercel Function envía, vía AWS SES, un email con el total de tareas pendientes y completadas.
+- **Extras:** filtros (todas / pendientes / completadas) con contador, prioridad (alta / media / baja), fecha de vencimiento con aviso de "Vencida" / "Vence hoy", y orden por más recientes, vencimiento o prioridad.
 - Diseño responsive mobile first con CSS propio.
 
 ## Stack
@@ -163,10 +164,10 @@ api/send-summary.ts  →  functions/sendSummary.ts (processSendSummary)
 
 ## Testing
 
-64 tests con Vitest + React Testing Library (`npm test`):
+82 tests con Vitest + React Testing Library (`npm test`):
 
-- **Unitarios:** validadores de formularios, `mapAuthError`, `useAuth`, `useTasks`, cliente de la API (`fetch` mockeado).
-- **Componentes:** `TodoForm` (validación, envío, edición, error), `TodoList` (render, completar, editar, eliminar con confirmación, estado vacío), `LoginPage` (validación, error traducido, Google), `ProtectedRoute`/`PublicOnlyRoute`, `Toast` y componentes UI.
+- **Unitarios:** validadores de formularios, `mapAuthError`, `useAuth`, `useTasks`, `filterTasks`, `sortTasks`, fechas de vencimiento (`formatDate`) y cliente de la API (`fetch` mockeado).
+- **Componentes:** `TodoForm` (validación, envío, prioridad y fecha, edición, error), `TodoList` (render, prioridad y vencimiento, completar, editar, eliminar con confirmación, estado vacío), `TaskFilters`, `LoginPage` (validación, error traducido, Google), `ProtectedRoute`/`PublicOnlyRoute`, `Toast` y componentes UI.
 - **Servidor:** plantilla del email (conteos, escape de HTML, texto plano) y `processSendSummary` (405, 401, 400, 500, 502 y 200) con dependencias falsas.
 - **Mocks:** `vi.mock` de `services/*` y `hooks/useAuth`; ningún test llama a Firebase ni a AWS reales.
 
@@ -209,7 +210,9 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 
 ## Mejoras futuras
 
-- Filtros (todas / pendientes / completadas), fecha de vencimiento, prioridad y reordenamiento con drag & drop.
+- Reordenar tareas con drag & drop (dnd-kit), guardando el orden manual en Firestore.
+- Mostrar prioridad, vencimiento y cantidad de tareas vencidas en el email de resumen.
+- Mejorar el diseño visual.
 - Límite de envíos de email por usuario (rate limit).
 - Salida del sandbox de SES.
 - Recuperación de contraseña y verificación de email.

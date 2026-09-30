@@ -68,3 +68,9 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
   - SES respondía `AccessDenied`: la política IAM con `ses:SendEmail` no estaba asignada al usuario.
   - Un espacio después del `=` en `.env` hacía fallar la carga por terminal (Vite lo toleraba).
   - En Vercel la función fallaba con `ERR_REQUIRE_ESM`: `firebase-admin` 14 → `jose` 6 (solo ESM). En local funcionaba porque Node 24 lo permite. Se leyeron los logs de Vercel y se fijó `firebase-admin` 13.
+
+## Extras — Filtros, prioridad y vencimiento
+- **Qué pedí:** agregar los extras del enunciado después de tener el núcleo desplegado: filtros, fecha de vencimiento y orden por prioridad.
+- **Qué generó / propuso:** funciones puras `filterTasks`, `sortTasks` y `formatDate` con tests, componente `TaskFilters`, campos de prioridad y fecha en el formulario y reglas de Firestore que aceptan los campos nuevos sin romper las tareas existentes.
+- **Qué revisé o cambié yo:** publiqué las reglas nuevas en Firebase y probé los filtros y el orden. Decidí no hacer el drag & drop para priorizar una entrega estable.
+- **Qué no funcionó o tuve que corregir:** la primera vez las reglas nuevas no quedaron publicadas y las tareas con prioridad eran rechazadas; se detectó con una prueba automática antes de desplegar, así producción nunca dejó de funcionar.
