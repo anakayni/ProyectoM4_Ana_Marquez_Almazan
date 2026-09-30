@@ -1,4 +1,4 @@
-import type { SendSummaryErrorCode, SendSummaryResponse } from '../src/types/api';
+import type { SendSummaryErrorCode, SendSummaryResponse } from '../src/types/api.js';
 // Extensión .js: en Vercel (Node con ESM) los imports relativos la necesitan; TypeScript la resuelve al .ts.
 import { renderSummaryEmail, type SummaryTask } from './summaryEmail.js';
 
