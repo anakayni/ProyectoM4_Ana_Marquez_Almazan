@@ -14,7 +14,7 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 ---
 
 ## Fase 0 — Diseño y setup
-- **Qué pedí:** analizar el enunciado y hacerme preguntas antes de programar.
+- **Qué pedí:** Debo realizar un todo list CRUD, con la siguinete estructura, por donde sería bueno comenzar.
 - **Qué generó / propuso:** documento de diseño con alternativas (p. ej. que el servidor lea las tareas vs. que el cliente las envíe) y un plan por fases con tests y commits por tarea.
 - **Qué revisé o cambié yo:** elegí empezar desde cero, auth con email + Google, CSS propio y dejar los extras para después del núcleo.
 - **Qué aprendí:** Me sirvió mucho que antes de escribir código me hiciera preguntas. Me obligó a pensar qué quería que hiciera la app, qué no iba a hacer y cómo se iba a ver y usar. Normalmente yo empiezo a programar directo, y aquí sentí que tenía un mapa antes de arrancar.
