@@ -1,8 +1,15 @@
-/* AI Action Experience Pattern — Design System token layer
-   Layer 1 primitives → Layer 2 semantic → Layer 3 AI context.
-   Components consume ONLY layer 2 and 3. */
+/* Tokens de diseño.
+   Capa 0 marca → capa 1 primitivos → capa 2 semántica → capa 3 IA.
+   Los componentes consumen solo las capas 2 y 3. */
 
 :root {
+  /* ─── Marca: paleta del espacio de trabajo (configurable en la etapa 8) ── */
+  --brand-1: #1B4079; /* azul oscuro */
+  --brand-2: #4D7C8A; /* azul petróleo */
+  --brand-3: #7F9C96; /* gris verdoso */
+  --brand-4: #8FAD88; /* verde */
+  --brand-5: #CBDF90; /* verde lima */
+
   /* ─── Layer 1: primitives ─────────────────────────────────── */
   --color-gray-0: #FFFFFF;
   --color-gray-25: #FCFCFB;
@@ -50,23 +57,24 @@
   --color-text-muted: var(--color-gray-500);
   --color-text-inverse: var(--color-gray-50);
   --color-text-disabled: var(--color-gray-400);
-  --color-text-link: var(--color-violet-600);
+  --color-text-heading: var(--brand-1);
+  --color-text-link: color-mix(in srgb, var(--brand-2) 85%, black);
 
   --color-surface-default: var(--color-gray-0);
-  --color-surface-subtle: var(--color-gray-50);
-  --color-surface-sunken: var(--color-gray-100);
+  --color-surface-subtle: color-mix(in srgb, var(--brand-5) 14%, white);
+  --color-surface-sunken: color-mix(in srgb, var(--brand-3) 14%, white);
   --color-surface-raised: var(--color-gray-0);
   --color-surface-inverse: var(--color-gray-900);
 
-  --color-border-subtle: var(--color-gray-100);
-  --color-border-default: var(--color-gray-200);
-  --color-border-strong: var(--color-gray-300);
+  --color-border-subtle: color-mix(in srgb, var(--brand-3) 16%, white);
+  --color-border-default: color-mix(in srgb, var(--brand-3) 28%, white);
+  --color-border-strong: color-mix(in srgb, var(--brand-3) 50%, white);
   --color-border-inverse: #26272E;
 
-  --color-action-primary: var(--color-gray-900);
-  --color-action-primary-hover: var(--color-gray-700);
-  --color-action-secondary-border: var(--color-gray-300);
-  --color-action-secondary-hover: var(--color-gray-50);
+  --color-action-primary: var(--brand-1);
+  --color-action-primary-hover: color-mix(in srgb, var(--brand-1) 85%, black);
+  --color-action-secondary-border: var(--color-border-strong);
+  --color-action-secondary-hover: var(--color-surface-subtle);
   --color-action-danger: var(--color-red-600);
   --color-action-danger-hover: var(--color-red-700);
   --color-action-disabled: var(--color-gray-200);
@@ -74,18 +82,28 @@
   --color-status-neutral: var(--color-gray-600);
   --color-status-neutral-surface: var(--color-gray-50);
   --color-status-neutral-border: var(--color-gray-200);
-  --color-status-info: var(--color-blue-500);
-  --color-status-info-surface: var(--color-blue-100);
-  --color-status-info-border: var(--color-blue-200);
-  --color-status-success: var(--color-green-600);
-  --color-status-success-surface: var(--color-green-100);
-  --color-status-success-border: var(--color-green-200);
+  --color-status-info: var(--brand-2);
+  --color-status-info-surface: color-mix(in srgb, var(--brand-2) 12%, white);
+  --color-status-info-border: color-mix(in srgb, var(--brand-2) 30%, white);
+  --color-status-success: color-mix(in srgb, var(--brand-4) 55%, black);
+  --color-status-success-surface: color-mix(in srgb, var(--brand-4) 18%, white);
+  --color-status-success-border: color-mix(in srgb, var(--brand-4) 40%, white);
   --color-status-warning: var(--color-amber-600);
   --color-status-warning-surface: var(--color-amber-100);
   --color-status-warning-border: var(--color-amber-200);
   --color-status-danger: var(--color-red-600);
   --color-status-danger-surface: var(--color-red-100);
   --color-status-danger-border: var(--color-red-200);
+
+  /* ─── Navegación (menú lateral y pestañas) ─────────────────── */
+  --color-nav-bg: var(--brand-1);
+  --color-nav-text: #FFFFFF;
+  --color-nav-text-muted: color-mix(in srgb, white 62%, var(--brand-1));
+  --color-nav-hover: color-mix(in srgb, white 10%, var(--brand-1));
+  --color-nav-active-bg: var(--brand-5);
+  --color-nav-active-text: var(--brand-1);
+  --color-avatar-bg: var(--brand-4);
+  --color-avatar-text: var(--brand-1);
 
   /* ─── Layer 3: AI context — provenance ONLY, never severity ── */
   --color-ai-surface: var(--color-violet-100);
@@ -94,7 +112,7 @@
   --color-ai-accent-strong: var(--color-violet-600);
 
   /* ─── Focus & interaction ─────────────────────────────────── */
-  --focus-ring-color: var(--color-violet-500);
+  --focus-ring-color: var(--brand-1);
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
 

@@ -15,6 +15,7 @@ export default defineConfig({
     include: ['tests/**/*.test.{ts,tsx}'],
     // Los tests de reglas necesitan el emulador: se corren con `npm run test:rules`.
     exclude: ['tests/rules/**', 'node_modules/**'],
-    css: { modules: { classNameStrategy: 'non-scoped' } },
+    // tokens.css se procesa para que tests/unit/tokens.test.ts pueda leer la paleta (el resto del CSS se ignora).
+    css: { include: [/tokens\.css/], modules: { classNameStrategy: 'non-scoped' } },
   },
 });
