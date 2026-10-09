@@ -74,3 +74,13 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué generó / propuso:** funciones puras `filterTasks`, `sortTasks` y `formatDate` con tests, componente `TaskFilters`, campos de prioridad y fecha en el formulario y reglas de Firestore que aceptan los campos nuevos sin romper las tareas existentes.
 - **Qué revisé o cambié yo:** publiqué las reglas nuevas en Firebase y probé los filtros y el orden. Decidí no hacer el drag & drop para priorizar una entrega estable.
 - **Qué no funcionó o tuve que corregir:** la primera vez las reglas nuevas no quedaron publicadas y las tareas con prioridad eran rechazadas; se detectó con una prueba automática antes de desplegar, así producción nunca dejó de funcionar.
+
+## v2 — Etapa 1: roles, invitaciones y auditoría
+- **Qué pedí:** a partir de unos mockups, convertir la app en un espacio de equipo: un administrador que registra los emails que pueden entrar, roles, y un registro para auditar quién mueve o edita qué. Solo funciones reales, sin costos hasta tener un cliente, y en el mismo repositorio.
+- **Qué generó / propuso:** dividir la v2 en 8 etapas con su diseño y plan; un Firebase y una URL de desarrollo separados de producción; tres roles (Administrador, Miembro, Lector); invitaciones por email con link de registro y confirmación de email; auditoría obligada por las Security Rules (cada cambio guarda quién, cuándo, el antes y el después); tests de reglas con el emulador de Firestore y un script para crear el primer admin.
+- **Qué revisé o cambié yo:** elegí las opciones del diseño (un solo espacio, tres roles, que todos vean todo pero quede registro, que lo obliguen las reglas). Creé el proyecto `matecode-tasks-dev` en Firebase, instalé Java para el emulador y probé el flujo completo: entrar como admin, invitar, registrarme como Lector, intentar entrar sin invitación y revisar el `auditLog`.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Los primeros tests de "trampa" podían fallar por el motivo equivocado (la hora no era la del servidor); se reescribieron con controles positivos: la misma escritura, pero honesta, sí debe pasar.
+  - `firebase deploy` devolvía 403 por un permiso del proyecto; las reglas de desarrollo se publicaron con la API de Firebase Rules desde un script temporal que solo acepta el proyecto de desarrollo.
+  - La preview de Vercel está protegida con login de Vercel, así que el registro de personas invitadas se probó en local.

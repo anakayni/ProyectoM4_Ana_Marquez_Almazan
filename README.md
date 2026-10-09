@@ -208,6 +208,67 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 - Revisar y entender cada cambio antes de aceptarlo, y verificar siempre con tests, build y prueba manual.
 - Nunca pegar secretos en el prompt; cargarlos directo en `.env` o en Vercel.
 
+## v2 en desarrollo (rama `v2`)
+
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria.
+
+### Entornos
+
+| | Producción | Desarrollo |
+|---|---|---|
+| Rama | `main` | `v2` |
+| Firebase | `matecode-tasks-dc1e1` | `matecode-tasks-dev` |
+| URL | https://matecode-tasks-sandy.vercel.app | https://matecode-tasks-dev.vercel.app (preview protegida por Vercel) |
+| Variables en Vercel | *Production* | *Preview* |
+
+Todo funciona en planes gratuitos (Firebase Spark, Vercel Hobby, SES en sandbox) y no se usa Firebase Storage.
+
+### Roles y permisos
+
+| Acción | Administrador | Miembro | Lector |
+|---|---|---|---|
+| Ver todas las tareas del equipo y su historial | ✓ | ✓ | ✓ |
+| Crear y editar cualquier tarea | ✓ | ✓ | |
+| Eliminar tareas | todas | solo las que creó | |
+| Invitar personas, cambiar roles, desactivar | ✓ | | |
+| Ver el registro de auditoría completo | ✓ | | |
+
+Un administrador no puede cambiar su propio rol ni desactivarse (así el espacio nunca queda sin admin).
+
+### Flujo de invitación
+
+1. El admin invita un email con un rol → se crea `invitations/{email}` y la app muestra un link `/register?email=…` para compartir.
+2. La persona se registra **con ese mismo email**. Si usa contraseña, primero debe confirmar su email.
+3. Al entrar, la app "reclama" la invitación: crea `users/{uid}` con el rol invitado y marca la invitación como aceptada.
+4. Quien no tiene invitación ve "No tienes invitación a este espacio"; quien fue desactivado tampoco entra.
+
+El primer administrador se crea una sola vez por entorno con `npm run bootstrap-admin -- email@ejemplo.com` (usa la cuenta de servicio del `.env`).
+
+### Auditoría obligatoria
+
+Cada cambio a una tarea, invitación o usuario se guarda en la misma escritura (batch o transacción) que una entrada en `auditLog`:
+
+```js
+// auditLog/task_abc123_3
+{
+  entityType: 'task', entityId: 'abc123', rev: 3,
+  action: 'update', actorId: '<uid de quien cambió>', at: <hora del servidor>,
+  before: { title: 'Revisar factura', completed: false, … },
+  after:  { title: 'Revisar factura', completed: true,  … },
+}
+```
+
+No depende de que la app "se acuerde" de auditar: las **Security Rules** rechazan cualquier cambio que no venga acompañado de su entrada, y verifican que `before` y `after` coincidan con el documento real, que `actorId` sea quien hace el cambio y que `at` sea la hora del servidor. Las entradas no se pueden editar ni borrar.
+
+### Comandos nuevos
+
+| Script | Qué hace |
+|---|---|
+| `npm run test:rules` | Tests de las Security Rules contra el emulador de Firestore (requiere **Java 21**) |
+| `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
+
+Tests en la rama `v2`: 122 de la app (`npm test`) y 32 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+
 ## Mejoras futuras
 
 - Reordenar tareas con drag & drop (dnd-kit), guardando el orden manual en Firestore.
