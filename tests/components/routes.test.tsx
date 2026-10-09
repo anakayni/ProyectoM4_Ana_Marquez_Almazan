@@ -1,52 +1,75 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AuthContextValue } from '@/types/auth';
+import type { Access, UserProfile } from '@/types/auth';
 
-const authState: Pick<AuthContextValue, 'user' | 'loading'> = { user: null, loading: false };
+const authState: { access: Access; profile: UserProfile | null } = { access: 'loading', profile: null };
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => authState }));
 
-import { ProtectedRoute } from '@/routes/ProtectedRoute';
-import { PublicOnlyRoute } from '@/routes/PublicOnlyRoute';
+import { AdminRoute } from '@/routes/AdminRoute';
+import { RequireAccess } from '@/routes/RequireAccess';
+
+const profile = (role: UserProfile['role']): UserProfile => ({
+  uid: 'u', email: 'u@x.com', displayName: 'U', role, active: true, invitedBy: 'a', rev: 1,
+});
 
 function renderAt(path: string) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/login" element={<PublicOnlyRoute><h1>Login</h1></PublicOnlyRoute>} />
-        <Route path="/tasks" element={<ProtectedRoute><h1>Mis tareas</h1></ProtectedRoute>} />
+        <Route path="/login" element={<RequireAccess allow={['signed-out']}><h1>Login</h1></RequireAccess>} />
+        <Route path="/verify-email" element={<RequireAccess allow={['unverified']}><h1>Confirma tu email</h1></RequireAccess>} />
+        <Route path="/no-access" element={<RequireAccess allow={['no-invitation', 'inactive']}><h1>Sin acceso</h1></RequireAccess>} />
+        <Route path="/tasks" element={<RequireAccess allow={['active']}><h1>Mis tareas</h1></RequireAccess>} />
+        <Route
+          path="/team/invite"
+          element={<RequireAccess allow={['active']}><AdminRoute><h1>Invitar</h1></AdminRoute></RequireAccess>}
+        />
       </Routes>
     </MemoryRouter>,
   );
 }
 
-describe('rutas guardianas', () => {
+describe('rutas por estado de acceso', () => {
   beforeEach(() => {
-    authState.user = null;
-    authState.loading = false;
+    authState.access = 'loading';
+    authState.profile = null;
   });
 
   it('muestra un spinner mientras se resuelve la sesión', () => {
-    authState.loading = true;
     renderAt('/tasks');
     expect(screen.getByRole('status')).toHaveTextContent(/cargando/i);
-    expect(screen.queryByText('Mis tareas')).not.toBeInTheDocument();
   });
 
-  it('redirige a /login si no hay sesión', () => {
+  it.each([
+    ['signed-out', 'Login'],
+    ['unverified', 'Confirma tu email'],
+    ['no-invitation', 'Sin acceso'],
+    ['inactive', 'Sin acceso'],
+    ['active', 'Mis tareas'],
+  ] as const)('con acceso "%s", /tasks termina en "%s"', (access, heading) => {
+    authState.access = access;
     renderAt('/tasks');
-    expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
   });
 
-  it('muestra las tareas si hay sesión', () => {
-    authState.user = { uid: '1', email: 'ana@mail.com', displayName: 'Ana', emailVerified: true };
-    renderAt('/tasks');
-    expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
-  });
-
-  it('redirige de /login a /tasks si ya hay sesión', () => {
-    authState.user = { uid: '1', email: 'ana@mail.com', displayName: 'Ana', emailVerified: true };
+  it('con sesión activa, /login redirige a las tareas', () => {
+    authState.access = 'active';
     renderAt('/login');
     expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
+  });
+
+  it('un miembro no entra a la pantalla de invitar', () => {
+    authState.access = 'active';
+    authState.profile = profile('member');
+    renderAt('/team/invite');
+    expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
+  });
+
+  it('un admin entra a la pantalla de invitar', () => {
+    authState.access = 'active';
+    authState.profile = profile('admin');
+    renderAt('/team/invite');
+    expect(screen.getByRole('heading', { name: 'Invitar' })).toBeInTheDocument();
   });
 });

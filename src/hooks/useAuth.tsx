@@ -59,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile: profile ?? null,
       access,
-      loading: access === 'loading',
       login: authService.loginWithEmail,
       loginWithGoogle: authService.loginWithGoogle,
       register: async (input) => {

@@ -28,3 +28,4 @@
   .item { grid-template-columns: auto 1fr auto; align-items: start; }
   .actions { grid-column: auto; }
 }
+.status { width: 20px; text-align: center; color: var(--color-status-success); font-weight: var(--weight-semibold); }

@@ -59,6 +59,25 @@ describe('TodoList', () => {
     expect(onDelete).toHaveBeenCalledWith('1');
   });
 
+  describe('permisos', () => {
+    it('un lector no ve el checkbox ni los botones de editar y eliminar', () => {
+      render(<TodoList tasks={tasks} canEdit={false} canDelete={() => false} onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /eliminar/i })).not.toBeInTheDocument();
+    });
+
+    it('un miembro edita todo, pero solo ve "Eliminar" en las tareas que creó', () => {
+      const mixed: Task[] = [tasks[0], { ...tasks[1], createdBy: 'otra' }];
+      render(
+        <TodoList tasks={mixed} canDelete={(t) => t.createdBy === 'u'} onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      );
+      expect(screen.getAllByRole('button', { name: /editar/i })).toHaveLength(2);
+      expect(screen.getByRole('button', { name: /eliminar "comprar yerba"/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /eliminar "pagar luz"/i })).not.toBeInTheDocument();
+    });
+  });
+
   it('permite cancelar la eliminación', async () => {
     const { onDelete } = setup();
     await userEvent.click(screen.getByRole('button', { name: /eliminar "comprar yerba"/i }));

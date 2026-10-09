@@ -35,3 +35,15 @@
   .main { max-width: 1080px; display: grid; grid-template-columns: 360px 1fr; align-items: start; }
   .card { position: sticky; top: var(--space-6); }
 }
+
+.role {
+  display: inline-block; margin-top: var(--space-1); padding: 2px var(--space-2);
+  border-radius: var(--radius-pill); background: var(--color-status-info-surface);
+  color: var(--color-status-info); font-size: var(--text-xs); font-weight: var(--weight-medium);
+}
+.headerLink {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 var(--space-3);
+  border: 1px solid var(--color-action-secondary-border); border-radius: var(--radius-md);
+  color: var(--color-text-primary); font-size: var(--text-md); font-weight: var(--weight-medium); text-decoration: none;
+}
+.headerLink:hover { background: var(--color-action-secondary-hover); }

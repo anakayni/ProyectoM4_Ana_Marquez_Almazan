@@ -7,7 +7,7 @@ export const authFormClass = styles.form;
 // eslint-disable-next-line react/only-export-components
 export const authDividerClass = styles.divider;
 
-type AuthLayoutProps = { title: string; subtitle: string; children: ReactNode; footer: ReactNode };
+type AuthLayoutProps = { title: string; subtitle: string; children: ReactNode; footer?: ReactNode };
 
 export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProps) {
   return (
@@ -20,7 +20,7 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
         <h1 className={styles.title}>{title}</h1>
         <p className={styles.subtitle}>{subtitle}</p>
         {children}
-        <p className={styles.footer}>{footer}</p>
+        {footer && <p className={styles.footer}>{footer}</p>}
       </div>
     </main>
   );

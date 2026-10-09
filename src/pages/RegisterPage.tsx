@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { AuthLayout, authDividerClass, authFormClass } from '@/components/auth/AuthLayout';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { Alert } from '@/components/ui/Alert';
@@ -8,6 +8,7 @@ import { Field, fieldInputClass } from '@/components/ui/Field';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthAction } from '@/hooks/useAuthAction';
 import type { RegisterFormValues } from '@/types/auth';
+import { normalizeEmail } from '@/utils/email';
 import { hasErrors, validateRegister, type FieldErrors } from '@/utils/validators';
 
 type RegisterField = keyof RegisterFormValues;
@@ -22,7 +23,10 @@ const FIELDS: { name: RegisterField; label: string; type: string; autoComplete: 
 export function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const { error, submitting, run } = useAuthAction();
-  const [values, setValues] = useState<RegisterFormValues>({ name: '', email: '', password: '', confirmPassword: '' });
+  // El link de invitación trae el email: /register?email=ana@empresa.com
+  const [params] = useSearchParams();
+  const invitedEmail = normalizeEmail(params.get('email') ?? '');
+  const [values, setValues] = useState<RegisterFormValues>({ name: '', email: invitedEmail, password: '', confirmPassword: '' });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors<RegisterField>>({});
 
   function handleSubmit(event: FormEvent) {
@@ -36,7 +40,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Crea tu cuenta"
-      subtitle="Tus tareas, guardadas en la nube."
+      subtitle={invitedEmail ? 'Te invitaron a un espacio de trabajo. Regístrate con este email.' : 'Solo para personas invitadas por un administrador.'}
       footer={<>¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link></>}
     >
       {error && <Alert kind="error">{error}</Alert>}

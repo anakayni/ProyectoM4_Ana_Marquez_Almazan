@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router';
 import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TodoForm } from '@/components/tasks/TodoForm';
@@ -8,22 +9,25 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
+import { can } from '@/features/auth/permissions';
 import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
-import type { AuthUser } from '@/types/auth';
+import { ROLE_LABEL, type UserProfile } from '@/types/auth';
 import type { SortMode, Task, TaskFilter, TaskInput } from '@/types/task';
 import styles from './TasksPage.module.css';
 
 export function TasksPage() {
-  const { user, logout } = useAuth();
-  // ProtectedRoute garantiza que acá siempre hay usuario.
-  return <TasksView user={user as AuthUser} onLogout={logout} />;
+  const { profile, logout } = useAuth();
+  // RequireAccess garantiza que acá siempre hay un perfil activo.
+  return <TasksView profile={profile as UserProfile} onLogout={logout} />;
 }
 
-function TasksView({ user, onLogout }: { user: AuthUser; onLogout: () => Promise<void> }) {
-  const { tasks, loading, error, retry, create, update, remove, toggle } = useTasks(user.uid);
+function TasksView({ profile, onLogout }: { profile: UserProfile; onLogout: () => Promise<void> }) {
+  const { tasks, loading, error, retry, create, update, remove, toggle } = useTasks(profile.uid);
+  const canCreate = can(profile, 'task:create');
+  const canEdit = can(profile, 'task:edit');
   const [editing, setEditing] = useState<Task | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [filter, setFilter] = useState<TaskFilter>('all');
@@ -60,25 +64,33 @@ function TasksView({ user, onLogout }: { user: AuthUser; onLogout: () => Promise
       <header className={styles.header}>
         <div>
           <p className={styles.brand}>MateCode <span>Tasks</span></p>
-          <h1 className={styles.greeting}>Hola, {user.displayName || user.email}</h1>
+          <h1 className={styles.greeting}>Hola, {profile.displayName}</h1>
+          <p className={styles.role}>{ROLE_LABEL[profile.role]}</p>
           {!loading && !error && (
             <p className={styles.summary}>{counts.pending} pendientes · {counts.done} completadas</p>
           )}
         </div>
         <div className={styles.headerActions}>
+          {can(profile, 'team:manage') && (
+            <Link className={styles.headerLink} to="/team/invite">Invitar personas</Link>
+          )}
           <SendSummaryButton onResult={setToast} />
           <Button variant="secondary" size="sm" onClick={() => void onLogout()}>Cerrar sesión</Button>
         </div>
       </header>
 
       <main className={styles.main}>
-        <section className={styles.card} aria-labelledby="new-task-title">
-          <h2 id="new-task-title" className={styles.sectionTitle}>Nueva tarea</h2>
-          <TodoForm onSubmit={handleCreate} />
-        </section>
+        {canCreate ? (
+          <section className={styles.card} aria-labelledby="new-task-title">
+            <h2 id="new-task-title" className={styles.sectionTitle}>Nueva tarea</h2>
+            <TodoForm onSubmit={handleCreate} />
+          </section>
+        ) : (
+          <Alert kind="info">Tienes acceso de solo lectura: puedes ver las tareas del equipo, pero no modificarlas.</Alert>
+        )}
 
         <section aria-labelledby="list-title">
-          <h2 id="list-title" className={styles.sectionTitle}>Mis tareas</h2>
+          <h2 id="list-title" className={styles.sectionTitle}>Tareas del equipo</h2>
           {loading && <Spinner label="Cargando tareas…" />}
           {error && (
             <Alert kind="error">
@@ -101,7 +113,11 @@ function TasksView({ user, onLogout }: { user: AuthUser; onLogout: () => Promise
           {!loading && !error && (
             <TodoList
               tasks={visibleTasks}
-              {...(tasks.length > 0 && { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Prueba con otro filtro.' })}
+              canEdit={canEdit}
+              canDelete={(task) => can(profile, 'task:delete', { createdBy: task.createdBy })}
+              {...(tasks.length > 0
+                ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Prueba con otro filtro.' }
+                : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
               onToggle={(id, completed) => void safely(() => toggle(id, completed))}
               onEdit={setEditing}
               onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}

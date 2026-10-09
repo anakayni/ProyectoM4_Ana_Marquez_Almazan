@@ -39,8 +39,6 @@ export interface AuthContextValue {
   /** Perfil del equipo; null si todavía no existe o no se sabe */
   profile: UserProfile | null;
   access: Access;
-  /** @deprecated Temporal hasta que las rutas usen `access` (etapa 1, tarea 6) */
-  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
