@@ -7,7 +7,7 @@ let emitError: (error: Error) => void = () => {};
 const unsubscribe = vi.fn();
 
 vi.mock('@/services/tasks.service', () => ({
-  subscribeToTasks: vi.fn((_uid: string, onData: typeof emitData, onError: typeof emitError) => {
+  subscribeToTasks: vi.fn((onData: typeof emitData, onError: typeof emitError) => {
     emitData = onData;
     emitError = onError;
     return unsubscribe;
@@ -20,15 +20,15 @@ vi.mock('@/services/tasks.service', () => ({
 import * as service from '@/services/tasks.service';
 import { useTasks } from '@/hooks/useTasks';
 
-const task: Task = { id: 't1', userId: 'u1', title: 'Comprar yerba', description: '', completed: false, priority: 'media', dueDate: null, createdAt: 1 };
+const task: Task = { id: 't1', createdBy: 'u1', updatedBy: 'u1', rev: 1, title: 'Comprar yerba', description: '', completed: false, priority: 'media', dueDate: null, createdAt: 1 };
 
 describe('useTasks', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('se suscribe con el uid y expone las tareas', () => {
+  it('se suscribe a las tareas de todo el equipo y las expone', () => {
     const { result } = renderHook(() => useTasks('u1'));
     expect(result.current.loading).toBe(true);
-    expect(service.subscribeToTasks).toHaveBeenCalledWith('u1', expect.any(Function), expect.any(Function));
+    expect(service.subscribeToTasks).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
 
     act(() => emitData([task]));
     expect(result.current.loading).toBe(false);
@@ -42,14 +42,14 @@ describe('useTasks', () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it('delega las acciones CRUD al servicio', async () => {
+  it('delega las acciones CRUD al servicio indicando quién las hace', async () => {
     const { result } = renderHook(() => useTasks('u1'));
     await result.current.create({ title: 'Nueva', description: '', priority: 'alta', dueDate: null });
     await result.current.toggle('t1', true);
     await result.current.remove('t1');
     expect(service.createTask).toHaveBeenCalledWith('u1', { title: 'Nueva', description: '', priority: 'alta', dueDate: null });
-    expect(service.updateTask).toHaveBeenCalledWith('t1', { completed: true });
-    expect(service.deleteTask).toHaveBeenCalledWith('t1');
+    expect(service.updateTask).toHaveBeenCalledWith('u1', 't1', { completed: true });
+    expect(service.deleteTask).toHaveBeenCalledWith('u1', 't1');
   });
 
   it('se desuscribe al desmontar', () => {

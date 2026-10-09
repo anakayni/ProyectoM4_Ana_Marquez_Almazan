@@ -5,11 +5,12 @@ import type { Task, TaskInput, TaskPatch } from '@/types/task';
 export const LOAD_ERROR = 'No pudimos cargar tus tareas. Revisa tu conexión e inténtalo de nuevo.';
 
 /**
- * Tareas del usuario en tiempo real + acciones CRUD.
+ * Tareas de todo el equipo en tiempo real + acciones CRUD.
+ * `actorId` es quien hace los cambios: queda registrado en la auditoría.
  * No hace falta volver a pedir la lista tras crear/editar/borrar:
  * onSnapshot avisa cada cambio y la UI se actualiza sola.
  */
-export function useTasks(uid: string) {
+export function useTasks(actorId: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +18,6 @@ export function useTasks(uid: string) {
 
   useEffect(() => {
     return subscribeToTasks(
-      uid,
       (next) => {
         setTasks(next);
         setLoading(false);
@@ -29,7 +29,7 @@ export function useTasks(uid: string) {
         setLoading(false);
       },
     );
-  }, [uid, attempt]);
+  }, [attempt]);
 
   // Reinicia el estado y fuerza una nueva suscripción (el efecto depende de `attempt`).
   const retry = useCallback(() => {
@@ -37,10 +37,10 @@ export function useTasks(uid: string) {
     setError(null);
     setAttempt((n) => n + 1);
   }, []);
-  const create = useCallback((input: TaskInput) => createTask(uid, input), [uid]);
-  const update = useCallback((id: string, patch: TaskPatch) => updateTask(id, patch), []);
-  const remove = useCallback((id: string) => deleteTask(id), []);
-  const toggle = useCallback((id: string, completed: boolean) => updateTask(id, { completed }), []);
+  const create = useCallback((input: TaskInput) => createTask(actorId, input), [actorId]);
+  const update = useCallback((id: string, patch: TaskPatch) => updateTask(actorId, id, patch), [actorId]);
+  const remove = useCallback((id: string) => deleteTask(actorId, id), [actorId]);
+  const toggle = useCallback((id: string, completed: boolean) => updateTask(actorId, id, { completed }), [actorId]);
 
   return { tasks, loading, error, retry, create, update, remove, toggle };
 }

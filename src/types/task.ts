@@ -2,7 +2,12 @@ export type Priority = 'alta' | 'media' | 'baja';
 
 export interface Task {
   id: string;
-  userId: string;
+  /** Quién la creó (ya no es "el dueño": todo el equipo ve todas las tareas) */
+  createdBy: string;
+  /** Quién hizo el último cambio */
+  updatedBy: string;
+  /** Versión: sube de a 1 con cada cambio y obliga a dejar una entrada de auditoría */
+  rev: number;
   title: string;
   description: string;
   completed: boolean;

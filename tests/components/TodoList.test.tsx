@@ -5,8 +5,8 @@ import { TodoList } from '@/components/tasks/TodoList';
 import type { Task } from '@/types/task';
 
 const tasks: Task[] = [
-  { id: '1', userId: 'u', title: 'Comprar yerba', description: 'Dos kilos', completed: false, priority: 'media', dueDate: null, createdAt: 2 },
-  { id: '2', userId: 'u', title: 'Pagar luz', description: '', completed: true, priority: 'media', dueDate: null, createdAt: 1 },
+  { id: '1', createdBy: 'u', updatedBy: 'u', rev: 1, title: 'Comprar yerba', description: 'Dos kilos', completed: false, priority: 'media', dueDate: null, createdAt: 2 },
+  { id: '2', createdBy: 'u', updatedBy: 'u', rev: 1, title: 'Pagar luz', description: '', completed: true, priority: 'media', dueDate: null, createdAt: 1 },
 ];
 
 function setup(list: Task[] = tasks) {
