@@ -1,0 +1,7 @@
+.shell { --bottom-nav-height: 60px; min-height: 100dvh; background: var(--color-surface-subtle); }
+.content { min-width: 0; padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)); }
+
+@media (min-width: 768px) {
+  .shell { --bottom-nav-height: 0px; display: grid; grid-template-columns: 240px 1fr; align-items: start; }
+  .content { padding-bottom: 0; }
+}

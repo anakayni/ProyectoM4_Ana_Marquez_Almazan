@@ -1,0 +1,16 @@
+.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--color-nav-bg);
+}
+.list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--bottom-nav-height); }
+.tab {
+  width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0; background: none; color: var(--color-nav-text); font-size: var(--text-2xs); text-decoration: none; cursor: pointer;
+}
+.active { color: var(--color-nav-active-bg); font-weight: var(--weight-semibold); }
+.soon { color: var(--color-nav-text-muted); }
+.tabs :focus-visible { outline-color: var(--color-nav-active-bg); outline-offset: -4px; }
+
+@media (min-width: 768px) {
+  .tabs { display: none; }
+}
