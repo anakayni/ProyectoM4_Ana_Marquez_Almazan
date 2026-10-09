@@ -12,17 +12,17 @@ import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
-import type { AppUser } from '@/types/auth';
+import type { AuthUser } from '@/types/auth';
 import type { SortMode, Task, TaskFilter, TaskInput } from '@/types/task';
 import styles from './TasksPage.module.css';
 
 export function TasksPage() {
   const { user, logout } = useAuth();
   // ProtectedRoute garantiza que acá siempre hay usuario.
-  return <TasksView user={user as AppUser} onLogout={logout} />;
+  return <TasksView user={user as AuthUser} onLogout={logout} />;
 }
 
-function TasksView({ user, onLogout }: { user: AppUser; onLogout: () => Promise<void> }) {
+function TasksView({ user, onLogout }: { user: AuthUser; onLogout: () => Promise<void> }) {
   const { tasks, loading, error, retry, create, update, remove, toggle } = useTasks(user.uid);
   const [editing, setEditing] = useState<Task | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);

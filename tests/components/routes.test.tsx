@@ -39,13 +39,13 @@ describe('rutas guardianas', () => {
   });
 
   it('muestra las tareas si hay sesión', () => {
-    authState.user = { uid: '1', email: 'ana@mail.com', displayName: 'Ana' };
+    authState.user = { uid: '1', email: 'ana@mail.com', displayName: 'Ana', emailVerified: true };
     renderAt('/tasks');
     expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
   });
 
   it('redirige de /login a /tasks si ya hay sesión', () => {
-    authState.user = { uid: '1', email: 'ana@mail.com', displayName: 'Ana' };
+    authState.user = { uid: '1', email: 'ana@mail.com', displayName: 'Ana', emailVerified: true };
     renderAt('/login');
     expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
   });
