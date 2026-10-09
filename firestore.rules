@@ -2,32 +2,166 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
+    // ─── Identidad y rol ──────────────────────────────────────────
+    function signedIn() { return request.auth != null; }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function isActive() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.active == true;
+    }
+    function hasRole(roles) { return isActive() && get(userPath(request.auth.uid)).data.role in roles; }
+    function isAdmin() { return hasRole(['admin']); }
+    function canEdit() { return hasRole(['admin', 'member']); }
+    function myEmail() { return request.auth.token.email; }
+    function emailVerified() { return request.auth.token.email_verified == true; }
+
+    // ─── Auditoría obligatoria ────────────────────────────────────
+    // Cada cambio en un documento auditado debe ir acompañado (en el mismo batch/transacción)
+    // de auditLog/{tipo}_{id}_{rev}, con fotos before/after que coinciden con los datos reales.
+    function entityPath(type, id) {
+      return type == 'task' ? /databases/$(database)/documents/tasks/$(id)
+        : type == 'invitation' ? /databases/$(database)/documents/invitations/$(id)
+        : /databases/$(database)/documents/users/$(id);
+    }
+    function audited(type, id, rev) {
+      return existsAfter(/databases/$(database)/documents/auditLog/$(type + '_' + id + '_' + string(rev)));
+    }
+    function nextRev() { return request.resource.data.rev == resource.data.rev + 1; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    function validAudit(logId) {
+      let d = request.resource.data;
+      let path = entityPath(d.entityType, d.entityId);
+      return d.keys().hasOnly(['entityType', 'entityId', 'rev', 'action', 'actorId', 'at', 'before', 'after'])
+        && d.entityType in ['task', 'invitation', 'user']
+        && logId == d.entityType + '_' + d.entityId + '_' + string(d.rev)
+        && d.actorId == request.auth.uid
+        && d.at == request.time
+        && (
+          (d.action == 'create' && !exists(path) && existsAfter(path)
+            && d.before == null && d.after == getAfter(path).data && getAfter(path).data.rev == d.rev)
+          || (d.action == 'update' && exists(path) && existsAfter(path)
+            && d.before == get(path).data && d.after == getAfter(path).data && getAfter(path).data.rev == d.rev)
+          || (d.action == 'delete' && exists(path) && !existsAfter(path)
+            && d.before == get(path).data && d.after == null && get(path).data.rev + 1 == d.rev)
+        );
     }
 
-    function ownsExisting() {
-      return signedIn() && resource.data.userId == request.auth.uid;
+    match /auditLog/{logId} {
+      allow read: if isAdmin() || (isActive() && resource.data.entityType == 'task');
+      allow create: if signedIn() && validAudit(logId);
+      allow update, delete: if false;
     }
 
-    function validTask(data) {
-      return data.keys().hasOnly(['userId', 'title', 'description', 'completed', 'priority', 'dueDate', 'createdAt', 'updatedAt'])
-        && data.title is string && data.title.size() > 0 && data.title.size() <= 80
-        && data.description is string && data.description.size() <= 500
-        && data.completed is bool
-        // priority y dueDate son opcionales para aceptar tareas creadas antes de agregarlos
-        && (!('priority' in data) || data.priority in ['alta', 'media', 'baja'])
-        && (!('dueDate' in data) || data.dueDate == null || (data.dueDate is string && data.dueDate.size() == 10));
+    // ─── Tareas (todo el equipo las ve) ───────────────────────────
+    function validTask(d) {
+      return d.keys().hasOnly(['createdBy', 'title', 'description', 'completed', 'priority', 'dueDate',
+                               'createdAt', 'updatedAt', 'updatedBy', 'rev'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 80
+        && d.description is string && d.description.size() <= 500
+        && d.completed is bool
+        && d.priority in ['alta', 'media', 'baja']
+        && (d.dueDate == null || (d.dueDate is string && d.dueDate.size() == 10))
+        && d.rev is int
+        && d.updatedBy == request.auth.uid
+        && d.updatedAt == request.time;
     }
 
     match /tasks/{taskId} {
-      allow read, delete: if ownsExisting();
-      allow create: if signedIn()
-        && request.resource.data.userId == request.auth.uid
-        && validTask(request.resource.data);
-      allow update: if ownsExisting()
-        && request.resource.data.userId == resource.data.userId
-        && validTask(request.resource.data);
+      allow read: if isActive();
+      allow create: if canEdit()
+        && validTask(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.rev == 1
+        && audited('task', taskId, 1);
+      allow update: if canEdit()
+        && validTask(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && nextRev()
+        && audited('task', taskId, request.resource.data.rev);
+      allow delete: if (isAdmin() || (hasRole(['member']) && resource.data.createdBy == request.auth.uid))
+        && audited('task', taskId, resource.data.rev + 1);
+    }
+
+    // ─── Invitaciones (ID = email en minúsculas) ──────────────────
+    function invitationPath(email) { return /databases/$(database)/documents/invitations/$(email); }
+
+    match /invitations/{email} {
+      allow read: if isAdmin() || (signedIn() && myEmail() == email);
+
+      allow create: if isAdmin()
+        && email == email.lower()
+        && request.resource.data.keys().hasOnly(['email', 'role', 'status', 'invitedBy', 'createdAt', 'acceptedBy', 'acceptedAt', 'rev'])
+        && request.resource.data.email == email
+        && request.resource.data.role in ['admin', 'member', 'viewer']
+        && request.resource.data.status == 'pending'
+        && request.resource.data.invitedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.acceptedBy == null
+        && request.resource.data.acceptedAt == null
+        && request.resource.data.rev == 1
+        && audited('invitation', email, 1);
+
+      allow update: if nextRev() && audited('invitation', email, request.resource.data.rev) && (
+        // Un admin cancela una invitación pendiente
+        (isAdmin() && resource.data.status == 'pending' && request.resource.data.status == 'revoked'
+          && changed().hasOnly(['status', 'rev']))
+        // Un admin vuelve a invitar un email cancelado
+        || (isAdmin() && resource.data.status == 'revoked' && request.resource.data.status == 'pending'
+          && request.resource.data.role in ['admin', 'member', 'viewer']
+          && request.resource.data.invitedBy == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && changed().hasOnly(['status', 'role', 'invitedBy', 'createdAt', 'rev']))
+        // La persona invitada acepta, junto con la creación de su perfil
+        || (signedIn() && emailVerified() && myEmail() == email
+          && resource.data.status == 'pending' && request.resource.data.status == 'accepted'
+          && request.resource.data.acceptedBy == request.auth.uid
+          && request.resource.data.acceptedAt == request.time
+          && changed().hasOnly(['status', 'acceptedBy', 'acceptedAt', 'rev'])
+          && existsAfter(userPath(request.auth.uid)))
+      );
+      allow delete: if false;
+    }
+
+    // ─── Usuarios ─────────────────────────────────────────────────
+    match /users/{uid} {
+      // El propio documento se puede leer aunque no exista o esté desactivado (para saber el estado de acceso)
+      allow read: if isActive() || (signedIn() && request.auth.uid == uid);
+
+      // Solo reclamando una invitación pendiente del propio email verificado
+      allow create: if signedIn() && request.auth.uid == uid && emailVerified()
+        && exists(invitationPath(myEmail()))
+        && get(invitationPath(myEmail())).data.status == 'pending'
+        && getAfter(invitationPath(myEmail())).data.status == 'accepted'
+        && request.resource.data.keys().hasOnly(['email', 'displayName', 'role', 'active', 'invitedBy', 'joinedAt', 'rev'])
+        && request.resource.data.email == myEmail()
+        && request.resource.data.role == get(invitationPath(myEmail())).data.role
+        && request.resource.data.invitedBy == get(invitationPath(myEmail())).data.invitedBy
+        && request.resource.data.active == true
+        && request.resource.data.joinedAt == request.time
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.rev == 1
+        && audited('user', uid, 1);
+
+      allow update: if nextRev() && audited('user', uid, request.resource.data.rev) && (
+        // Un admin cambia el rol o el estado de OTRA persona (nunca el suyo)
+        (isAdmin() && uid != request.auth.uid
+          && changed().hasOnly(['role', 'active', 'rev'])
+          && request.resource.data.role in ['admin', 'member', 'viewer']
+          && request.resource.data.active is bool)
+        // Cada persona activa cambia su propio nombre
+        || (isActive() && uid == request.auth.uid
+          && changed().hasOnly(['displayName', 'rev'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() > 0
+          && request.resource.data.displayName.size() <= 80)
+      );
+      allow delete: if false;
     }
   }
 }
