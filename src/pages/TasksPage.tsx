@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
 import { TaskBoard, type TaskView } from '@/components/tasks/TaskBoard';
+import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
 import { TaskStats } from '@/components/tasks/TaskStats';
 import { TodoForm } from '@/components/tasks/TodoForm';
 import { TodoList } from '@/components/tasks/TodoList';
@@ -38,6 +39,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const members = useTeamMembers();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [sort, setSort] = useState<SortMode>('recent');
   const [scope, setScope] = usePreference<TaskScope>('matecode.scope', canEdit ? 'mine' : 'team', SCOPES);
@@ -51,6 +53,8 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const scoped = scopeTasks(tasks, scope, profile.uid);
   const stats = countTasks(scoped, today);
   const visibleTasks = sortTasks(filterByCard(scoped, card, today), sort);
+  // Se busca en la lista viva: si alguien borra la tarea, el panel se cierra solo.
+  const openTask = tasks.find((t) => t.id === openId) ?? null;
 
   async function safely(action: () => Promise<void>, success?: string) {
     try {
@@ -130,29 +134,43 @@ function TasksView({ profile }: { profile: UserProfile }) {
                   nameOf={nameOf}
                   canEdit={canEdit}
                   onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
-                  // Hasta que exista el panel de detalle, abrir = editar (solo para quien puede editar).
-                  onOpen={(task) => canEdit && setEditing(task)}
+                  onOpen={(task) => setOpenId(task.id)}
                 />
               ) : (
                 <TodoList
                   tasks={visibleTasks}
                   nameOf={nameOf}
                   canEdit={canEdit}
-                  canDelete={(task) => can(profile, 'task:delete', { createdBy: task.createdBy })}
                   {...(card !== null
                     ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
                     : scope === 'mine'
                       ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
                       : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
                   onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
-                  onEdit={setEditing}
-                  onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}
+                  onOpen={(task) => setOpenId(task.id)}
                 />
               )}
             </>
           )}
         </section>
       </main>
+
+      {openTask && !editing && (
+        // Mientras se edita, el panel se oculta y vuelve con los datos ya actualizados.
+        <TaskDetailPanel
+          task={openTask}
+          nameOf={nameOf}
+          canEdit={canEdit}
+          canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
+          onClose={() => setOpenId(null)}
+          onEdit={setEditing}
+          onDelete={(id) => {
+            setOpenId(null);
+            void safely(() => remove(id), 'Tarea eliminada.');
+          }}
+          onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+        />
+      )}
 
       {creating && (
         <Modal title="Nueva tarea" onClose={() => setCreating(false)}>

@@ -12,7 +12,7 @@ const tasks: Task[] = [
 const nameOf = (uid: string | null) => (uid === 'ana' ? 'Ana' : null);
 
 function setup(list: Task[] = tasks, props: Partial<Parameters<typeof TodoList>[0]> = {}) {
-  const handlers = { onStatusChange: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() };
+  const handlers = { onStatusChange: vi.fn(), onOpen: vi.fn() };
   render(<TodoList tasks={list} nameOf={nameOf} {...handlers} {...props} />);
   return handlers;
 }
@@ -48,33 +48,14 @@ describe('TodoList', () => {
     expect(screen.getByText('No hay tareas en este filtro')).toBeInTheDocument();
   });
 
-  it('pide editar la tarea', async () => {
-    const { onEdit } = setup();
-    await userEvent.click(screen.getByRole('button', { name: /editar "comprar yerba"/i }));
-    expect(onEdit).toHaveBeenCalledWith(tasks[0]);
+  it('abre el detalle al hacer clic en el título', async () => {
+    const { onOpen } = setup();
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar yerba' }));
+    expect(onOpen).toHaveBeenCalledWith(tasks[0]);
   });
 
-  it('pide confirmación antes de eliminar y permite cancelar', async () => {
-    const { onDelete } = setup();
-    await userEvent.click(screen.getByRole('button', { name: /eliminar "comprar yerba"/i }));
-    await userEvent.click(screen.getByRole('button', { name: /cancelar/i }));
-    expect(onDelete).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: /eliminar "comprar yerba"/i }));
-    await userEvent.click(screen.getByRole('button', { name: /sí, eliminar/i }));
-    expect(onDelete).toHaveBeenCalledWith('1');
-  });
-
-  describe('permisos', () => {
-    it('un lector no ve controles de edición', () => {
-      setup(tasks, { canEdit: false, canDelete: () => false });
-      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /editar|eliminar/i })).not.toBeInTheDocument();
-    });
-
-    it('un miembro solo ve "Eliminar" en las tareas que creó', () => {
-      setup([tasks[0], { ...tasks[1], createdBy: 'otra' }], { canDelete: (t) => t.createdBy === 'u' });
-      expect(screen.getByRole('button', { name: /eliminar "comprar yerba"/i })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /eliminar "pagar luz"/i })).not.toBeInTheDocument();
-    });
+  it('un lector no puede cambiar el estado', () => {
+    setup(tasks, { canEdit: false });
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 });

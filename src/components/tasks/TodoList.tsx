@@ -10,9 +10,8 @@ type TodoListProps = TodoItemHandlers & {
   /** Mensajes para la lista vacía (p. ej. cuando un filtro no tiene resultados). */
   emptyTitle?: string;
   emptyHint?: string;
-  /** Permisos según el rol (por defecto, todo permitido) */
+  /** Puede cambiar el estado (por defecto, sí) */
   canEdit?: boolean;
-  canDelete?: (task: Task) => boolean;
 };
 
 export function TodoList({
@@ -21,7 +20,6 @@ export function TodoList({
   emptyTitle = 'Todavía no tienes tareas',
   emptyHint = 'Crea una con "+ Nueva tarea".',
   canEdit = true,
-  canDelete = () => true,
   ...handlers
 }: TodoListProps) {
   if (tasks.length === 0) {
@@ -36,7 +34,7 @@ export function TodoList({
   return (
     <ul className={styles.list}>
       {tasks.map((task) => (
-        <TodoItem key={task.id} task={task} nameOf={nameOf} canEdit={canEdit} canDelete={canDelete(task)} {...handlers} />
+        <TodoItem key={task.id} task={task} nameOf={nameOf} canEdit={canEdit} {...handlers} />
       ))}
     </ul>
   );
