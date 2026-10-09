@@ -1,23 +1,27 @@
 import { useCallback, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
-import { TaskFilters } from '@/components/tasks/TaskFilters';
+import { TaskStats } from '@/components/tasks/TaskStats';
 import { TodoForm } from '@/components/tasks/TodoForm';
 import { TodoList } from '@/components/tasks/TodoList';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
-import { assigneeOptions } from '@/features/team/members';
-import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
+import { assigneeOptions, makeNameOf } from '@/features/team/members';
+import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
+import { countTasks, filterByCard } from '@/features/tasks/taskStats';
 import { useAuth } from '@/hooks/useAuth';
+import { usePreference } from '@/hooks/usePreference';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import type { SortMode, Task, TaskFilter, TaskInput } from '@/types/task';
+import { SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type Task, type TaskInput, type TaskScope } from '@/types/task';
+import { toDateInputValue } from '@/utils/formatDate';
 import styles from './TasksPage.module.css';
 
 export function TasksPage() {
@@ -34,12 +38,17 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
-  const [filter, setFilter] = useState<TaskFilter>('all');
   const [sort, setSort] = useState<SortMode>('recent');
+  const [scope, setScope] = usePreference<TaskScope>('matecode.scope', canEdit ? 'mine' : 'team', SCOPES);
+  const [card, setCard] = useState<StatCard | null>(null);
+  // "Hoy" se fija al abrir la página (para saber qué está vencido); recargar actualiza la fecha.
+  const [today] = useState(() => toDateInputValue(new Date()));
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const counts = countTasks(tasks);
-  const visibleTasks = sortTasks(filterTasks(tasks, filter), sort);
+  const nameOf = makeNameOf(members);
+  const scoped = scopeTasks(tasks, scope, profile.uid);
+  const stats = countTasks(scoped, today);
+  const visibleTasks = sortTasks(filterByCard(scoped, card, today), sort);
 
   async function safely(action: () => Promise<void>, success?: string) {
     try {
@@ -68,11 +77,6 @@ function TasksView({ profile }: { profile: UserProfile }) {
     <>
       <PageHeader
         title="Mis tareas"
-        subtitle={
-          !loading && !error ? (
-            <span className={styles.counts}>{counts.pending} pendientes · {counts.done} completadas</span>
-          ) : undefined
-        }
         actions={
           <>
             <SendSummaryButton onResult={setToast} />
@@ -86,39 +90,49 @@ function TasksView({ profile }: { profile: UserProfile }) {
           <Alert kind="info">Tienes acceso de solo lectura: puedes ver las tareas del equipo, pero no modificarlas.</Alert>
         )}
 
-        <section aria-labelledby="list-title">
-          <h2 id="list-title" className={styles.sectionTitle}>Tareas del equipo</h2>
+        <section aria-label="Tareas" className={styles.tasks}>
           {loading && <Spinner label="Cargando tareas…" />}
           {error && (
             <Alert kind="error">
               {error} <Button size="sm" variant="ghost" onClick={retry}>Reintentar</Button>
             </Alert>
           )}
-          {!loading && !error && tasks.length > 0 && (
-            <div className={styles.toolbar}>
-              <TaskFilters value={filter} counts={counts} onChange={setFilter} />
-              <label className={styles.sort}>
-                Ordenar por
-                <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
-                  <option value="recent">Más recientes</option>
-                  <option value="due">Vencimiento</option>
-                  <option value="priority">Prioridad</option>
-                </select>
-              </label>
-            </div>
-          )}
           {!loading && !error && (
-            <TodoList
-              tasks={visibleTasks}
-              canEdit={canEdit}
-              canDelete={(task) => can(profile, 'task:delete', { createdBy: task.createdBy })}
-              {...(tasks.length > 0
-                ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Prueba con otro filtro.' }
-                : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
-              onToggle={(id, completed) => void safely(() => setStatus(id, completed ? 'done' : 'todo'))}
-              onEdit={setEditing}
-              onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}
-            />
+            <>
+              <div className={styles.toolbar}>
+                <SegmentedControl
+                  label="Mostrar" name="scope" value={scope}
+                  onChange={(next) => {
+                    setScope(next);
+                    setCard(null);
+                  }}
+                  options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
+                />
+                <label className={styles.sort}>
+                  Ordenar por
+                  <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
+                    <option value="recent">Más recientes</option>
+                    <option value="due">Vencimiento</option>
+                    <option value="priority">Prioridad</option>
+                  </select>
+                </label>
+              </div>
+              <TaskStats stats={stats} selected={card} onSelect={setCard} />
+              <TodoList
+                tasks={visibleTasks}
+                nameOf={nameOf}
+                canEdit={canEdit}
+                canDelete={(task) => can(profile, 'task:delete', { createdBy: task.createdBy })}
+                {...(card !== null
+                  ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
+                  : scope === 'mine'
+                    ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
+                    : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
+                onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                onEdit={setEditing}
+                onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}
+              />
+            </>
           )}
         </section>
       </main>

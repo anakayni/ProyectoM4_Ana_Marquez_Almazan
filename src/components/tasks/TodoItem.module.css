@@ -3,7 +3,6 @@
   padding: var(--space-4); background: var(--color-surface-default);
   border: 1px solid var(--color-border-default); border-radius: var(--radius-lg);
 }
-.checkbox { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--color-status-success); cursor: pointer; }
 .body { min-width: 0; }
 .title { font-size: var(--text-xl); font-weight: var(--weight-medium); overflow-wrap: anywhere; }
 .description { margin-top: var(--space-1); color: var(--color-text-secondary); white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -21,11 +20,13 @@
 .completed .badge { opacity: 0.6; }
 .completed .title { text-decoration: line-through; color: var(--color-text-muted); }
 .completed .description { color: var(--color-text-muted); }
-.actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-1); }
-.confirmText { margin-right: auto; font-size: var(--text-md); color: var(--color-status-danger); }
+.assignee { display: flex; padding-top: 2px; }
+.doneBy { font-size: var(--text-sm); color: var(--color-status-success); }
+.side { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.confirmText { font-size: var(--text-md); color: var(--color-status-danger); }
 
 @media (min-width: 640px) {
   .item { grid-template-columns: auto 1fr auto; align-items: start; }
-  .actions { grid-column: auto; }
+  .side { grid-column: auto; flex-direction: column; align-items: flex-end; }
 }
-.status { width: 20px; text-align: center; color: var(--color-status-success); font-weight: var(--weight-semibold); }

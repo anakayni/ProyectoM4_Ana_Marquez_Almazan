@@ -30,11 +30,6 @@ export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDa
 
 export type TaskPatch = Partial<TaskInput & Pick<Task, 'status'>>;
 
-/** Filtro de la etapa 2 (lo reemplazan las tarjetas en la tarea 6). */
-export type TaskFilter = 'all' | 'pending' | 'done';
-
-export type TaskCounts = Record<TaskFilter, number>;
-
 export type SortMode = 'recent' | 'due' | 'priority';
 
 export type TaskScope = 'mine' | 'team' | 'unassigned';

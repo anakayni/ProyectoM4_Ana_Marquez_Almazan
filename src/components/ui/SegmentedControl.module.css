@@ -1,0 +1,11 @@
+.group {
+  display: inline-flex; margin: 0; padding: 0; border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface-default);
+}
+.option {
+  padding: var(--space-1) var(--space-3); font-size: var(--text-md); color: var(--color-text-heading);
+  cursor: pointer; white-space: nowrap;
+}
+.option + .option { border-left: 1px solid var(--color-border-strong); }
+.selected { background: var(--color-action-primary); color: var(--color-text-inverse); }
+.option:has(input:focus-visible) { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: -3px; }
