@@ -13,6 +13,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
+    // Los tests de reglas necesitan el emulador: se corren con `npm run test:rules`.
+    exclude: ['tests/rules/**', 'node_modules/**'],
     css: { modules: { classNameStrategy: 'non-scoped' } },
   },
 });

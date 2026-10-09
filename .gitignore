@@ -31,3 +31,7 @@ coverage
 .env
 .env.*
 !.env.example
+
+# Emulador de Firebase
+firebase-debug.log
+firestore-debug.log
