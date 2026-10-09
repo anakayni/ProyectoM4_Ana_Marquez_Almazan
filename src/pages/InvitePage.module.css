@@ -1,0 +1,26 @@
+.page { display: flex; flex-direction: column; gap: var(--space-5); max-width: 720px; margin: 0 auto; padding: var(--space-5) var(--space-4) var(--space-12); }
+.back { align-self: flex-start; color: var(--color-text-link); font-size: var(--text-md); }
+.title { font-size: var(--text-3xl); font-weight: var(--weight-semibold); }
+.lead { color: var(--color-text-secondary); margin-top: calc(-1 * var(--space-3)); }
+.card { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); background: var(--color-surface-default); border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); }
+.sectionTitle { margin-bottom: var(--space-1); font-size: var(--text-sm); font-weight: var(--weight-semibold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-muted); }
+.form { display: flex; flex-direction: column; gap: var(--space-3); }
+.created { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.link { display: block; width: 100%; padding: var(--space-2) var(--space-3); overflow-wrap: anywhere; font-family: var(--font-mono); font-size: var(--text-sm); background: var(--color-surface-sunken); border-radius: var(--radius-sm); }
+.empty { color: var(--color-text-secondary); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.item { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); background: var(--color-surface-default); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); }
+.itemBody { display: flex; flex-direction: column; min-width: 0; }
+.email { font-weight: var(--weight-medium); overflow-wrap: anywhere; }
+.meta { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.pending { color: var(--color-status-warning); }
+.accepted { color: var(--color-status-success); }
+.revoked { color: var(--color-text-muted); }
+.itemActions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+@media (min-width: 640px) {
+  .page { padding: var(--space-8); }
+  .form { flex-direction: row; align-items: flex-end; }
+  .form > div:first-child { flex: 1; }
+  .item { flex-direction: row; align-items: center; justify-content: space-between; }
+}
