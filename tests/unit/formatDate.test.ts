@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daysUntil, dueStatus, formatDateLabel, formatDay, formatDueDate, toDateInputValue } from '@/utils/formatDate';
+import { daysUntil, dueStatus, formatDateLabel, formatDay, formatDueDate, formatRelative, toDateInputValue } from '@/utils/formatDate';
 
 // Mediodía local para evitar sorpresas con zonas horarias.
 const today = new Date(2026, 8, 30, 12);
@@ -40,5 +40,19 @@ describe('formatDay y formatDateLabel', () => {
   });
   it('formatea YYYY-MM-DD sin corrimiento de zona horaria', () => {
     expect(formatDateLabel('2026-10-08')).toMatch(/^8 oct/);
+  });
+});
+
+describe('formatRelative', () => {
+  const now = new Date(2026, 9, 8, 12, 0).getTime();
+  it.each([
+    [now - 20 * 1000, 'hace un momento'],
+    [now - 5 * 60 * 1000, 'hace 5 min'],
+    [now - 3 * 60 * 60 * 1000, 'hace 3 h'],
+  ])('%s → %s', (ms, expected) => {
+    expect(formatRelative(ms, now)).toBe(expected);
+  });
+  it('más de un día: fecha y hora', () => {
+    expect(formatRelative(new Date(2026, 9, 3, 18, 30).getTime(), now)).toMatch(/^3 oct.*18:30$/);
   });
 });

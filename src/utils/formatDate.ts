@@ -50,3 +50,14 @@ export function formatDay(ms: number): string {
 export function formatDateLabel(value: string): string {
   return shortDate.format(parseLocalDate(value));
 }
+
+const dateTime = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+/** "hace un momento", "hace 5 min", "hace 3 h" o "3 oct, 18:30". */
+export function formatRelative(ms: number, now: number = Date.now()): string {
+  const minutes = Math.floor((now - ms) / 60000);
+  if (minutes < 1) return 'hace un momento';
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 24 * 60) return `hace ${Math.floor(minutes / 60)} h`;
+  return dateTime.format(new Date(ms));
+}
