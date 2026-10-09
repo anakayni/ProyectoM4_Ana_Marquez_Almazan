@@ -92,4 +92,14 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué aprendí:** _(pendiente, lo escribo yo)_
 - **Qué no funcionó o tuve que corregir:**
   - El test de la paleta fallaba por el motivo equivocado: Vitest entrega los archivos CSS vacíos para ir más rápido. Se configuró para que lea `tokens.css` y así el test comprueba los colores de verdad.
-  - Al elegir pestañas abajo en el celular, tus datos y "Cerrar sesión" se quedaban sin lugar: se resolvió con un menú en la inicial, arriba a la derecha.
+  - Al elegir pestañas abajo en el celular, mis datos y "Cerrar sesión" se quedaban sin lugar: se resolvió con un menú en la inicial, arriba a la derecha.
+
+## v2 — Etapa 3: Mis tareas v2
+- **Qué pedí:** que "Mis tareas" sirviera para trabajar en equipo: tres estados, un responsable por tarea, números reales arriba, ver las tareas en lista o en tablero y un historial de quién cambió qué.
+- **Qué generó / propuso:** preguntas de a una y maquetas de la lista, el tablero y el panel. Después, un plan en dos partes: primero el modelo de datos con sus reglas y una migración auditada de las tareas existentes, la lista con tarjetas y el selector Mías / Equipo; luego el tablero, las frases del historial a partir de la auditoría y el panel de detalle.
+- **Qué revisé o cambié yo:** elegí tener las dos vistas, un responsable opcional, empezar en "Mías", tarjetas que filtran y el panel de detalle. Al leer el diseño pedí que no se perdiera el registro de quién completa cada tarea: eso agregó `completedBy` y `completedAt`, con reglas que impiden atribuir el completado a otra persona o cambiar la fecha. También pedí íconos en lugar de texto para cambiar de vista. Probé cada parte en local y en la preview.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - El diseño original reemplazaba `completed` por el estado sin guardar quién completaba: lo noté al revisar el documento y se corrigió antes de programar.
+  - La herramienta de calidad (oxlint) avisó que calcular la fecha de "hoy" en cada render podía dar resultados inestables; se calcula una vez al abrir la página.
+  - Los tests del panel no encontraban su contenido: el navegador simulado de los tests no tiene `showModal()` y la ventana quedaba cerrada. Se comprobó con una prueba mínima y `Modal` ahora se abre igual cuando esa función no existe.

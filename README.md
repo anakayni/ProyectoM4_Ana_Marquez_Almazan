@@ -211,7 +211,7 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 
 ## v2 en desarrollo (rama `v2`)
 
-Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida.
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial.
 
 ### Entornos
 
@@ -268,14 +268,26 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Paleta:** 5 variables en `tokens.css` (`--brand-1` … `--brand-5`: `#1B4079`, `#4D7C8A`, `#7F9C96`, `#8FAD88`, `#CBDF90`). Los componentes usan nombres por función (botón principal, fondo, menú) que apuntan a esas variables, y los tonos claros se calculan con `color-mix()`. En la etapa 8 el admin podrá cambiarlas desde Ajustes sin tocar componentes.
 - **Login:** pantalla dividida con panel de marca y el aviso "Acceso solo con invitación del administrador".
 
+### Mis tareas v2 (etapa 3)
+
+- **Estados:** Pendiente, En curso y Hecha (reemplazan a "completada"). Al pasar a Hecha se guardan **quién la completó y cuándo** (`completedBy`, `completedAt`); las reglas exigen que sean el usuario real y la hora del servidor, y nadie puede cambiarlos después.
+- **Responsable:** una persona opcional (admin o miembro activo). Las reglas lo verifican solo cuando cambia, así una tarea asignada a alguien desactivado se sigue pudiendo editar.
+- **Alcance:** Mías / Todo el equipo / Sin asignar, recordado en el navegador. Las tareas nuevas empiezan asignadas a quien las crea.
+- **Tarjetas:** Pendientes, En curso, Hechas y Vencidas (no hechas con fecha anterior a hoy), calculadas sobre el alcance elegido. Un clic filtra la lista; otro clic quita el filtro.
+- **Vistas:** Lista o Tablero de 3 columnas (íconos de lista y cuadrícula). En el tablero, la tarea cambia de columna con su selector de estado.
+- **Panel de detalle:** al hacer clic en el título se abre un panel con los datos, Editar / Eliminar y el **historial** en frases ("Ana cambió el estado de Pendiente a En curso · hace 2 h"), armado a partir del `auditLog` de esa tarea y actualizado en tiempo real.
+- **Email de resumen:** cuenta Pendientes, En curso y Hechas de las tareas **asignadas** a quien lo pide.
+- **Migración:** `npm run migrate-tasks` convierte las tareas de formatos anteriores (incluido el de producción, con `userId`) dejando una entrada de auditoría por tarea con actor "system". Se niega a correr fuera de `matecode-tasks-dev` salvo con `--confirmar-produccion`.
+
 ### Comandos nuevos
 
 | Script | Qué hace |
 |---|---|
 | `npm run test:rules` | Tests de las Security Rules contra el emulador de Firestore (requiere **Java 21**) |
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
+| `npm run migrate-tasks` | Migra las tareas al formato de la etapa 3, con auditoría (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 161 de la app (`npm test`) y 32 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 199 de la app (`npm test`) y 43 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
 
 ## Mejoras futuras
 
