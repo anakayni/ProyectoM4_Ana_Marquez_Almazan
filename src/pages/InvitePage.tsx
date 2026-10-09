@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field, fieldInputClass } from '@/components/ui/Field';
@@ -13,7 +13,7 @@ import styles from './InvitePage.module.css';
 
 const ROLES: Role[] = ['member', 'viewer', 'admin'];
 
-/** Pantalla mínima de invitaciones (la versión definitiva llega con la sección Equipo, etapa 4). */
+/** Invitaciones del equipo (la sección Equipo completa llega en la etapa 4). */
 export function InvitePage() {
   const { profile } = useAuth();
   const admin = profile as UserProfile; // AdminRoute garantiza un admin activo
@@ -82,70 +82,70 @@ export function InvitePage() {
   }
 
   return (
-    <main className={styles.page}>
-      <Link className={styles.back} to="/tasks">← Volver a las tareas</Link>
-      <h1 className={styles.title}>Invitar personas</h1>
-      <p className={styles.lead}>
-        Solo pueden entrar las personas que invites. Comparte el link con ellas: deben registrarse con el mismo email.
-      </p>
+    <>
+      <PageHeader
+        title="Equipo"
+        subtitle="Solo pueden entrar las personas que invites. Comparte el link con ellas: deben registrarse con el mismo email."
+      />
+      <main className={styles.page}>
+        <section className={styles.card} aria-labelledby="invite-title">
+          <h2 id="invite-title" className={styles.sectionTitle}>Nueva invitación</h2>
+          {error && <Alert kind="error">{error}</Alert>}
+          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            <Field id="invite-email" label="Email" error={emailError}>
+              <input
+                id="invite-email" type="email" autoComplete="off" className={fieldInputClass}
+                value={email} onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={Boolean(emailError)} aria-describedby={emailError ? 'invite-email-error' : undefined}
+              />
+            </Field>
+            <Field id="invite-role" label="Rol">
+              <select id="invite-role" className={fieldInputClass} value={role} onChange={(e) => setRole(e.target.value as Role)}>
+                {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+              </select>
+            </Field>
+            <Button type="submit" loading={submitting}>Invitar</Button>
+          </form>
 
-      <section className={styles.card} aria-labelledby="invite-title">
-        <h2 id="invite-title" className={styles.sectionTitle}>Nueva invitación</h2>
-        {error && <Alert kind="error">{error}</Alert>}
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <Field id="invite-email" label="Email" error={emailError}>
-            <input
-              id="invite-email" type="email" autoComplete="off" className={fieldInputClass}
-              value={email} onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={Boolean(emailError)} aria-describedby={emailError ? 'invite-email-error' : undefined}
-            />
-          </Field>
-          <Field id="invite-role" label="Rol">
-            <select id="invite-role" className={fieldInputClass} value={role} onChange={(e) => setRole(e.target.value as Role)}>
-              {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
-            </select>
-          </Field>
-          <Button type="submit" loading={submitting}>Invitar</Button>
-        </form>
+          {created && (
+            <div className={styles.created}>
+              <Alert kind="success">Invitación creada para {created}. Comparte este link:</Alert>
+              <code className={styles.link}>{linkFor(created)}</code>
+              <Button size="sm" variant="secondary" onClick={() => void copy(created)}>
+                {copied === created ? 'Link copiado' : 'Copiar link'}
+              </Button>
+            </div>
+          )}
+        </section>
 
-        {created && (
-          <div className={styles.created}>
-            <Alert kind="success">Invitación creada para {created}. Comparte este link:</Alert>
-            <code className={styles.link}>{linkFor(created)}</code>
-            <Button size="sm" variant="secondary" onClick={() => void copy(created)}>
-              {copied === created ? 'Link copiado' : 'Copiar link'}
-            </Button>
-          </div>
-        )}
-      </section>
-
-      <section aria-labelledby="list-title">
-        <h2 id="list-title" className={styles.sectionTitle}>Invitaciones</h2>
-        {invitations.length === 0 ? (
-          <p className={styles.empty}>Todavía no invitaste a nadie.</p>
-        ) : (
-          <ul className={styles.list}>
-            {invitations.map((inv) => (
-              <li key={inv.email} className={styles.item}>
-                <div className={styles.itemBody}>
-                  <span className={styles.email}>{inv.email}</span>
-                  <span className={styles.meta}>
-                    {ROLE_LABEL[inv.role]} · <span className={styles[inv.status]}>{INVITATION_STATUS_LABEL[inv.status]}</span>
-                  </span>
-                </div>
-                {inv.status === 'pending' && (
-                  <div className={styles.itemActions}>
-                    <Button size="sm" variant="ghost" onClick={() => void copy(inv.email)}>
-                      {copied === inv.email ? 'Link copiado' : 'Copiar link'}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void revoke(inv.email)}>Cancelar</Button>
+        <section aria-labelledby="list-title">
+          <h2 id="list-title" className={styles.sectionTitle}>Invitaciones</h2>
+          {invitations.length === 0 ? (
+            <p className={styles.empty}>Todavía no invitaste a nadie.</p>
+          ) : (
+            <ul className={styles.list}>
+              {invitations.map((inv) => (
+                <li key={inv.email} className={styles.item}>
+                  <div className={styles.itemBody}>
+                    <span className={styles.email}>{inv.email}</span>
+                    <span className={styles.meta}>
+                      {ROLE_LABEL[inv.role]} · <span className={styles[inv.status]}>{INVITATION_STATUS_LABEL[inv.status]}</span>
+                    </span>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
+                  {inv.status === 'pending' && (
+                    <div className={styles.itemActions}>
+                      <Button size="sm" variant="ghost" onClick={() => void copy(inv.email)}>
+                        {copied === inv.email ? 'Link copiado' : 'Copiar link'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => void revoke(inv.email)}>Cancelar</Button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </main>
+    </>
   );
 }

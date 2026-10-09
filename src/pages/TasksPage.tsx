@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Link } from 'react-router';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TodoForm } from '@/components/tasks/TodoForm';
@@ -14,17 +14,17 @@ import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
-import { ROLE_LABEL, type UserProfile } from '@/types/auth';
+import type { UserProfile } from '@/types/auth';
 import type { SortMode, Task, TaskFilter, TaskInput } from '@/types/task';
 import styles from './TasksPage.module.css';
 
 export function TasksPage() {
-  const { profile, logout } = useAuth();
+  const { profile } = useAuth();
   // RequireAccess garantiza que acá siempre hay un perfil activo.
-  return <TasksView profile={profile as UserProfile} onLogout={logout} />;
+  return <TasksView profile={profile as UserProfile} />;
 }
 
-function TasksView({ profile, onLogout }: { profile: UserProfile; onLogout: () => Promise<void> }) {
+function TasksView({ profile }: { profile: UserProfile }) {
   const { tasks, loading, error, retry, create, update, remove, toggle } = useTasks(profile.uid);
   const canCreate = can(profile, 'task:create');
   const canEdit = can(profile, 'task:edit');
@@ -60,24 +60,16 @@ function TasksView({ profile, onLogout }: { profile: UserProfile; onLogout: () =
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <p className={styles.brand}>MateCode <span>Tasks</span></p>
-          <h1 className={styles.greeting}>Hola, {profile.displayName}</h1>
-          <p className={styles.role}>{ROLE_LABEL[profile.role]}</p>
-          {!loading && !error && (
-            <p className={styles.summary}>{counts.pending} pendientes · {counts.done} completadas</p>
-          )}
-        </div>
-        <div className={styles.headerActions}>
-          {can(profile, 'team:manage') && (
-            <Link className={styles.headerLink} to="/team/invite">Invitar personas</Link>
-          )}
-          <SendSummaryButton onResult={setToast} />
-          <Button variant="secondary" size="sm" onClick={() => void onLogout()}>Cerrar sesión</Button>
-        </div>
-      </header>
+    <>
+      <PageHeader
+        title="Mis tareas"
+        subtitle={
+          !loading && !error ? (
+            <span className={styles.counts}>{counts.pending} pendientes · {counts.done} completadas</span>
+          ) : undefined
+        }
+        actions={<SendSummaryButton onResult={setToast} />}
+      />
 
       <main className={styles.main}>
         {canCreate ? (
@@ -143,6 +135,6 @@ function TasksView({ profile, onLogout }: { profile: UserProfile; onLogout: () =
       )}
 
       {toast && <Toast toast={toast} onDismiss={dismissToast} />}
-    </div>
+    </>
   );
 }
