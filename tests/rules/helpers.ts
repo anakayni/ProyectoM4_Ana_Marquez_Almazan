@@ -1,10 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, setDoc, Timestamp, type Firestore } from 'firebase/firestore';
+import type { Role } from '@/types/auth';
 
 export const PROJECT_ID = 'demo-matecode';
-
-type Role = 'admin' | 'member' | 'viewer';
 
 export function createEnv(): Promise<RulesTestEnvironment> {
   return initializeTestEnvironment({
