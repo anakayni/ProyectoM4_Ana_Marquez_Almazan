@@ -1,0 +1,4 @@
+.avatar {
+  width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  background: var(--color-avatar-bg); color: var(--color-avatar-text); font-weight: var(--weight-semibold); font-size: var(--text-lg);
+}

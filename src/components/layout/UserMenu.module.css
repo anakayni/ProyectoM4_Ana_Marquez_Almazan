@@ -1,0 +1,14 @@
+.root { position: relative; }
+.trigger { padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; }
+.panel {
+  position: absolute; right: 0; top: calc(100% + var(--space-2)); z-index: 30; min-width: 200px;
+  display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3);
+  background: var(--color-surface-raised); color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+}
+.name { font-weight: var(--weight-semibold); color: var(--color-text-heading); overflow-wrap: anywhere; }
+.role { font-size: var(--text-md); color: var(--color-text-link); }
+.logout {
+  display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); padding: var(--space-2) 0 0;
+  border: 0; border-top: 1px solid var(--color-border-subtle); background: none; text-align: left; cursor: pointer;
+}
