@@ -84,3 +84,12 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
   - Los primeros tests de "trampa" podían fallar por el motivo equivocado (la hora no era la del servidor); se reescribieron con controles positivos: la misma escritura, pero honesta, sí debe pasar.
   - `firebase deploy` devolvía 403 por un permiso del proyecto; las reglas de desarrollo se publicaron con la API de Firebase Rules desde un script temporal que solo acepta el proyecto de desarrollo.
   - La preview de Vercel está protegida con login de Vercel, así que el registro de personas invitadas se probó en local.
+
+## v2 — Etapa 2: estructura, paleta y login
+- **Qué pedí:** el diseño nuevo a partir de los mockups: menú lateral con Mis tareas, Proyectos, Calendario, Equipo y Ajustes, mi paleta de colores y el login en pantalla dividida.
+- **Qué generó / propuso:** preguntas una por una y maquetas en el navegador para comparar opciones (tres formas de aplicar la paleta y dos de login). Después, un marco común para todas las páginas, la lista de secciones como una función con tests, la paleta como 5 variables que en la etapa 8 se podrán cambiar desde Ajustes, e íconos con lucide-react.
+- **Qué revisé o cambié yo:** elegí mostrar las 5 secciones desde ya con "Próximamente", pestañas abajo en el celular (cambié mi primera elección), el menú azul oscuro y el login con mensaje. Revisé el resultado en la computadora y en vista de celular.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - El test de la paleta fallaba por el motivo equivocado: Vitest entrega los archivos CSS vacíos para ir más rápido. Se configuró para que lea `tokens.css` y así el test comprueba los colores de verdad.
+  - Al elegir pestañas abajo en el celular, tus datos y "Cerrar sesión" se quedaban sin lugar: se resolvió con un menú en la inicial, arriba a la derecha.

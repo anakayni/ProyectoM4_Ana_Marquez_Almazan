@@ -25,6 +25,7 @@ SPA de gestión de tareas para los empleados de una pyme. Cada persona se regist
 | Frontend | React 19 + TypeScript + Vite |
 | Navegación | React Router (`react-router`) |
 | Estilos | CSS Modules + variables de diseño (`src/styles/tokens.css`) |
+| Íconos (v2) | lucide-react |
 | Autenticación | Firebase Authentication (email/password + Google) |
 | Base de datos | Cloud Firestore |
 | Backend | Vercel Functions (`/api/send-summary`) |
@@ -210,7 +211,7 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 
 ## v2 en desarrollo (rama `v2`)
 
-Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria.
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida.
 
 ### Entornos
 
@@ -260,6 +261,13 @@ Cada cambio a una tarea, invitación o usuario se guarda en la misma escritura (
 
 No depende de que la app "se acuerde" de auditar: las **Security Rules** rechazan cualquier cambio que no venga acompañado de su entrada, y verifican que `before` y `after` coincidan con el documento real, que `actorId` sea quien hace el cambio y que `at` sea la hora del servidor. Las entradas no se pueden editar ni borrar.
 
+### Estructura y paleta (etapa 2)
+
+- **Marco común (`AppShell`):** las páginas internas comparten un menú lateral en la computadora y, en el celular, una barra superior (logo y menú de cuenta) con 5 pestañas abajo. Es una *layout route* de React Router: el menú se dibuja una vez y solo cambia el contenido (`<Outlet />`).
+- **Secciones:** salen de la función `navItems(perfil)`. Mis tareas y Equipo (solo admin) funcionan; Proyectos, Calendario y Ajustes se ven como "Próximamente" hasta su etapa.
+- **Paleta:** 5 variables en `tokens.css` (`--brand-1` … `--brand-5`: `#1B4079`, `#4D7C8A`, `#7F9C96`, `#8FAD88`, `#CBDF90`). Los componentes usan nombres por función (botón principal, fondo, menú) que apuntan a esas variables, y los tonos claros se calculan con `color-mix()`. En la etapa 8 el admin podrá cambiarlas desde Ajustes sin tocar componentes.
+- **Login:** pantalla dividida con panel de marca y el aviso "Acceso solo con invitación del administrador".
+
 ### Comandos nuevos
 
 | Script | Qué hace |
@@ -267,7 +275,7 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 | `npm run test:rules` | Tests de las Security Rules contra el emulador de Firestore (requiere **Java 21**) |
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
 
-Tests en la rama `v2`: 122 de la app (`npm test`) y 32 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 161 de la app (`npm test`) y 32 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
 
 ## Mejoras futuras
 
