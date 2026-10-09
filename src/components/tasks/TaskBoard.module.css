@@ -1,0 +1,22 @@
+.board { display: grid; gap: var(--space-3); }
+.column { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-lg); background: var(--color-surface-sunken); }
+.heading { display: flex; justify-content: space-between; padding: var(--space-1) var(--space-2); font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-heading); }
+.count { color: var(--color-text-secondary); font-weight: var(--weight-regular); }
+.empty { padding: var(--space-3) var(--space-2); font-size: var(--text-md); color: var(--color-text-muted); }
+.cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); background: var(--color-surface-default); border: 1px solid var(--color-border-default); border-radius: var(--radius-md); }
+.title { padding: 0; border: 0; background: none; text-align: left; font-weight: var(--weight-medium); color: var(--color-text-primary); cursor: pointer; overflow-wrap: anywhere; }
+.title:hover { text-decoration: underline; }
+.meta { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.badge { padding: 2px var(--space-2); border: 1px solid; border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: var(--weight-medium); }
+.alta { color: var(--color-status-danger); background: var(--color-status-danger-surface); border-color: var(--color-status-danger-border); }
+.media { color: var(--color-status-warning); background: var(--color-status-warning-surface); border-color: var(--color-status-warning-border); }
+.baja { color: var(--color-status-neutral); background: var(--color-status-neutral-surface); border-color: var(--color-status-neutral-border); }
+.due { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-secondary); }
+.overdue { color: var(--color-status-danger); }
+.today { color: var(--color-status-warning); }
+.footer { display: flex; justify-content: space-between; align-items: center; }
+
+@media (min-width: 900px) {
+  .board { grid-template-columns: repeat(3, 1fr); align-items: start; }
+}

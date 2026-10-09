@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
+import { TaskBoard, type TaskView } from '@/components/tasks/TaskBoard';
 import { TaskStats } from '@/components/tasks/TaskStats';
 import { TodoForm } from '@/components/tasks/TodoForm';
 import { TodoList } from '@/components/tasks/TodoList';
@@ -40,6 +41,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [sort, setSort] = useState<SortMode>('recent');
   const [scope, setScope] = usePreference<TaskScope>('matecode.scope', canEdit ? 'mine' : 'team', SCOPES);
+  const [view, setView] = usePreference<TaskView>('matecode.view', 'list', ['list', 'board']);
   const [card, setCard] = useState<StatCard | null>(null);
   // "Hoy" se fija al abrir la página (para saber qué está vencido); recargar actualiza la fecha.
   const [today] = useState(() => toDateInputValue(new Date()));
@@ -108,6 +110,10 @@ function TasksView({ profile }: { profile: UserProfile }) {
                   }}
                   options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
                 />
+                <SegmentedControl
+                  label="Vista" name="view" value={view} onChange={setView}
+                  options={[{ value: 'list', label: 'Lista' }, { value: 'board', label: 'Tablero' }]}
+                />
                 <label className={styles.sort}>
                   Ordenar por
                   <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
@@ -118,20 +124,31 @@ function TasksView({ profile }: { profile: UserProfile }) {
                 </label>
               </div>
               <TaskStats stats={stats} selected={card} onSelect={setCard} />
-              <TodoList
-                tasks={visibleTasks}
-                nameOf={nameOf}
-                canEdit={canEdit}
-                canDelete={(task) => can(profile, 'task:delete', { createdBy: task.createdBy })}
-                {...(card !== null
-                  ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
-                  : scope === 'mine'
-                    ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
-                    : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
-                onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
-                onEdit={setEditing}
-                onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}
-              />
+              {view === 'board' ? (
+                <TaskBoard
+                  tasks={visibleTasks}
+                  nameOf={nameOf}
+                  canEdit={canEdit}
+                  onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                  // Hasta que exista el panel de detalle, abrir = editar (solo para quien puede editar).
+                  onOpen={(task) => canEdit && setEditing(task)}
+                />
+              ) : (
+                <TodoList
+                  tasks={visibleTasks}
+                  nameOf={nameOf}
+                  canEdit={canEdit}
+                  canDelete={(task) => can(profile, 'task:delete', { createdBy: task.createdBy })}
+                  {...(card !== null
+                    ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
+                    : scope === 'mine'
+                      ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
+                      : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
+                  onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                  onEdit={setEditing}
+                  onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}
+                />
+              )}
             </>
           )}
         </section>
