@@ -1,5 +1,5 @@
-export type SummaryTask = { title: string; description: string; completed: boolean };
-export type Summary = { total: number; pending: number; completed: number };
+export type SummaryTask = { title: string; description: string; status: 'todo' | 'doing' | 'done' };
+export type Summary = { total: number; todo: number; doing: number; done: number };
 
 /** Zona horaria para la fecha del email (la función corre en UTC). */
 const TIME_ZONE = 'America/Mexico_City';
@@ -7,8 +7,8 @@ const TIME_ZONE = 'America/Mexico_City';
 const FONT = "'IBM Plex Sans',Arial,sans-serif";
 
 export function buildSummary(tasks: SummaryTask[]): Summary {
-  const completed = tasks.filter((t) => t.completed).length;
-  return { total: tasks.length, pending: tasks.length - completed, completed };
+  const count = (status: SummaryTask['status']) => tasks.filter((t) => t.status === status).length;
+  return { total: tasks.length, todo: count('todo'), doing: count('doing'), done: count('done') };
 }
 
 /** Los títulos los escribe el usuario: se escapan para que no puedan inyectar HTML en el email. */
@@ -28,6 +28,11 @@ function plural(n: number, singular: string, pluralWord: string): string {
 function statCell(value: number, label: string, color: string, first = false): string {
   const border = first ? '' : 'border-left:1px solid #EDEDE9;';
   return `<td width="33%" style="padding:14px 16px;${border}"><div style="font-size:22px;font-weight:600;color:${color};">${value}</div><div style="font-size:12px;color:#55554E;">${label}</div></td>`;
+}
+
+/** Bloque de texto plano: título con cantidad y una línea por tarea (vacío si no hay tareas). */
+function section(label: string, list: SummaryTask[]): string[] {
+  return list.length ? [`${label} (${list.length})`, ...list.map((t) => `- ${t.title}`), ''] : [];
 }
 
 function sectionTitle(label: string): string {
@@ -58,20 +63,24 @@ export function renderSummaryEmail(input: {
 }): { subject: string; html: string; text: string } {
   const { name, tasks, date, appUrl } = input;
   const summary = buildSummary(tasks);
-  const pendingTasks = tasks.filter((t) => !t.completed);
-  const doneTasks = tasks.filter((t) => t.completed);
+  const groups = {
+    todo: tasks.filter((t) => t.status === 'todo'),
+    doing: tasks.filter((t) => t.status === 'doing'),
+    done: tasks.filter((t) => t.status === 'done'),
+  };
   const dateLabel = new Intl.DateTimeFormat('es', { dateStyle: 'long', timeZone: TIME_ZONE }).format(date);
   const tasksUrl = `${appUrl.replace(/\/$/, '')}/tasks`;
   const safeName = escapeHtml(name);
 
-  const subject = `Tu resumen de tareas: ${plural(summary.pending, 'pendiente', 'pendientes')}, ${plural(summary.completed, 'completada', 'completadas')}`;
+  const subject = `Tu resumen de tareas: ${plural(summary.todo, 'pendiente', 'pendientes')}, ${summary.doing} en curso, ${plural(summary.done, 'hecha', 'hechas')}`;
 
   const body =
     summary.total === 0
-      ? `<tr><td style="padding:24px 32px 0;font-family:${FONT};font-size:14px;color:#55554E;">No tienes tareas todavía. ¡Crea la primera desde la app!</td></tr>`
+      ? `<tr><td style="padding:24px 32px 0;font-family:${FONT};font-size:14px;color:#55554E;">No tienes tareas asignadas. Cuando alguien te asigne una, aparecerá aquí.</td></tr>`
       : [
-          pendingTasks.length ? sectionTitle('Pendientes') + taskRows(pendingTasks, false) : '',
-          doneTasks.length ? sectionTitle('Completadas') + taskRows(doneTasks, true) : '',
+          groups.todo.length ? sectionTitle('Pendientes') + taskRows(groups.todo, false) : '',
+          groups.doing.length ? sectionTitle('En curso') + taskRows(groups.doing, false) : '',
+          groups.done.length ? sectionTitle('Hechas') + taskRows(groups.done, true) : '',
         ].join('');
 
   const html = `<!DOCTYPE html>
@@ -80,8 +89,8 @@ export function renderSummaryEmail(input: {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F6F4;"><tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#FFFFFF;border:1px solid #E3E3DE;border-radius:12px;">
 <tr><td style="padding:28px 32px 8px;font-family:${FONT};font-size:14px;font-weight:600;color:#14151A;">MateCode <span style="font-weight:400;color:#55554E;">Tasks</span></td></tr>
-<tr><td style="padding:20px 32px 0;font-family:${FONT};"><h1 style="margin:0 0 6px;font-size:22px;line-height:1.3;font-weight:600;color:#14151A;">Hola ${safeName}, este es tu resumen</h1><p style="margin:0;font-size:14px;line-height:1.55;color:#55554E;">Estado de tus tareas al ${dateLabel}.</p></td></tr>
-<tr><td style="padding:24px 32px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E3E3DE;border-radius:8px;font-family:${FONT};"><tr>${statCell(summary.total, 'Total', '#14151A', true)}${statCell(summary.pending, 'Pendientes', '#14151A')}${statCell(summary.completed, 'Completadas', '#157F4A')}</tr></table></td></tr>
+<tr><td style="padding:20px 32px 0;font-family:${FONT};"><h1 style="margin:0 0 6px;font-size:22px;line-height:1.3;font-weight:600;color:#14151A;">Hola ${safeName}, este es tu resumen</h1><p style="margin:0;font-size:14px;line-height:1.55;color:#55554E;">Estado de las tareas asignadas a ti al ${dateLabel}.</p></td></tr>
+<tr><td style="padding:24px 32px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E3E3DE;border-radius:8px;font-family:${FONT};"><tr>${statCell(summary.todo, 'Pendientes', '#14151A', true)}${statCell(summary.doing, 'En curso', '#4D7C8A')}${statCell(summary.done, 'Hechas', '#157F4A')}</tr></table></td></tr>
 ${body}
 <tr><td style="padding:28px 32px 32px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#14151A;border-radius:8px;"><a href="${escapeHtml(tasksUrl)}" style="display:inline-block;padding:12px 20px;font-family:${FONT};font-size:14px;font-weight:500;color:#F6F6F4;text-decoration:none;">Abrir mis tareas</a></td></tr></table></td></tr>
 </table>
@@ -92,11 +101,12 @@ ${body}
   const text = [
     `Hola ${name}, este es tu resumen de tareas al ${dateLabel}.`,
     '',
-    `Total: ${summary.total} · Pendientes: ${summary.pending} · Completadas: ${summary.completed}`,
+    `Pendientes: ${summary.todo} · En curso: ${summary.doing} · Hechas: ${summary.done}`,
     '',
-    ...(summary.total === 0 ? ['No tienes tareas todavía.', ''] : []),
-    ...(pendingTasks.length ? [`Pendientes (${pendingTasks.length})`, ...pendingTasks.map((t) => `- ${t.title}`), ''] : []),
-    ...(doneTasks.length ? [`Completadas (${doneTasks.length})`, ...doneTasks.map((t) => `- ${t.title}`), ''] : []),
+    ...(summary.total === 0 ? ['No tienes tareas asignadas.', ''] : []),
+    ...section('Pendientes', groups.todo),
+    ...section('En curso', groups.doing),
+    ...section('Hechas', groups.done),
     `Abrir mis tareas: ${tasksUrl}`,
   ].join('\n');
 

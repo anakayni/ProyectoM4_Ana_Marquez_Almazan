@@ -6,7 +6,7 @@ import { processSendSummary, type SendSummaryDeps } from '../../functions/sendSu
 function makeDeps(overrides: Partial<SendSummaryDeps> = {}): SendSummaryDeps {
   return {
     verifyIdToken: vi.fn().mockResolvedValue({ uid: 'u1', email: 'ana@mail.com', name: 'Ana' }),
-    getTasksForUser: vi.fn().mockResolvedValue([{ title: 'Tarea', description: '', completed: false }]),
+    getTasksForUser: vi.fn().mockResolvedValue([{ title: 'Tarea', description: '', status: 'todo' }]),
     sendEmail: vi.fn().mockResolvedValue('msg-123'),
     appUrl: 'https://app.test',
     now: () => new Date('2026-09-28T18:00:00Z'),

@@ -24,11 +24,11 @@ export async function verifyIdToken(token: string) {
   return { uid: decoded.uid, email: decoded.email, name: decoded.name as string | undefined };
 }
 
-/** firebase-admin ignora las Security Rules: el filtro por quién creó la tarea es obligatorio acá. */
+/** firebase-admin ignora las Security Rules: el filtro por responsable es obligatorio acá. */
 export async function getTasksForUser(uid: string): Promise<SummaryTask[]> {
-  const snapshot = await getFirestore(getAdminApp()).collection('tasks').where('createdBy', '==', uid).get();
+  const snapshot = await getFirestore(getAdminApp()).collection('tasks').where('assigneeId', '==', uid).get();
   return snapshot.docs.map((doc) => {
     const data = doc.data();
-    return { title: String(data.title), description: String(data.description ?? ''), completed: Boolean(data.completed) };
+    return { title: String(data.title), description: String(data.description ?? ''), status: data.status };
   });
 }

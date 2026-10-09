@@ -3,18 +3,18 @@ import { describe, expect, it } from 'vitest';
 import { buildSummary, escapeHtml, renderSummaryEmail } from '../../functions/summaryEmail';
 
 const tasks = [
-  { title: 'Llamar al proveedor', description: '', completed: false },
-  { title: 'Ordenar facturas', description: 'Agosto', completed: true },
-  { title: 'Cotizar <b>envío</b>', description: '', completed: false },
+  { title: 'Llamar al proveedor', description: '', status: 'todo' as const },
+  { title: 'Ordenar facturas', description: 'Agosto', status: 'done' as const },
+  { title: 'Cotizar <b>envío</b>', description: '', status: 'doing' as const },
 ];
 
 describe('buildSummary', () => {
-  it('cuenta total, pendientes y completadas', () => {
-    expect(buildSummary(tasks)).toEqual({ total: 3, pending: 2, completed: 1 });
+  it('cuenta total, pendientes, en curso y hechas', () => {
+    expect(buildSummary(tasks)).toEqual({ total: 3, todo: 1, doing: 1, done: 1 });
   });
 
   it('funciona con lista vacía', () => {
-    expect(buildSummary([])).toEqual({ total: 0, pending: 0, completed: 0 });
+    expect(buildSummary([])).toEqual({ total: 0, todo: 0, doing: 0, done: 0 });
   });
 });
 
@@ -33,7 +33,7 @@ describe('renderSummaryEmail', () => {
   });
 
   it('arma el asunto con los totales', () => {
-    expect(email.subject).toBe('Tu resumen de tareas: 2 pendientes, 1 completada');
+    expect(email.subject).toBe('Tu resumen de tareas: 1 pendiente, 1 en curso, 1 hecha');
   });
 
   it('incluye saludo, totales, tareas y link en el HTML', () => {
@@ -49,13 +49,14 @@ describe('renderSummaryEmail', () => {
   });
 
   it('genera versión de texto plano', () => {
-    expect(email.text).toContain('Pendientes (2)');
+    expect(email.text).toContain('Pendientes (1)');
     expect(email.text).toContain('- Llamar al proveedor');
-    expect(email.text).toContain('Completadas (1)');
+    expect(email.text).toContain('En curso (1)');
+    expect(email.text).toContain('Hechas (1)');
   });
 
   it('muestra un mensaje si no hay tareas', () => {
     const empty = renderSummaryEmail({ name: 'Ana', tasks: [], date: new Date(), appUrl: 'https://x.app' });
-    expect(empty.html).toContain('No tienes tareas todavía');
+    expect(empty.html).toContain('No tienes tareas asignadas');
   });
 });
