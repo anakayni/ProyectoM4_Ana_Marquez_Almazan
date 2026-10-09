@@ -79,7 +79,9 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** a partir de unos mockups, convertir la app en un espacio de equipo: un administrador que registra los emails que pueden entrar, roles, y un registro para auditar quién mueve o edita qué. Solo funciones reales, sin costos hasta tener un cliente, y en el mismo repositorio.
 - **Qué generó / propuso:** dividir la v2 en 8 etapas con su diseño y plan; un Firebase y una URL de desarrollo separados de producción; tres roles (Administrador, Miembro, Lector); invitaciones por email con link de registro y confirmación de email; auditoría obligada por las Security Rules (cada cambio guarda quién, cuándo, el antes y el después); tests de reglas con el emulador de Firestore y un script para crear el primer admin.
 - **Qué revisé o cambié yo:** elegí las opciones del diseño (un solo espacio, tres roles, que todos vean todo pero quede registro, que lo obliguen las reglas). Creé el proyecto `matecode-tasks-dev` en Firebase, instalé Java para el emulador y probé el flujo completo: entrar como admin, invitar, registrarme como Lector, intentar entrar sin invitación y revisar el `auditLog`.
-- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué aprendí:** Pensaba que los permisos se resolvían escribiendo funciones con `if/else` en el código de la app. Aprendí que con Firebase es más fácil y más seguro: las reglas de Firestore deciden en el servidor quién puede hacer qué, aunque alguien modifique los botones en el navegador.
+  La auditoría me pareció muy útil pensando en un cliente real: permite saber si alguien altera información a su conveniencia, dar seguimiento a las actividades de cada persona y ver qué usuarios están activos.
+  También aprendí que no basta con probar que algo funcione: hay que probar que falle cuando alguien intenta hacer trampa. Así se detectan problemas de vulnerabilidad antes de que lleguen a producción.
 - **Qué no funcionó o tuve que corregir:**
   - Los primeros tests de "trampa" podían fallar por el motivo equivocado (la hora no era la del servidor); se reescribieron con controles positivos: la misma escritura, pero honesta, sí debe pasar.
   - `firebase deploy` devolvía 403 por un permiso del proyecto; las reglas de desarrollo se publicaron con la API de Firebase Rules desde un script temporal que solo acepta el proyecto de desarrollo.
@@ -89,7 +91,8 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** el diseño nuevo a partir de los mockups: menú lateral con Mis tareas, Proyectos, Calendario, Equipo y Ajustes, mi paleta de colores y el login en pantalla dividida.
 - **Qué generó / propuso:** preguntas una por una y maquetas en el navegador para comparar opciones (tres formas de aplicar la paleta y dos de login). Después, un marco común para todas las páginas, la lista de secciones como una función con tests, la paleta como 5 variables que en la etapa 8 se podrán cambiar desde Ajustes, e íconos con lucide-react.
 - **Qué revisé o cambié yo:** elegí mostrar las 5 secciones desde ya con "Próximamente", pestañas abajo en el celular (cambié mi primera elección), el menú azul oscuro y el login con mensaje. Revisé el resultado en la computadora y en vista de celular.
-- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué aprendí:** Elegir con maquetas en el navegador fue mucho más fácil que describirlo con palabras: ver las opciones una al lado de la otra me ayudó a decidir.
+  Al principio elegí el menú ☰ para el celular, pero cambié a pestañas abajo porque así la app se parece a una app nativa (como una PWA) y es más accesible desde el teléfono.
 - **Qué no funcionó o tuve que corregir:**
   - El test de la paleta fallaba por el motivo equivocado: Vitest entrega los archivos CSS vacíos para ir más rápido. Se configuró para que lea `tokens.css` y así el test comprueba los colores de verdad.
   - Al elegir pestañas abajo en el celular, mis datos y "Cerrar sesión" se quedaban sin lugar: se resolvió con un menú en la inicial, arriba a la derecha.
@@ -98,7 +101,7 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** que "Mis tareas" sirviera para trabajar en equipo: tres estados, un responsable por tarea, números reales arriba, ver las tareas en lista o en tablero y un historial de quién cambió qué.
 - **Qué generó / propuso:** preguntas de a una y maquetas de la lista, el tablero y el panel. Después, un plan en dos partes: primero el modelo de datos con sus reglas y una migración auditada de las tareas existentes, la lista con tarjetas y el selector Mías / Equipo; luego el tablero, las frases del historial a partir de la auditoría y el panel de detalle.
 - **Qué revisé o cambié yo:** elegí tener las dos vistas, un responsable opcional, empezar en "Mías", tarjetas que filtran y el panel de detalle. Al leer el diseño pedí que no se perdiera el registro de quién completa cada tarea: eso agregó `completedBy` y `completedAt`, con reglas que impiden atribuir el completado a otra persona o cambiar la fecha. También pedí íconos en lugar de texto para cambiar de vista. Probé cada parte en local y en la preview.
-- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué aprendí:** Al revisar el documento de diseño me di cuenta de que, al reemplazar "completada" por el estado, se perdía quién completaba cada tarea. Ese registro es importante: permite ver qué se terminó y quién está más libre de trabajo. Revisar el diseño antes de que se programe me permitió corregirlo a tiempo, sin rehacer código.
 - **Qué no funcionó o tuve que corregir:**
   - El diseño original reemplazaba `completed` por el estado sin guardar quién completaba: lo noté al revisar el documento y se corrigió antes de programar.
   - La herramienta de calidad (oxlint) avisó que calcular la fecha de "hoy" en cada render podía dar resultados inestables; se calcula una vez al abrir la página.
