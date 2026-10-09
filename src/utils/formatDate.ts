@@ -40,3 +40,13 @@ export function toDateInputValue(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
+
+/** "8 oct" a partir de milisegundos (p. ej. cuándo se completó). */
+export function formatDay(ms: number): string {
+  return shortDate.format(new Date(ms));
+}
+
+/** "8 oct" a partir de 'YYYY-MM-DD'. */
+export function formatDateLabel(value: string): string {
+  return shortDate.format(parseLocalDate(value));
+}

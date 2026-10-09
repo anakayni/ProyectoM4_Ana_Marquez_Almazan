@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daysUntil, dueStatus, formatDueDate, toDateInputValue } from '@/utils/formatDate';
+import { daysUntil, dueStatus, formatDateLabel, formatDay, formatDueDate, toDateInputValue } from '@/utils/formatDate';
 
 // Mediodía local para evitar sorpresas con zonas horarias.
 const today = new Date(2026, 8, 30, 12);
@@ -31,5 +31,14 @@ describe('formatDueDate', () => {
 describe('toDateInputValue', () => {
   it('devuelve la fecha local en formato YYYY-MM-DD', () => {
     expect(toDateInputValue(new Date(2026, 0, 5))).toBe('2026-01-05');
+  });
+});
+
+describe('formatDay y formatDateLabel', () => {
+  it('formatea milisegundos como día corto', () => {
+    expect(formatDay(new Date(2026, 9, 8, 15, 30).getTime())).toBe(formatDateLabel('2026-10-08'));
+  });
+  it('formatea YYYY-MM-DD sin corrimiento de zona horaria', () => {
+    expect(formatDateLabel('2026-10-08')).toMatch(/^8 oct/);
   });
 });
