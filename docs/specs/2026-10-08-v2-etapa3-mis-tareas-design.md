@@ -19,7 +19,7 @@ Convertir "Mis tareas" en una herramienta de equipo: estado de 3 valores, un res
 | Alcance | Selector **Mías / Todo el equipo / Sin asignar**. Empieza en "Mías" (lectores: "Todo el equipo"). Se recuerda en el navegador. |
 | Tarjetas | Pendientes, En curso, Hechas, Vencidas. Cuentan según el alcance elegido; clic = filtrar, otro clic = quitar. Reemplazan a los botones de filtro actuales. |
 | Vencida | `status != 'done'` y `dueDate` anterior a hoy (fecha local). |
-| Detalle | Clic en una tarea abre un panel lateral (pantalla completa en celular) con datos, Editar / Eliminar e historial en frases. |
+| Detalle | Clic en una tarea abre un panel lateral (pantalla completa en celular) con datos (incluido quién la completó y cuándo), Editar / Eliminar e historial en frases. |
 | Crear | Botón "+ Nueva tarea" en el encabezado; abre la misma ventana del formulario que se usa para editar. |
 | Orden | Se mantiene (más recientes, vencimiento, prioridad) en ambas vistas. |
 | Email de resumen | Cuenta Pendientes, En curso y Hechas de las tareas **asignadas** a quien lo pide. |
@@ -31,9 +31,11 @@ Convertir "Mis tareas" en una herramienta de equipo: estado de 3 valores, un res
 
 | Campo | Cambio |
 |---|---|
-| `completed` | **Se elimina** |
+| `completed` | **Se reemplaza** por `status` + los dos campos de completado (la información no se pierde: la migración la convierte y la auditoría guarda la versión anterior) |
 | `status` | **Nuevo:** `'todo' \| 'doing' \| 'done'` |
 | `assigneeId` | **Nuevo:** `string \| null` (UID) |
+| `completedBy` | **Nuevo:** UID de quien la pasó a Hecha, o `null` si no está hecha |
+| `completedAt` | **Nuevo:** hora del servidor en que pasó a Hecha, o `null` |
 | resto | Igual: `createdBy`, `title`, `description`, `priority`, `dueDate`, `createdAt`, `updatedAt`, `updatedBy`, `rev` |
 
 Tipos: `TaskStatus`, `STATUS_LABEL`, `TaskInput` suma `assigneeId`; `TaskPatch` reemplaza `completed` por `status`.
@@ -43,13 +45,14 @@ Tipos: `TaskStatus`, `STATUS_LABEL`, `TaskInput` suma `assigneeId`; `TaskPatch` 
 - `validTask`: `hasOnly` con `status` y `assigneeId` en lugar de `completed`; `status in ['todo','doing','done']`; `assigneeId == null || assigneeId is string`.
 - Responsable válido: si `assigneeId` cambia (o en `create`, si no es `null`), `users/{assigneeId}` debe existir, estar activo y tener rol `admin` o `member`.
 - No se revisa el responsable cuando no cambia: una tarea asignada a alguien desactivado sigue siendo editable.
+- Completado honesto: al pasar a `done`, `completedBy == request.auth.uid` y `completedAt == request.time`; mientras sigue en `done`, no cambian; al salir de `done` (o si nunca estuvo), ambos son `null`. Así nadie puede atribuir el completado a otra persona ni cambiar la fecha.
 - Sin cambios en roles, borrado ni auditoría obligatoria.
 
 ### Migración (`scripts/migrate-tasks.mjs`, `npm run migrate-tasks`)
 
 - Usa la cuenta de servicio del `.env` (como `bootstrap-admin`).
 - Lógica de conversión en una función pura `migrateTask(doc)` en `src/features/tasks/migrateTask.ts` (sin imports, para que el script la use directamente: Node 24 ejecuta TypeScript simple), probada con tests:
-  - Formato etapa 1: `completed` → `status` (`true` → `done`, `false` → `todo`), agrega `assigneeId: null`.
+  - Formato etapa 1: `completed` → `status` (`true` → `done`, `false` → `todo`), agrega `assigneeId: null`. Para las completadas, `completedBy` = último en editarla (`updatedBy`, o `createdBy`) y `completedAt` = `updatedAt` (o `createdAt`): es la mejor aproximación disponible, porque antes no se guardaba quién completó.
   - Formato producción (v1): además `userId` → `createdBy`, agrega `updatedBy` (= `createdBy`), `rev`.
   - Ya migrada (tiene `status`): no se toca.
 - Cada tarea migrada sube `rev` y deja `auditLog/task_{id}_{rev}` con `actorId: 'system'`, `action: 'update'` (o `create` si no tenía `rev`), `before` y `after`.
@@ -85,7 +88,7 @@ Frases de `describeChange` (ejemplos):
 | `ScopeSelector` | Grupo de 3 opciones (radio) |
 | `ViewToggle` | Lista / Tablero (radio) |
 | `StatusSelect` | `<select>` de estado con etiqueta accesible; solo texto para lectores |
-| `TaskList` (adapta `TodoList`/`TodoItem`) | Inicial del responsable, prioridad, vencimiento, `StatusSelect`; clic en el título abre el detalle |
+| `TaskList` (adapta `TodoList`/`TodoItem`) | Inicial del responsable, prioridad, vencimiento, `StatusSelect`, "Hecha por Ana · 8 oct" en las hechas; clic en el título abre el detalle |
 | `TaskBoard` | 3 columnas con conteo; tarjetas con título, prioridad, responsable y "Mover ▾" |
 | `TaskDetailPanel` | Panel lateral (`<dialog>`): datos, Editar / Eliminar según permisos, `TaskHistory` |
 | `TaskHistory` | Frases ordenadas de la más nueva a la más vieja, con fecha relativa |
@@ -108,7 +111,7 @@ Frases de `describeChange` (ejemplos):
 
 ## 7. Tests
 
-- **Reglas (emulador):** estado inválido rechazado; campo `completed` rechazado; asignar a lector / inactivo / inexistente rechazado; asignar a miembro activo permitido; editar tarea con responsable desactivado (sin cambiar responsable) permitido; auditoría sigue obligatoria.
+- **Reglas (emulador):** completado con actor y hora reales aceptado; `completedBy` de otra persona rechazado; cambiar `completedAt` de una tarea ya hecha rechazado; reabrir deja ambos en `null`; estado inválido rechazado; campo `completed` rechazado; asignar a lector / inactivo / inexistente rechazado; asignar a miembro activo permitido; editar tarea con responsable desactivado (sin cambiar responsable) permitido; auditoría sigue obligatoria.
 - **Unitarios:** `migrateTask` (3 formatos), `scopeTasks`, `isOverdue`, `countTasks`, `filterByCard`, `describeChange`, `usePreference`.
 - **Componentes:** `TaskStats` (conteos, `aria-pressed`, clic filtra y des-filtra), `ScopeSelector`, `StatusSelect` (cambia estado; lector solo ve texto), `TaskBoard` (columnas y conteos), `TaskDetailPanel` (datos, permisos, historial), `TodoForm` (responsable), email (`summaryEmail` con 3 estados).
 
