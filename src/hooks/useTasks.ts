@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createTask, deleteTask, subscribeToTasks, updateTask } from '@/services/tasks.service';
-import type { Task, TaskInput, TaskPatch } from '@/types/task';
+import type { Task, TaskInput, TaskPatch, TaskStatus } from '@/types/task';
 
 export const LOAD_ERROR = 'No pudimos cargar tus tareas. Revisa tu conexión e inténtalo de nuevo.';
 
@@ -40,7 +40,7 @@ export function useTasks(actorId: string) {
   const create = useCallback((input: TaskInput) => createTask(actorId, input), [actorId]);
   const update = useCallback((id: string, patch: TaskPatch) => updateTask(actorId, id, patch), [actorId]);
   const remove = useCallback((id: string) => deleteTask(actorId, id), [actorId]);
-  const toggle = useCallback((id: string, completed: boolean) => updateTask(actorId, id, { completed }), [actorId]);
+  const setStatus = useCallback((id: string, status: TaskStatus) => updateTask(actorId, id, { status }), [actorId]);
 
-  return { tasks, loading, error, retry, create, update, remove, toggle };
+  return { tasks, loading, error, retry, create, update, remove, setStatus };
 }

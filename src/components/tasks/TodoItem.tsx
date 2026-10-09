@@ -23,18 +23,18 @@ export function TodoItem({ task, canEdit, canDelete, onToggle, onEdit, onDelete 
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <li className={`${styles.item} ${task.completed ? styles.completed : ''}`}>
+    <li className={`${styles.item} ${task.status === 'done' ? styles.completed : ''}`}>
       {canEdit ? (
         <input
           type="checkbox"
           className={styles.checkbox}
-          checked={task.completed}
+          checked={task.status === 'done'}
           onChange={(e) => onToggle(task.id, e.target.checked)}
           aria-label={`Completar "${task.title}"`}
         />
       ) : (
-        <span className={styles.status} aria-label={task.completed ? 'Completada' : 'Pendiente'}>
-          {task.completed ? '✓' : '○'}
+        <span className={styles.status} aria-label={task.status === 'done' ? 'Completada' : 'Pendiente'}>
+          {task.status === 'done' ? '✓' : '○'}
         </span>
       )}
       <div className={styles.body}>
@@ -43,7 +43,7 @@ export function TodoItem({ task, canEdit, canDelete, onToggle, onEdit, onDelete 
         <p className={styles.meta}>
           <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
           {task.dueDate && (
-            <span className={`${styles.due} ${task.completed ? '' : styles[dueStatus(task.dueDate)]}`}>
+            <span className={`${styles.due} ${task.status === 'done' ? '' : styles[dueStatus(task.dueDate)]}`}>
               {formatDueDate(task.dueDate)}
             </span>
           )}

@@ -4,7 +4,7 @@ import type { Task } from '@/types/task';
 
 function task(id: string, overrides: Partial<Task> = {}): Task {
   return {
-    id, createdBy: 'u', updatedBy: 'u', rev: 1, title: id, description: '', completed: false,
+    id, createdBy: 'u', updatedBy: 'u', rev: 1, title: id, description: '', status: 'todo', assigneeId: null, completedBy: null, completedAt: null,
     priority: 'media', dueDate: null, createdAt: 0, ...overrides,
   };
 }
@@ -32,7 +32,7 @@ describe('sortTasks', () => {
   });
 
   it('en "due" y "priority" las completadas van al final', () => {
-    const list = [task('hecha', { priority: 'alta', completed: true }), task('pendiente', { priority: 'baja' })];
+    const list = [task('hecha', { priority: 'alta', status: 'done' }), task('pendiente', { priority: 'baja' })];
     expect(ids(sortTasks(list, 'priority'))).toEqual(['pendiente', 'hecha']);
   });
 

@@ -6,7 +6,7 @@ const PRIORITY_RANK: Record<Priority, number> = { alta: 0, media: 1, baja: 2 };
 
 const byRecent: Comparator = (a, b) => b.createdAt - a.createdAt;
 const byPriority: Comparator = (a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
-const pendingFirst: Comparator = (a, b) => Number(a.completed) - Number(b.completed);
+const pendingFirst: Comparator = (a, b) => Number(a.status === 'done') - Number(b.status === 'done');
 
 /** Por vencimiento; las tareas sin fecha van al final. Las fechas YYYY-MM-DD se comparan como texto. */
 const byDue: Comparator = (a, b) => {

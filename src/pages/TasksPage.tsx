@@ -25,7 +25,7 @@ export function TasksPage() {
 }
 
 function TasksView({ profile }: { profile: UserProfile }) {
-  const { tasks, loading, error, retry, create, update, remove, toggle } = useTasks(profile.uid);
+  const { tasks, loading, error, retry, create, update, remove, setStatus } = useTasks(profile.uid);
   const canCreate = can(profile, 'task:create');
   const canEdit = can(profile, 'task:edit');
   const [editing, setEditing] = useState<Task | null>(null);
@@ -110,7 +110,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
               {...(tasks.length > 0
                 ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Prueba con otro filtro.' }
                 : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
-              onToggle={(id, completed) => void safely(() => toggle(id, completed))}
+              onToggle={(id, completed) => void safely(() => setStatus(id, completed ? 'done' : 'todo'))}
               onEdit={setEditing}
               onDelete={(id) => void safely(() => remove(id), 'Tarea eliminada.')}
             />
@@ -126,6 +126,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
               description: editing.description,
               priority: editing.priority,
               dueDate: editing.dueDate,
+              assigneeId: editing.assigneeId,
             }}
             submitLabel="Guardar cambios"
             onSubmit={handleEdit}

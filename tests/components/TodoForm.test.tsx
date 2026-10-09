@@ -23,6 +23,7 @@ describe('TodoForm', () => {
       description: 'Pedir cotización',
       priority: 'media',
       dueDate: null,
+      assigneeId: null,
     });
     expect(screen.getByLabelText('Título')).toHaveValue('');
   });
@@ -41,7 +42,7 @@ describe('TodoForm', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(
       <TodoForm
-        initialValues={{ title: 'Original', description: '', priority: 'baja', dueDate: '2026-10-01' }}
+        initialValues={{ title: 'Original', description: '', priority: 'baja', dueDate: '2026-10-01', assigneeId: null }}
         submitLabel="Guardar cambios"
         onSubmit={onSubmit}
       />,
@@ -53,7 +54,7 @@ describe('TodoForm', () => {
     await userEvent.clear(title);
     await userEvent.type(title, 'Editada');
     await userEvent.click(screen.getByRole('button', { name: /guardar cambios/i }));
-    expect(onSubmit).toHaveBeenCalledWith({ title: 'Editada', description: '', priority: 'baja', dueDate: '2026-10-01' });
+    expect(onSubmit).toHaveBeenCalledWith({ title: 'Editada', description: '', priority: 'baja', dueDate: '2026-10-01', assigneeId: null });
     expect(title).toHaveValue('Editada');
   });
 

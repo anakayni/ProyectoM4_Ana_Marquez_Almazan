@@ -1,4 +1,4 @@
-import { collection, doc, runTransaction, serverTimestamp, writeBatch, type Firestore } from 'firebase/firestore';
+import { collection, doc, runTransaction, serverTimestamp, writeBatch, type DocumentData, type Firestore } from 'firebase/firestore';
 import type { TaskInput, TaskPatch } from '@/types/task';
 import { auditEntry, auditRef } from './audit';
 
@@ -9,13 +9,24 @@ function cleanPatch(patch: TaskPatch): TaskPatch {
   return cleaned;
 }
 
+/** Al pasar a Hecha se registra quién y cuándo; al salir de Hecha se vacía (las reglas exigen lo mismo). */
+function completion(before: DocumentData, patch: TaskPatch, actorId: string) {
+  if (patch.status === undefined || patch.status === before.status) return {};
+  return patch.status === 'done'
+    ? { completedBy: actorId, completedAt: serverTimestamp() }
+    : { completedBy: null, completedAt: null };
+}
+
 export async function createTask(db: Firestore, actorId: string, input: TaskInput): Promise<string> {
   const ref = doc(collection(db, 'tasks'));
   const data = {
     createdBy: actorId,
     title: input.title.trim(),
     description: input.description.trim(),
-    completed: false,
+    status: 'todo',
+    assigneeId: input.assigneeId,
+    completedBy: null,
+    completedAt: null,
     priority: input.priority,
     dueDate: input.dueDate,
     createdAt: serverTimestamp(),
@@ -44,7 +55,10 @@ export async function updateTask(db: Firestore, actorId: string, id: string, pat
     if (!snap.exists()) throw new Error('La tarea ya no existe.');
     const before = snap.data();
     const rev = before.rev + 1;
-    const after = { ...before, ...cleanPatch(patch), rev, updatedBy: actorId, updatedAt: serverTimestamp() };
+    const after = {
+      ...before, ...cleanPatch(patch), ...completion(before, patch, actorId),
+      rev, updatedBy: actorId, updatedAt: serverTimestamp(),
+    };
     tx.set(ref, after);
     tx.set(auditRef(db, 'task', id, rev), auditEntry({ type: 'task', id, rev, action: 'update', actorId, before, after }));
   });

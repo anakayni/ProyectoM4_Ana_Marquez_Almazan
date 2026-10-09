@@ -56,16 +56,39 @@ service cloud.firestore {
 
     // ─── Tareas (todo el equipo las ve) ───────────────────────────
     function validTask(d) {
-      return d.keys().hasOnly(['createdBy', 'title', 'description', 'completed', 'priority', 'dueDate',
-                               'createdAt', 'updatedAt', 'updatedBy', 'rev'])
+      return d.keys().hasOnly(['createdBy', 'title', 'description', 'status', 'assigneeId', 'completedBy', 'completedAt',
+                               'priority', 'dueDate', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
         && d.title is string && d.title.size() > 0 && d.title.size() <= 80
         && d.description is string && d.description.size() <= 500
-        && d.completed is bool
+        && d.status in ['todo', 'doing', 'done']
+        && (d.assigneeId == null || d.assigneeId is string)
         && d.priority in ['alta', 'media', 'baja']
         && (d.dueDate == null || (d.dueDate is string && d.dueDate.size() == 10))
         && d.rev is int
         && d.updatedBy == request.auth.uid
         && d.updatedAt == request.time;
+    }
+
+    // Responsable: debe existir y ser admin o miembro activo (solo se revisa cuando cambia).
+    function validAssignee(uid) {
+      return uid == null
+        || (exists(userPath(uid))
+            && get(userPath(uid)).data.active == true
+            && get(userPath(uid)).data.role in ['admin', 'member']);
+    }
+
+    // Completado honesto: quien la pasa a Hecha y la hora del servidor; nadie lo reescribe después.
+    function completionOnCreate(d) {
+      return d.status == 'done'
+        ? d.completedBy == request.auth.uid && d.completedAt == request.time
+        : d.completedBy == null && d.completedAt == null;
+    }
+    function completionOnUpdate(d, old) {
+      return d.status != 'done'
+        ? d.completedBy == null && d.completedAt == null
+        : old.status == 'done'
+          ? d.completedBy == old.completedBy && d.completedAt == old.completedAt
+          : d.completedBy == request.auth.uid && d.completedAt == request.time;
     }
 
     match /tasks/{taskId} {
@@ -75,11 +98,15 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.createdAt == request.time
         && request.resource.data.rev == 1
+        && validAssignee(request.resource.data.assigneeId)
+        && completionOnCreate(request.resource.data)
         && audited('task', taskId, 1);
       allow update: if canEdit()
         && validTask(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
+        && (!changed().hasAny(['assigneeId']) || validAssignee(request.resource.data.assigneeId))
+        && completionOnUpdate(request.resource.data, resource.data)
         && nextRev()
         && audited('task', taskId, request.resource.data.rev);
       allow delete: if (isAdmin() || (hasRole(['member']) && resource.data.createdBy == request.auth.uid))

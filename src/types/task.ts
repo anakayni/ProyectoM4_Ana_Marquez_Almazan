@@ -1,5 +1,7 @@
 export type Priority = 'alta' | 'media' | 'baja';
 
+export type TaskStatus = 'todo' | 'doing' | 'done';
+
 export interface Task {
   id: string;
   /** Quién la creó (ya no es "el dueño": todo el equipo ve todas las tareas) */
@@ -10,7 +12,12 @@ export interface Task {
   rev: number;
   title: string;
   description: string;
-  completed: boolean;
+  status: TaskStatus;
+  /** Responsable (admin o miembro), o null = "Sin asignar" */
+  assigneeId: string | null;
+  /** Quién la pasó a Hecha y cuándo (ms); null si no está hecha */
+  completedBy: string | null;
+  completedAt: number | null;
   priority: Priority;
   /** Fecha local en formato YYYY-MM-DD, o null si no tiene vencimiento */
   dueDate: string | null;
@@ -19,16 +26,32 @@ export interface Task {
 }
 
 /** Campos que el usuario completa en el formulario */
-export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDate'>;
+export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'assigneeId'>;
 
-export type TaskPatch = Partial<TaskInput & Pick<Task, 'completed'>>;
+export type TaskPatch = Partial<TaskInput & Pick<Task, 'status'>>;
 
+/** Filtro de la etapa 2 (lo reemplazan las tarjetas en la tarea 6). */
 export type TaskFilter = 'all' | 'pending' | 'done';
 
 export type TaskCounts = Record<TaskFilter, number>;
 
 export type SortMode = 'recent' | 'due' | 'priority';
 
+export type TaskScope = 'mine' | 'team' | 'unassigned';
+
+/** Tarjetas de arriba: un estado o "vencidas". */
+export type StatCard = TaskStatus | 'overdue';
+
+export type TaskStats = Record<StatCard, number>;
+
 export const PRIORITIES: readonly Priority[] = ['alta', 'media', 'baja'];
 
 export const PRIORITY_LABEL: Record<Priority, string> = { alta: 'Alta', media: 'Media', baja: 'Baja' };
+
+export const STATUSES: readonly TaskStatus[] = ['todo', 'doing', 'done'];
+
+export const STATUS_LABEL: Record<TaskStatus, string> = { todo: 'Pendiente', doing: 'En curso', done: 'Hecha' };
+
+export const SCOPES: readonly TaskScope[] = ['mine', 'team', 'unassigned'];
+
+export const SCOPE_LABEL: Record<TaskScope, string> = { mine: 'Mías', team: 'Todo el equipo', unassigned: 'Sin asignar' };
