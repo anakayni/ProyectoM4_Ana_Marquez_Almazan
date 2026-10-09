@@ -67,4 +67,14 @@ describe('TodoForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar la tarea');
     expect(screen.getByLabelText('Título')).toHaveValue('Tarea');
   });
+
+  it('permite elegir responsable', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<TodoForm onSubmit={onSubmit} assignees={[{ uid: 'ana', label: 'Ana' }, { uid: 'luis', label: 'Luis' }]} />);
+    await userEvent.type(screen.getByLabelText('Título'), 'Llamar');
+    expect(screen.getByLabelText('Responsable')).toHaveValue('');
+    await userEvent.selectOptions(screen.getByLabelText('Responsable'), 'luis');
+    await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ assigneeId: 'luis' }));
+  });
 });

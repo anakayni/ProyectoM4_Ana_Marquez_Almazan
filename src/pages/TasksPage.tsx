@@ -10,10 +10,12 @@ import { Modal } from '@/components/ui/Modal';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
+import { assigneeOptions } from '@/features/team/members';
 import { countTasks, filterTasks } from '@/features/tasks/filterTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
+import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
 import type { SortMode, Task, TaskFilter, TaskInput } from '@/types/task';
 import styles from './TasksPage.module.css';
@@ -28,6 +30,8 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const { tasks, loading, error, retry, create, update, remove, setStatus } = useTasks(profile.uid);
   const canCreate = can(profile, 'task:create');
   const canEdit = can(profile, 'task:edit');
+  const members = useTeamMembers();
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [filter, setFilter] = useState<TaskFilter>('all');
@@ -49,6 +53,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
 
   async function handleCreate(values: TaskInput) {
     await create(values); // si falla, TodoForm muestra el error
+    setCreating(false);
     setToast({ kind: 'success', message: 'Tarea creada.' });
   }
 
@@ -68,16 +73,16 @@ function TasksView({ profile }: { profile: UserProfile }) {
             <span className={styles.counts}>{counts.pending} pendientes · {counts.done} completadas</span>
           ) : undefined
         }
-        actions={<SendSummaryButton onResult={setToast} />}
+        actions={
+          <>
+            <SendSummaryButton onResult={setToast} />
+            {canCreate && <Button size="sm" onClick={() => setCreating(true)}>+ Nueva tarea</Button>}
+          </>
+        }
       />
 
       <main className={styles.main}>
-        {canCreate ? (
-          <section className={styles.card} aria-labelledby="new-task-title">
-            <h2 id="new-task-title" className={styles.sectionTitle}>Nueva tarea</h2>
-            <TodoForm onSubmit={handleCreate} />
-          </section>
-        ) : (
+        {!canCreate && (
           <Alert kind="info">Tienes acceso de solo lectura: puedes ver las tareas del equipo, pero no modificarlas.</Alert>
         )}
 
@@ -118,6 +123,19 @@ function TasksView({ profile }: { profile: UserProfile }) {
         </section>
       </main>
 
+      {creating && (
+        <Modal title="Nueva tarea" onClose={() => setCreating(false)}>
+          <TodoForm
+            // Empieza asignada a quien la crea: si no, desaparecería de "Mías" al guardarla.
+            initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid }}
+            submitLabel="Crear tarea"
+            assignees={assigneeOptions(members, profile.uid)}
+            onSubmit={handleCreate}
+            onCancel={() => setCreating(false)}
+          />
+        </Modal>
+      )}
+
       {editing && (
         <Modal title="Editar tarea" onClose={() => setEditing(null)}>
           <TodoForm
@@ -129,6 +147,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
               assigneeId: editing.assigneeId,
             }}
             submitLabel="Guardar cambios"
+            assignees={assigneeOptions(members, editing.assigneeId)}
             onSubmit={handleEdit}
             onCancel={() => setEditing(null)}
           />

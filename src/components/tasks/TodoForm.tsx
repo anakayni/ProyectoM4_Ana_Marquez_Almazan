@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field, fieldInputClass } from '@/components/ui/Field';
+import type { AssigneeOption } from '@/features/team/members';
 import { PRIORITIES, PRIORITY_LABEL, type Priority, type TaskInput } from '@/types/task';
 import { DESCRIPTION_MAX, hasErrors, validateTask, type FieldErrors } from '@/utils/validators';
 import styles from './TodoForm.module.css';
@@ -10,13 +11,15 @@ type TodoFormProps = {
   /** Si se pasa, el formulario funciona en modo edición y no se limpia al guardar. */
   initialValues?: TaskInput;
   submitLabel?: string;
+  /** Personas que se pueden elegir como responsable */
+  assignees?: AssigneeOption[];
   onSubmit: (values: TaskInput) => Promise<void>;
   onCancel?: () => void;
 };
 
 const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null, assigneeId: null };
 
-export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmit, onCancel }: TodoFormProps) {
+export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assignees = [], onSubmit, onCancel }: TodoFormProps) {
   const [values, setValues] = useState<TaskInput>(initialValues ?? EMPTY);
   const [errors, setErrors] = useState<FieldErrors<'title' | 'description'>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -76,6 +79,15 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmi
           />
         </Field>
       </div>
+      <Field id="task-assignee" label="Responsable">
+        <select
+          id="task-assignee" className={fieldInputClass}
+          value={values.assigneeId ?? ''} onChange={(e) => setValues((v) => ({ ...v, assigneeId: e.target.value || null }))}
+        >
+          <option value="">Sin asignar</option>
+          {assignees.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
+        </select>
+      </Field>
       <div className={styles.actions}>
         {onCancel && <Button variant="ghost" onClick={onCancel}>Cancelar</Button>}
         <Button type="submit" loading={submitting}>{submitLabel}</Button>
