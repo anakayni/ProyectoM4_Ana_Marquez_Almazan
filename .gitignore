@@ -35,3 +35,6 @@ coverage
 # Emulador de Firebase
 firebase-debug.log
 firestore-debug.log
+
+# Maquetas del brainstorming
+.superpowers/
