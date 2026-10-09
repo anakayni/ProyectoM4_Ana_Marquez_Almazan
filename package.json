@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rules": "PATH=\"/opt/homebrew/opt/openjdk@21/bin:$PATH\" firebase emulators:exec --only firestore --project demo-matecode \"vitest run --config vitest.rules.config.ts\""
+    "test:rules": "PATH=\"/opt/homebrew/opt/openjdk@21/bin:$PATH\" firebase emulators:exec --only firestore --project demo-matecode \"vitest run --config vitest.rules.config.ts\"",
+    "bootstrap-admin": "node --env-file=.env scripts/bootstrap-admin.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.1142.0",
