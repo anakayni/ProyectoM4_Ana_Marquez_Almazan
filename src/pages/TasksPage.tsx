@@ -1,3 +1,4 @@
+import { LayoutGrid, List } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SendSummaryButton } from '@/components/tasks/SendSummaryButton';
@@ -116,7 +117,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
                 />
                 <SegmentedControl
                   label="Vista" name="view" value={view} onChange={setView}
-                  options={[{ value: 'list', label: 'Lista' }, { value: 'board', label: 'Tablero' }]}
+                  options={[{ value: 'list', label: 'Lista', icon: List }, { value: 'board', label: 'Tablero', icon: LayoutGrid }]}
                 />
                 <label className={styles.sort}>
                   Ordenar por
