@@ -154,6 +154,13 @@ service cloud.firestore {
     }
 
     // ─── Usuarios ─────────────────────────────────────────────────
+    // Foto de perfil: JPEG en data URL, chica (la app la reduce a 128×128 antes de guardarla).
+    function validPhoto(d) {
+      return !('photo' in d) || d.photo == null
+        || (d.photo is string && d.photo.size() <= 50000
+            && d.photo.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$'));
+    }
+
     match /users/{uid} {
       // El propio documento se puede leer aunque no exista o esté desactivado (para saber el estado de acceso)
       allow read: if isActive() || (signedIn() && request.auth.uid == uid);
@@ -181,12 +188,13 @@ service cloud.firestore {
           && changed().hasOnly(['role', 'active', 'rev'])
           && request.resource.data.role in ['admin', 'member', 'viewer']
           && request.resource.data.active is bool)
-        // Cada persona activa cambia su propio nombre
+        // Cada persona activa cambia su propio nombre y su foto
         || (isActive() && uid == request.auth.uid
-          && changed().hasOnly(['displayName', 'rev'])
+          && changed().hasOnly(['displayName', 'photo', 'rev'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() > 0
-          && request.resource.data.displayName.size() <= 80)
+          && request.resource.data.displayName.size() <= 80
+          && validPhoto(request.resource.data))
       );
       allow delete: if false;
     }

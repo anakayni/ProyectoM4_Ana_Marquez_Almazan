@@ -1,7 +1,7 @@
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
-import { updateMember, updateOwnName } from '@/services/audited/users';
+import { updateMember, updateOwnProfile } from '@/services/audited/users';
 import { createEnv, dbAs, seedUser } from './helpers';
 
 let env: Awaited<ReturnType<typeof createEnv>>;
@@ -45,8 +45,8 @@ describe('usuarios', () => {
   });
 
   it('cada persona cambia su propio nombre, pero no el de otros', async () => {
-    await assertSucceeds(updateOwnName(as('ana'), 'ana', 'Ana M.'));
-    await assertFails(updateOwnName(as('ana'), 'admin', 'Hackeado'));
+    await assertSucceeds(updateOwnProfile(as('ana'), 'ana', { displayName: 'Ana M.' }));
+    await assertFails(updateOwnProfile(as('ana'), 'admin', { displayName: 'Hackeado' }));
   });
 
   it('una persona sin perfil puede leer su propio documento (para saber su estado)', async () => {
@@ -55,5 +55,24 @@ describe('usuarios', () => {
 
   it('un usuario desactivado no lee el equipo', async () => {
     await assertFails(getDoc(doc(as('ex'), 'users', 'ana')));
+  });
+
+  describe('foto de perfil', () => {
+    const jpeg = (chars: number) => `data:image/jpeg;base64,${'A'.repeat(chars)}`;
+
+    it('cada persona sube y quita su propia foto', async () => {
+      await assertSucceeds(updateOwnProfile(as('ana'), 'ana', { photo: jpeg(1000) }));
+      await assertSucceeds(updateOwnProfile(as('ana'), 'ana', { photo: null }));
+    });
+
+    it('rechaza una foto demasiado grande o que no es JPEG', async () => {
+      await assertFails(updateOwnProfile(as('ana'), 'ana', { photo: jpeg(60000) }));
+      await assertFails(updateOwnProfile(as('ana'), 'ana', { photo: 'data:image/png;base64,AAAA' }));
+    });
+
+    it('ni siquiera el admin cambia la foto o el nombre de otra persona', async () => {
+      await assertFails(updateMember(as('admin'), 'admin', 'ana', { photo: jpeg(100) } as never));
+      await assertFails(updateMember(as('admin'), 'admin', 'ana', { displayName: 'Otro' } as never));
+    });
   });
 });

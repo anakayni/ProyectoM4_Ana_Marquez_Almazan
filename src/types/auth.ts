@@ -15,6 +15,8 @@ export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
+  /** Foto 128×128 (data URL JPEG) o null; los perfiles creados antes de la etapa 4 no la tienen */
+  photo?: string | null;
   role: Role;
   active: boolean;
   invitedBy: string | null;

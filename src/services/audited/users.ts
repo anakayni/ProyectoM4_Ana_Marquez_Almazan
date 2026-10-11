@@ -63,15 +63,20 @@ export async function updateMember(
   });
 }
 
-/** Cada persona cambia su propio nombre visible. */
-export async function updateOwnName(db: Firestore, uid: string, displayName: string): Promise<void> {
+/** Cada persona cambia su propio nombre visible y su foto. */
+export async function updateOwnProfile(
+  db: Firestore,
+  uid: string,
+  patch: { displayName?: string; photo?: string | null },
+): Promise<void> {
   const ref = doc(db, 'users', uid);
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists()) throw new Error('El usuario no existe.');
     const before = snap.data();
     const rev = before.rev + 1;
-    const after = { ...before, displayName: displayName.trim(), rev };
+    const clean = { ...patch, ...(patch.displayName !== undefined && { displayName: patch.displayName.trim() }) };
+    const after = { ...before, ...clean, rev };
     tx.set(ref, after);
     tx.set(
       auditRef(db, 'user', uid, rev),

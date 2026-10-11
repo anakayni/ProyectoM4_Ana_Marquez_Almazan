@@ -13,6 +13,7 @@ function toProfile(uid: string, d: DocumentData): UserProfile {
     uid,
     email: d.email,
     displayName: d.displayName,
+    photo: d.photo ?? null,
     role: d.role,
     active: d.active,
     invitedBy: d.invitedBy,
@@ -75,3 +76,7 @@ export const claimInvitation = (user: AuthUser) => users.claimInvitation(db, use
 export const createInvitation = (actorId: string, email: string, role: Role) =>
   invitations.createInvitation(db, actorId, email, role);
 export const revokeInvitation = (actorId: string, email: string) => invitations.revokeInvitation(db, actorId, email);
+export const updateMember = (actorId: string, uid: string, patch: { role?: Role; active?: boolean }) =>
+  users.updateMember(db, actorId, uid, patch);
+export const updateOwnProfile = (uid: string, patch: { displayName?: string; photo?: string | null }) =>
+  users.updateOwnProfile(db, uid, patch);
