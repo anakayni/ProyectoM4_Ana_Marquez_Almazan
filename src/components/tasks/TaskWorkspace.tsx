@@ -1,20 +1,18 @@
 import { LayoutGrid, List, Table2 } from 'lucide-react';
 import { useCallback, useState, type ReactNode } from 'react';
 import { TaskBoard } from './TaskBoard';
-import { TaskDetailPanel } from './TaskDetailPanel';
+import { TaskDialogs } from './TaskDialogs';
 import { TaskStats } from './TaskStats';
 import { TaskTable } from './TaskTable';
-import { TodoForm } from './TodoForm';
 import { TodoList } from './TodoList';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
 import { makeProjectOf } from '@/features/projects/projectOf';
-import { assigneeOptions, makeNameOf, makePersonOf } from '@/features/team/members';
+import { makeNameOf, makePersonOf } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { filterByPriority, filterByProject, searchTasks, type PriorityFilter, type ProjectFilter } from '@/features/tasks/searchTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
@@ -43,7 +41,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const canEdit = can(profile, 'task:edit');
   const members = useTeamMembers();
   const { projects } = useProjects();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<Partial<TaskInput> | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [sort, setSort] = useState<SortMode>('recent');
@@ -69,8 +67,6 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const filtered = filterByProject(filterByPriority(searchTasks(scoped, query), priority), projectId ? 'all' : projectFilter);
   const stats = countTasks(filtered, today);
   const visibleTasks = sortTasks(filterByCard(filtered, card, today), sort);
-  // Se busca en la lista viva: si alguien borra la tarea, el panel se cierra solo.
-  const openTask = tasks.find((t) => t.id === openId) ?? null;
 
   async function safely(action: () => Promise<void>, success?: string) {
     try {
@@ -82,16 +78,9 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
     }
   }
 
-  async function handleCreate(values: TaskInput) {
-    await create(values); // si falla, TodoForm muestra el error
-    setCreating(false);
-    setToast({ kind: 'success', message: 'Tarea creada.' });
-  }
-
-
   return (
     <>
-      {renderHeader(canCreate ? <Button size="sm" onClick={() => setCreating(true)}>+ Nueva tarea</Button> : null)}
+      {renderHeader(canCreate ? <Button size="sm" onClick={() => setCreating(projectId ? { projectId } : {})}>+ Nueva tarea</Button> : null)}
 
       <main className={styles.main}>
         {!canCreate && (
@@ -201,41 +190,12 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
         </section>
       </main>
 
-      {openTask && (
-        <TaskDetailPanel
-          key={openTask.id}
-          task={openTask}
-          nameOf={nameOf}
-          projectOf={projectOf}
-          assignees={assigneeOptions(members, openTask.assigneeId)}
-          projects={projects.filter((p) => !p.archived || p.id === openTask.projectId)}
-          canEdit={canEdit}
-          canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
-          onClose={() => setOpenId(null)}
-          onSave={async (patch) => {
-            await update(openTask.id, patch); // si falla, el panel muestra el error
-            setToast({ kind: 'success', message: 'Cambios guardados.' });
-          }}
-          onDelete={(id) => {
-            setOpenId(null);
-            void safely(() => remove(id), 'Tarea eliminada.');
-          }}
-        />
-      )}
-
-      {creating && (
-        <Modal title="Nueva tarea" onClose={() => setCreating(false)}>
-          <TodoForm
-            // Empieza asignada a quien la crea: si no, desaparecería de "Mías" al guardarla.
-            initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid, projectId: projectId ?? null }}
-            submitLabel="Crear tarea"
-            assignees={assigneeOptions(members, profile.uid)}
-            projects={projects.filter((p) => !p.archived)}
-            onSubmit={handleCreate}
-            onCancel={() => setCreating(false)}
-          />
-        </Modal>
-      )}
+      <TaskDialogs
+        profile={profile} tasks={tasks} members={members} projects={projects}
+        openId={openId} onCloseTask={() => setOpenId(null)}
+        creating={creating} onCloseCreate={() => setCreating(null)}
+        actions={{ create, update, remove }} onToast={setToast}
+      />
 
       {toast && <Toast toast={toast} onDismiss={dismissToast} />}
     </>
