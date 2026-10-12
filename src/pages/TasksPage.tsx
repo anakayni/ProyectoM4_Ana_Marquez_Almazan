@@ -14,7 +14,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
-import { assigneeOptions, makeNameOf } from '@/features/team/members';
+import { assigneeOptions, makeNameOf, makePersonOf } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { countTasks, filterByCard } from '@/features/tasks/taskStats';
@@ -51,6 +51,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const dismissToast = useCallback(() => setToast(null), []);
 
   const nameOf = makeNameOf(members);
+  const personOf = makePersonOf(members);
   const scoped = scopeTasks(tasks, scope, profile.uid);
   const stats = countTasks(scoped, today);
   const visibleTasks = sortTasks(filterByCard(scoped, card, today), sort);
@@ -133,6 +134,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
                 <TaskBoard
                   tasks={visibleTasks}
                   nameOf={nameOf}
+                  personOf={personOf}
                   canEdit={canEdit}
                   onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
                   onOpen={(task) => setOpenId(task.id)}
@@ -141,6 +143,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
                 <TodoList
                   tasks={visibleTasks}
                   nameOf={nameOf}
+                  personOf={personOf}
                   canEdit={canEdit}
                   {...(card !== null
                     ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }

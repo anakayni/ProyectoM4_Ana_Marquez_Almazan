@@ -1,4 +1,4 @@
-import type { NameOf } from '@/features/team/members';
+import type { NameOf, PersonOf } from '@/features/team/members';
 import type { Task } from '@/types/task';
 import { TodoItem, type TodoItemHandlers } from './TodoItem';
 import styles from './TodoList.module.css';
@@ -7,6 +7,8 @@ type TodoListProps = TodoItemHandlers & {
   tasks: Task[];
   /** Nombre de un integrante a partir de su UID */
   nameOf: NameOf;
+  /** Foto y estado de un integrante (para el avatar del responsable) */
+  personOf: PersonOf;
   /** Mensajes para la lista vacía (p. ej. cuando un filtro no tiene resultados). */
   emptyTitle?: string;
   emptyHint?: string;
@@ -17,6 +19,7 @@ type TodoListProps = TodoItemHandlers & {
 export function TodoList({
   tasks,
   nameOf,
+  personOf,
   emptyTitle = 'Todavía no tienes tareas',
   emptyHint = 'Crea una con "+ Nueva tarea".',
   canEdit = true,
@@ -34,7 +37,7 @@ export function TodoList({
   return (
     <ul className={styles.list}>
       {tasks.map((task) => (
-        <TodoItem key={task.id} task={task} nameOf={nameOf} canEdit={canEdit} {...handlers} />
+        <TodoItem key={task.id} task={task} nameOf={nameOf} personOf={personOf} canEdit={canEdit} {...handlers} />
       ))}
     </ul>
   );

@@ -10,10 +10,12 @@ const tasks: Task[] = [
   { ...base, id: '2', title: 'Pagar luz', description: '', status: 'done', assigneeId: null, completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime() },
 ];
 const nameOf = (uid: string | null) => (uid === 'ana' ? 'Ana' : null);
+const personOf = (uid: string | null) =>
+  uid === 'ana' ? { name: 'Ana', photo: null, active: true } : uid === 'mario' ? { name: 'Mario', photo: null, active: false } : null;
 
 function setup(list: Task[] = tasks, props: Partial<Parameters<typeof TodoList>[0]> = {}) {
   const handlers = { onStatusChange: vi.fn(), onOpen: vi.fn() };
-  render(<TodoList tasks={list} nameOf={nameOf} {...handlers} {...props} />);
+  render(<TodoList tasks={list} nameOf={nameOf} personOf={personOf} {...handlers} {...props} />);
   return handlers;
 }
 
@@ -24,6 +26,11 @@ describe('TodoList', () => {
     expect(screen.getByText('Dos kilos')).toBeInTheDocument();
     expect(screen.getByText('Responsable: Ana')).toBeInTheDocument();
     expect(screen.getByText('Sin asignar')).toBeInTheDocument();
+  });
+
+  it('el avatar de un responsable inactivo se ve atenuado', () => {
+    setup([{ ...tasks[0], assigneeId: 'mario' }]);
+    expect(document.querySelector('.inactive')).not.toBeNull();
   });
 
   it('muestra quién completó y cuándo', () => {

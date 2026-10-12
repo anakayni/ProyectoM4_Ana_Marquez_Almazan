@@ -13,7 +13,7 @@ const nameOf = () => null;
 
 describe('TaskBoard', () => {
   it('reparte las tareas en 3 columnas con su conteo', () => {
-    render(<TaskBoard tasks={tasks} nameOf={nameOf} canEdit onStatusChange={vi.fn()} onOpen={vi.fn()} />);
+    render(<TaskBoard tasks={tasks} nameOf={nameOf} personOf={() => null} canEdit onStatusChange={vi.fn()} onOpen={vi.fn()} />);
     const todo = screen.getByRole('region', { name: /Pendiente/ });
     expect(within(todo).getAllByRole('listitem')).toHaveLength(2);
     expect(within(todo).getByText('2')).toBeInTheDocument();
@@ -23,14 +23,14 @@ describe('TaskBoard', () => {
 
   it('mueve una tarea de columna con el selector', async () => {
     const onStatusChange = vi.fn();
-    render(<TaskBoard tasks={tasks} nameOf={nameOf} canEdit onStatusChange={onStatusChange} onOpen={vi.fn()} />);
+    render(<TaskBoard tasks={tasks} nameOf={nameOf} personOf={() => null} canEdit onStatusChange={onStatusChange} onOpen={vi.fn()} />);
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Estado de "Tarea 3"' }), 'done');
     expect(onStatusChange).toHaveBeenCalledWith('3', 'done');
   });
 
   it('abre una tarea al hacer clic en su título', async () => {
     const onOpen = vi.fn();
-    render(<TaskBoard tasks={tasks} nameOf={nameOf} canEdit onStatusChange={vi.fn()} onOpen={onOpen} />);
+    render(<TaskBoard tasks={tasks} nameOf={nameOf} personOf={() => null} canEdit onStatusChange={vi.fn()} onOpen={onOpen} />);
     await userEvent.click(screen.getByRole('button', { name: 'Tarea 1' }));
     expect(onOpen).toHaveBeenCalledWith(tasks[0]);
   });

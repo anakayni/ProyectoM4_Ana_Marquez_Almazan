@@ -37,7 +37,7 @@ export function UserMenu({ profile, onLogout }: { profile: UserProfile; onLogout
         aria-label={`Cuenta de ${profile.displayName}`} aria-expanded={open} aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
       >
-        <Avatar name={profile.displayName} />
+        <Avatar name={profile.displayName} photo={profile.photo} />
       </button>
       {open && (
         <div id={panelId} className={styles.panel}>

@@ -1,5 +1,5 @@
 import { Avatar } from '@/components/layout/Avatar';
-import type { NameOf } from '@/features/team/members';
+import type { NameOf, PersonOf } from '@/features/team/members';
 import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { dueStatus, formatDay, formatDueDate } from '@/utils/formatDate';
 import { StatusSelect } from './StatusSelect';
@@ -14,18 +14,20 @@ export type TodoItemHandlers = {
 type TodoItemProps = TodoItemHandlers & {
   task: Task;
   nameOf: NameOf;
+  personOf: PersonOf;
   /** Puede cambiar el estado (admin y miembro) */
   canEdit: boolean;
 };
 
-export function TodoItem({ task, nameOf, canEdit, onStatusChange, onOpen }: TodoItemProps) {
+export function TodoItem({ task, nameOf, personOf, canEdit, onStatusChange, onOpen }: TodoItemProps) {
   const done = task.status === 'done';
   const assignee = nameOf(task.assigneeId);
+  const person = personOf(task.assigneeId);
 
   return (
     <li className={`${styles.item} ${done ? styles.completed : ''}`}>
       <span className={styles.assignee} title={assignee ?? 'Sin asignar'}>
-        <Avatar name={assignee ?? ''} />
+        <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} />
         <span className="visually-hidden">{assignee ? `Responsable: ${assignee}` : 'Sin asignar'}</span>
       </span>
       <div className={styles.body}>

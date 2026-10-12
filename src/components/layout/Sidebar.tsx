@@ -34,7 +34,7 @@ export function Sidebar({ items, profile, onLogout }: SidebarProps) {
         </ul>
       </nav>
       <div className={styles.user}>
-        <Avatar name={profile.displayName} />
+        <Avatar name={profile.displayName} photo={profile.photo} />
         <div className={styles.userText}>
           <span className={styles.userName}>{profile.displayName}</span>
           <span className={styles.userRole}>{ROLE_LABEL[profile.role]}</span>
