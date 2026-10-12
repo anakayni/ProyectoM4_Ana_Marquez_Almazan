@@ -52,6 +52,12 @@ export function formatDateLabel(value: string): string {
 }
 
 const dateTime = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const fullDateTime = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+/** "13 oct 2026, 18:30" (para la auditoría, donde importa el año). */
+export function formatDateTime(ms: number): string {
+  return fullDateTime.format(new Date(ms));
+}
 
 /** "hace un momento", "hace 5 min", "hace 3 h" o "3 oct, 18:30". */
 export function formatRelative(ms: number, now: number = Date.now()): string {

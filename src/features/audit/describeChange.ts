@@ -6,7 +6,7 @@ import { formatDateLabel } from '@/utils/formatDate';
 
 export type ProjectNameOf = (id: string | null) => string | null;
 
-function actor(actorId: string, nameOf: NameOf): string {
+export function actorName(actorId: string, nameOf: NameOf): string {
   if (actorId === 'system') return 'El sistema';
   return nameOf(actorId) ?? 'Alguien';
 }
@@ -54,7 +54,7 @@ function sentences(who: string, { field, from, to }: FieldChange, nameOf: NameOf
 
 /** Convierte una entrada de auditoría de una tarea en frases para el historial. */
 export function describeChange(entry: AuditEntry, nameOf: NameOf, projectNameOf: ProjectNameOf = () => null): string[] {
-  const who = actor(entry.actorId, nameOf);
+  const who = actorName(entry.actorId, nameOf);
   if (entry.action === 'create') return [`${who} creó la tarea`];
   if (entry.action === 'delete') return [`${who} eliminó la tarea`];
   const result = diffSnapshots(entry.before, entry.after).flatMap((change) => sentences(who, change, nameOf, projectNameOf));
