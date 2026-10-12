@@ -115,3 +115,13 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué no funcionó o tuve que corregir:**
   - Un test fallaba con el mismo error que simulaba el servicio, aunque el componente lo capturaba bien. Se investigó paso a paso con pruebas mínimas: el `beforeEach` de una sola línea devolvía el mock, y Vitest ejecuta como "limpieza" cualquier función que devuelva un hook. Se corrigió escribiéndolo con llaves.
   - Al abrir Equipo para todos, `navItems` dejó de usar el perfil; se mantuvo el parámetro (como `_profile`) porque Ajustes, en la etapa 8, va a depender del rol.
+
+## v2 — Etapa 5: Proyectos y tareas en tabla
+- **Qué pedí:** proyectos con su progreso, y que las tareas se vieran como en un mockup que compartí: tabla, número de tarea, subtareas y un panel lateral para editar.
+- **Qué generó / propuso:** separó del mockup lo que tiene datos reales de lo decorativo (latencia, almacenamiento, SLA, "PRO" quedaron fuera) y dividió la etapa en dos partes con su propio plan: 5A (proyectos y contraste) y 5B (número, subtareas, búsqueda, tabla y panel editable). Propuso un contador con transacción para que los números nunca se repitan, y que Mis tareas se volviera un componente reutilizable para la página de cada proyecto.
+- **Qué revisé o cambié yo:** pedí que solo el admin pueda eliminar proyectos y que todo pida confirmación, un selector de color libre para cada proyecto, mantener tres vistas (Lista, Tabla y Tablero) y, sobre todo, **mejorar la accesibilidad**: noté que el texto gris y los placeholders se leían poco. Probé cada parte en local y en la preview.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Al medir el contraste, el gris atenuado de la app daba 3.48:1 (por debajo de 4.5:1): se oscureció y un test lo vigila.
+  - El color de letra de las etiquetas: el azul oscuro elegido al principio no llegaba a 4.5:1 con algunos colores medios. Se probaron todos los colores posibles y solo el negro (junto con el blanco) lo garantiza.
+  - Un reemplazo automático en los datos de prueba se cortó en una coma dentro de `new Date(...)`; el build lo detectó y en la parte siguiente se usaron reemplazos exactos.

@@ -211,7 +211,7 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 
 ## v2 en desarrollo (rama `v2`)
 
-Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial. **Etapa 4 (lista):** Equipo y Mi perfil con foto.
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial. **Etapa 4 (lista):** Equipo y Mi perfil con foto. **Etapa 5 (lista):** Proyectos y tareas en tabla.
 
 ### Entornos
 
@@ -286,15 +286,25 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Foto de perfil sin Firebase Storage** (que exige el plan pago): el navegador recorta la imagen en cuadrado y la reduce a 128×128 JPEG (~10 KB) con un `<canvas>`, y se guarda dentro del perfil en Firestore. Las reglas solo aceptan un JPEG de hasta 50 KB, y cada persona cambia solo su propia foto y su nombre (ni el admin puede cambiar los de otra persona).
 - **Mi perfil:** se abre desde el nombre al pie del menú lateral o desde el menú de la inicial en el celular.
 
+### Proyectos y tareas en tabla (etapa 5)
+
+- **Proyectos:** nombre, descripción, fechas de inicio y fin, persona a cargo y **color propio** (atajos con la paleta + selector libre). El progreso es real (tareas hechas / total) y se marca **"Atrasado"** si pasó la fecha de fin sin llegar al 100%. Admin y miembros crean, editan y archivan (con confirmación); **solo el admin elimina**, y las tareas del proyecto quedan "Sin proyecto" con su historial. No se pueden agregar tareas a un proyecto archivado. Cada proyecto tiene su página con sus tareas y las mismas vistas que Mis tareas.
+- **Número de tarea `MC-n`:** un contador (`counters/tasks`) que la creación incrementa en la misma transacción; las reglas exigen que el número sea el del contador y que nunca cambie.
+- **Subtareas:** hasta 20 por tarea, con su avance ("2 de 3 · 66%") y sus cambios en el historial.
+- **Vistas Lista, Tabla y Tablero**, buscador (título, descripción o número, sin distinguir tildes) y filtros de prioridad y proyecto. En el celular la tabla se ve como tarjetas.
+- **Panel editable:** todos los campos y las subtareas se guardan juntos con "Guardar cambios" (una escritura y una entrada de historial); si cierras con cambios, pregunta antes de descartar.
+- **Accesibilidad:** el texto atenuado y los placeholders tienen contraste ≥ 4.5:1, verificado por un test. La letra de las etiquetas de proyecto es blanca o negra según el color, porque solo esas dos garantizan 4.5:1 sobre cualquier color.
+- Del mockup de referencia no se construyó lo que no tiene datos reales (latencia, almacenamiento, SLA, "PRO").
+
 ### Comandos nuevos
 
 | Script | Qué hace |
 |---|---|
 | `npm run test:rules` | Tests de las Security Rules contra el emulador de Firestore (requiere **Java 21**) |
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
-| `npm run migrate-tasks` | Migra las tareas al formato de la etapa 3, con auditoría (solo dev; `--confirmar-produccion` al integrar) |
+| `npm run migrate-tasks` | Migra las tareas al formato actual (estado, proyecto, número, subtareas) con auditoría y crea el contador (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 227 de la app (`npm test`) y 46 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 288 de la app (`npm test`) y 56 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
 
 ## Mejoras futuras
 
