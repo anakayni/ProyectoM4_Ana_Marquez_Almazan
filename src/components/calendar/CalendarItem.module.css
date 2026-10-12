@@ -1,0 +1,10 @@
+.chip {
+  display: block; width: 100%; padding: 1px var(--space-1); border: 0; border-left: 3px solid; border-radius: var(--radius-xs);
+  background: var(--color-surface-subtle); color: var(--color-text-primary); font-size: var(--text-xs); text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+.chip:hover { text-decoration: underline; }
+.done { text-decoration: line-through; color: var(--color-text-muted); }
+.overdue { background: var(--color-status-danger-surface); }
+.marker { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--color-text-primary); }
+.diamond { width: 8px; height: 8px; transform: rotate(45deg); flex: none; }
