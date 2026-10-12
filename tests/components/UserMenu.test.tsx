@@ -10,8 +10,9 @@ const profile: UserProfile = {
 
 function setup() {
   const onLogout = vi.fn();
-  render(<><UserMenu profile={profile} onLogout={onLogout} /><p>Fuera</p></>);
-  return { onLogout, trigger: screen.getByRole('button', { name: 'Cuenta de Ana Marquez' }) };
+  const onOpenProfile = vi.fn();
+  render(<><UserMenu profile={profile} onLogout={onLogout} onOpenProfile={onOpenProfile} /><p>Fuera</p></>);
+  return { onLogout, onOpenProfile, trigger: screen.getByRole('button', { name: 'Cuenta de Ana Marquez' }) };
 }
 
 describe('UserMenu', () => {
@@ -50,5 +51,12 @@ describe('UserMenu', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
     expect(onLogout).toHaveBeenCalledOnce();
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('abre Mi perfil', async () => {
+    const { trigger, onOpenProfile } = setup();
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByRole('button', { name: 'Mi perfil' }));
+    expect(onOpenProfile).toHaveBeenCalledOnce();
   });
 });

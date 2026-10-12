@@ -1,11 +1,13 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, UserRound } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { ROLE_LABEL, type UserProfile } from '@/types/auth';
 import { Avatar } from './Avatar';
 import styles from './UserMenu.module.css';
 
 /** Menú de cuenta del celular: se abre con la inicial y se cierra con Escape, clic fuera o al elegir. */
-export function UserMenu({ profile, onLogout }: { profile: UserProfile; onLogout: () => void }) {
+type UserMenuProps = { profile: UserProfile; onLogout: () => void; onOpenProfile: () => void };
+
+export function UserMenu({ profile, onLogout, onOpenProfile }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -43,6 +45,16 @@ export function UserMenu({ profile, onLogout }: { profile: UserProfile; onLogout
         <div id={panelId} className={styles.panel}>
           <p className={styles.name}>{profile.displayName}</p>
           <p className={styles.role}>{ROLE_LABEL[profile.role]}</p>
+          <button
+            type="button" className={styles.item}
+            onClick={() => {
+              setOpen(false);
+              onOpenProfile();
+            }}
+          >
+            <UserRound size={16} aria-hidden="true" />
+            Mi perfil
+          </button>
           <button
             type="button" className={styles.logout}
             onClick={() => {

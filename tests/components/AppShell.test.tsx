@@ -9,6 +9,7 @@ const auth = vi.hoisted(() => ({
   logout: vi.fn(),
 }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => auth }));
+vi.mock('@/services/team.service', () => ({ updateOwnProfile: vi.fn() }));
 
 import { AppShell } from '@/components/layout/AppShell';
 
@@ -89,5 +90,11 @@ describe('AppShell', () => {
     renderAt('/tasks');
     const topBar = within(screen.getByRole('banner'));
     expect(topBar.getByRole('button', { name: 'Cuenta de Ana Marquez' })).toBeInTheDocument();
+  });
+
+  it('abre Mi perfil desde el menú lateral', async () => {
+    const sidebar = renderAt('/tasks');
+    await userEvent.click(sidebar.getByRole('button', { name: 'Mi perfil' }));
+    expect(screen.getByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument();
   });
 });

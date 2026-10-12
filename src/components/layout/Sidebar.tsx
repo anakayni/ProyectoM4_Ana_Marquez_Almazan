@@ -6,10 +6,10 @@ import { Avatar } from './Avatar';
 import { BrandMark } from './BrandMark';
 import styles from './Sidebar.module.css';
 
-type SidebarProps = { items: NavItem[]; profile: UserProfile; onLogout: () => void };
+type SidebarProps = { items: NavItem[]; profile: UserProfile; onLogout: () => void; onOpenProfile: () => void };
 
 /** Menú lateral de escritorio. */
-export function Sidebar({ items, profile, onLogout }: SidebarProps) {
+export function Sidebar({ items, profile, onLogout, onOpenProfile }: SidebarProps) {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}><BrandMark inverse /></div>
@@ -34,11 +34,13 @@ export function Sidebar({ items, profile, onLogout }: SidebarProps) {
         </ul>
       </nav>
       <div className={styles.user}>
-        <Avatar name={profile.displayName} photo={profile.photo} />
-        <div className={styles.userText}>
-          <span className={styles.userName}>{profile.displayName}</span>
-          <span className={styles.userRole}>{ROLE_LABEL[profile.role]}</span>
-        </div>
+        <button type="button" className={styles.profile} onClick={onOpenProfile} aria-label="Mi perfil" title="Mi perfil">
+          <Avatar name={profile.displayName} photo={profile.photo} />
+          <span className={styles.userText}>
+            <span className={styles.userName}>{profile.displayName}</span>
+            <span className={styles.userRole}>{ROLE_LABEL[profile.role]}</span>
+          </span>
+        </button>
         <button type="button" className={styles.logout} onClick={onLogout} aria-label="Cerrar sesión" title="Cerrar sesión">
           <LogOut size={18} aria-hidden="true" />
         </button>
