@@ -26,6 +26,7 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
 import { SCOPES, SCOPE_LABEL, type TaskInput, type TaskScope } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import styles from './CalendarPage.module.css';
 
 export function CalendarPage() {
@@ -68,17 +69,17 @@ export function CalendarPage() {
 
   return (
     <>
-      <PageHeader
-        title="Calendario"
-        actions={
-          <SegmentedControl
-            label="Vista del calendario" name="calendar-view" value={view} onChange={setView}
-            options={[{ value: 'month', label: 'Mes' }, { value: 'gantt', label: 'Gantt' }]}
-          />
-        }
-      />
-      <main className={styles.page}>
-        <div className={styles.toolbar}>
+      <StickyHeader>
+        <PageHeader
+          title="Calendario"
+          actions={
+            <SegmentedControl
+              label="Vista del calendario" name="calendar-view" value={view} onChange={setView}
+              options={[{ value: 'month', label: 'Mes' }, { value: 'gantt', label: 'Gantt' }]}
+            />
+          }
+        />
+        <div className={`${styles.toolbar} ${styles.bars}`}>
           <div className={styles.month}>
             {view === 'month' ? (
               <>
@@ -129,6 +130,8 @@ export function CalendarPage() {
             )}
           </div>
         </div>
+      </StickyHeader>
+      <main className={styles.page}>
 
         {loading && <Spinner label="Cargando tareas…" />}
         {error && <Alert kind="error">{error} <Button size="sm" variant="ghost" onClick={retry}>Reintentar</Button></Alert>}

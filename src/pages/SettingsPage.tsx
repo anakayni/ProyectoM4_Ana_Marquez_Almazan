@@ -4,6 +4,7 @@ import { GeneralSettings } from '@/components/settings/GeneralSettings';
 import { can } from '@/features/auth/permissions';
 import { useAuth } from '@/hooks/useAuth';
 import type { UserProfile } from '@/types/auth';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import styles from './SettingsPage.module.css';
 
 /** Ajustes del espacio (solo admin; las reglas también lo exigen). */
@@ -13,7 +14,9 @@ export function SettingsPage() {
   if (!can(me, 'team:manage')) return <Navigate to="/tasks" replace />;
   return (
     <>
-      <PageHeader title="Ajustes" subtitle="Nombre, logo, colores y numeración del espacio." />
+      <StickyHeader>
+        <PageHeader title="Ajustes" subtitle="Nombre, logo, colores y numeración del espacio." />
+      </StickyHeader>
       <main className={styles.page}>
         <GeneralSettings actorId={me.uid} />
       </main>

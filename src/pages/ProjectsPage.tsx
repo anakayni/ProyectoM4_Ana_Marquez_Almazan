@@ -15,6 +15,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
 import { toDateInputValue } from '@/utils/formatDate';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import styles from './ProjectsPage.module.css';
 
 type Filter = 'active' | 'archived';
@@ -39,16 +40,20 @@ export function ProjectsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Proyectos"
-        subtitle={`${plural(active.length, 'activo', 'activos')} · ${plural(archived.length, 'archivado', 'archivados')}`}
-        actions={can(me, 'task:create') && <Button size="sm" onClick={() => setCreating(true)}>+ Nuevo proyecto</Button>}
-      />
-      <main className={styles.page}>
-        <SegmentedControl
-          label="Mostrar" name="project-filter" value={filter} onChange={setFilter}
-          options={[{ value: 'active', label: 'Activos' }, { value: 'archived', label: 'Archivados' }]}
+      <StickyHeader>
+        <PageHeader
+          title="Proyectos"
+          subtitle={`${plural(active.length, 'activo', 'activos')} · ${plural(archived.length, 'archivado', 'archivados')}`}
+          actions={can(me, 'task:create') && <Button size="sm" onClick={() => setCreating(true)}>+ Nuevo proyecto</Button>}
         />
+        <div className={styles.bars}>
+          <SegmentedControl
+            label="Mostrar" name="project-filter" value={filter} onChange={setFilter}
+            options={[{ value: 'active', label: 'Activos' }, { value: 'archived', label: 'Archivados' }]}
+          />
+        </div>
+      </StickyHeader>
+      <main className={styles.page}>
         {loading && <Spinner label="Cargando proyectos…" />}
         {error && <Alert kind="error">{error}</Alert>}
         {!loading && !error && shown.length === 0 && (

@@ -12,6 +12,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { updateMember } from '@/services/team.service';
 import type { Role, UserProfile } from '@/types/auth';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import styles from './TeamPage.module.css';
 
 export function TeamPage() {
@@ -46,11 +47,13 @@ function TeamView({ me }: { me: UserProfile }) {
 
   return (
     <>
-      <PageHeader
-        title="Equipo"
-        subtitle={`${activeCount} ${activeCount === 1 ? 'integrante activo' : 'integrantes activos'}`}
-        actions={isAdmin && <Button size="sm" onClick={() => setInviting(true)}>+ Invitar</Button>}
-      />
+      <StickyHeader>
+        <PageHeader
+          title="Equipo"
+          subtitle={`${activeCount} ${activeCount === 1 ? 'integrante activo' : 'integrantes activos'}`}
+          actions={isAdmin && <Button size="sm" onClick={() => setInviting(true)}>+ Invitar</Button>}
+        />
+      </StickyHeader>
       <main className={styles.page}>
         <section aria-labelledby="members-title" className={styles.section}>
           <h2 id="members-title" className={styles.title}>Integrantes</h2>

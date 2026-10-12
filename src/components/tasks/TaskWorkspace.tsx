@@ -25,6 +25,7 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
 import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import styles from './TaskWorkspace.module.css';
 
 type TaskWorkspaceProps = {
@@ -82,7 +83,61 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
 
   return (
     <>
-      {renderHeader(canCreate ? <Button size="sm" onClick={() => setCreating(projectId ? { projectId } : {})}>+ Nueva tarea</Button> : null)}
+      <StickyHeader>
+        {renderHeader(canCreate ? <Button size="sm" onClick={() => setCreating(projectId ? { projectId } : {})}>+ Nueva tarea</Button> : null)}
+        <div className={styles.bars}>
+          <div className={styles.filters}>
+            <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
+            <input
+              id="task-search" type="search" className={styles.search} value={query}
+              placeholder={`Buscar por título, descripción o ${taskPrefix}-…`} onChange={(e) => setQuery(e.target.value)}
+            />
+            <label className={styles.sort}>
+              Prioridad
+              <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityFilter)}>
+                <option value="all">Todas</option>
+                {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
+              </select>
+            </label>
+            {!projectId && (
+              <label className={styles.sort}>
+                Proyecto
+                <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+                  <option value="all">Todos</option>
+                  <option value="none">Sin proyecto</option>
+                  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
+                </select>
+              </label>
+            )}
+          </div>
+          <div className={styles.toolbar}>
+            <SegmentedControl
+              label="Mostrar" name="scope" value={scope}
+              onChange={(next) => {
+                setScope(next);
+                setCard(null);
+              }}
+              options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
+            />
+            <SegmentedControl
+              label="Vista" name="view" value={view} onChange={setView}
+              options={[
+                { value: 'list', label: 'Lista', icon: List },
+                { value: 'table', label: 'Tabla', icon: Table2 },
+                { value: 'board', label: 'Tablero', icon: LayoutGrid },
+              ]}
+            />
+            <label className={styles.sort}>
+              Ordenar por
+              <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
+                <option value="recent">Más recientes</option>
+                <option value="due">Vencimiento</option>
+                <option value="priority">Prioridad</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </StickyHeader>
 
       <main className={styles.main}>
         {!canCreate && (
@@ -98,56 +153,6 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
           )}
           {!loading && !error && (
             <>
-              <div className={styles.filters}>
-                <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
-                <input
-                  id="task-search" type="search" className={styles.search} value={query}
-                  placeholder={`Buscar por título, descripción o ${taskPrefix}-…`} onChange={(e) => setQuery(e.target.value)}
-                />
-                <label className={styles.sort}>
-                  Prioridad
-                  <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityFilter)}>
-                    <option value="all">Todas</option>
-                    {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
-                  </select>
-                </label>
-                {!projectId && (
-                  <label className={styles.sort}>
-                    Proyecto
-                    <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
-                      <option value="all">Todos</option>
-                      <option value="none">Sin proyecto</option>
-                      {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
-                    </select>
-                  </label>
-                )}
-              </div>
-              <div className={styles.toolbar}>
-                <SegmentedControl
-                  label="Mostrar" name="scope" value={scope}
-                  onChange={(next) => {
-                    setScope(next);
-                    setCard(null);
-                  }}
-                  options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
-                />
-                <SegmentedControl
-                  label="Vista" name="view" value={view} onChange={setView}
-                  options={[
-                    { value: 'list', label: 'Lista', icon: List },
-                    { value: 'table', label: 'Tabla', icon: Table2 },
-                    { value: 'board', label: 'Tablero', icon: LayoutGrid },
-                  ]}
-                />
-                <label className={styles.sort}>
-                  Ordenar por
-                  <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
-                    <option value="recent">Más recientes</option>
-                    <option value="due">Vencimiento</option>
-                    <option value="priority">Prioridad</option>
-                  </select>
-                </label>
-              </div>
               <TaskStats stats={stats} selected={card} onSelect={setCard} />
               {view === 'board' ? (
                 <TaskBoard
