@@ -2,12 +2,11 @@ import { Avatar } from '@/components/layout/Avatar';
 import { ProjectTag } from '@/components/projects/ProjectTag';
 import type { ProjectOf } from '@/features/projects/projectOf';
 import type { NameOf, PersonOf } from '@/features/team/members';
+import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import { PRIORITY_LABEL, STATUSES, STATUS_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { dueStatus, formatDueDate } from '@/utils/formatDate';
 import { StatusSelect } from './StatusSelect';
 import styles from './TaskBoard.module.css';
-
-export type TaskView = 'list' | 'board';
 
 type Props = {
   tasks: Task[];
@@ -40,6 +39,7 @@ export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
                   const project = projectOf(task.projectId);
                   return (
                     <li key={task.id} className={styles.card}>
+                      <span className={styles.number}>{formatTaskNumber(task.number)}</span>
                       <button type="button" className={styles.title} onClick={() => onOpen(task)}>{task.title}</button>
                       <div className={styles.meta}>
                         <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>

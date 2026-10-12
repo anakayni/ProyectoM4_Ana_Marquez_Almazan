@@ -20,3 +20,4 @@
 @media (min-width: 900px) {
   .board { grid-template-columns: repeat(3, 1fr); align-items: start; }
 }
+.number { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-muted); }

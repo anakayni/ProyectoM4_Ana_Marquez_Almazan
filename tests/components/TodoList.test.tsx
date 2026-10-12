@@ -75,4 +75,10 @@ describe('TodoList', () => {
     setup(tasks, { canEdit: false });
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
+
+  it('muestra el número y el avance de subtareas', () => {
+    setup([{ ...tasks[0], number: 42, subtasks: [{ id: 'a', title: 'A', done: true }, { id: 'b', title: 'B', done: false }] }]);
+    expect(screen.getByText('MC-42')).toBeInTheDocument();
+    expect(screen.getByText('☑ 1 de 2')).toBeInTheDocument();
+  });
 });

@@ -1,8 +1,9 @@
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, Table2 } from 'lucide-react';
 import { useCallback, useState, type ReactNode } from 'react';
-import { TaskBoard, type TaskView } from './TaskBoard';
+import { TaskBoard } from './TaskBoard';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { TaskStats } from './TaskStats';
+import { TaskTable } from './TaskTable';
 import { TodoForm } from './TodoForm';
 import { TodoList } from './TodoList';
 import { Alert } from '@/components/ui/Alert';
@@ -23,7 +24,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type Task, type TaskInput, type TaskScope } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type Task, type TaskInput, type TaskScope, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import styles from './TaskWorkspace.module.css';
 
@@ -51,7 +52,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const [scope, setScope] = usePreference<TaskScope>(
     projectId ? 'matecode.scope.project' : 'matecode.scope', canEdit && !projectId ? 'mine' : 'team', SCOPES,
   );
-  const [view, setView] = usePreference<TaskView>('matecode.view', 'list', ['list', 'board']);
+  const [view, setView] = usePreference<TaskView>('matecode.view', 'list', ['list', 'table', 'board']);
   const [card, setCard] = useState<StatCard | null>(null);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<PriorityFilter>('all');
@@ -148,7 +149,11 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                 />
                 <SegmentedControl
                   label="Vista" name="view" value={view} onChange={setView}
-                  options={[{ value: 'list', label: 'Lista', icon: List }, { value: 'board', label: 'Tablero', icon: LayoutGrid }]}
+                  options={[
+                    { value: 'list', label: 'Lista', icon: List },
+                    { value: 'table', label: 'Tabla', icon: Table2 },
+                    { value: 'board', label: 'Tablero', icon: LayoutGrid },
+                  ]}
                 />
                 <label className={styles.sort}>
                   Ordenar por
@@ -162,6 +167,16 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
               <TaskStats stats={stats} selected={card} onSelect={setCard} />
               {view === 'board' ? (
                 <TaskBoard
+                  tasks={visibleTasks}
+                  nameOf={nameOf}
+                  personOf={personOf}
+                  projectOf={projectOf}
+                  canEdit={canEdit}
+                  onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                  onOpen={(task) => setOpenId(task.id)}
+                />
+              ) : view === 'table' && visibleTasks.length > 0 ? (
+                <TaskTable
                   tasks={visibleTasks}
                   nameOf={nameOf}
                   personOf={personOf}

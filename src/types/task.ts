@@ -44,6 +44,8 @@ export type TaskPatch = Partial<TaskInput & Pick<Task, 'status' | 'subtasks'>>;
 
 export type SortMode = 'recent' | 'due' | 'priority';
 
+export type TaskView = 'list' | 'table' | 'board';
+
 export type TaskScope = 'mine' | 'team' | 'unassigned';
 
 /** Tarjetas de arriba: un estado o "vencidas". */
