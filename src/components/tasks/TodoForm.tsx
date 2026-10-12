@@ -17,7 +17,7 @@ type TodoFormProps = {
   onCancel?: () => void;
 };
 
-const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null, assigneeId: null };
+const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null, assigneeId: null, projectId: null };
 
 export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assignees = [], onSubmit, onCancel }: TodoFormProps) {
   const [values, setValues] = useState<TaskInput>(initialValues ?? EMPTY);

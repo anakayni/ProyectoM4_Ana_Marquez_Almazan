@@ -44,7 +44,7 @@ describe('makePersonOf', () => {
 describe('openTasksByMember', () => {
   const t = (assigneeId: string | null, status: Task['status']): Task => ({
     id: Math.random().toString(), createdBy: 'x', updatedBy: 'x', rev: 1, title: 't', description: '', status, assigneeId,
-    completedBy: null, completedAt: null, priority: 'media', dueDate: null, createdAt: 1,
+    completedBy: null, completedAt: null, projectId: null, priority: 'media', dueDate: null, createdAt: 1,
   });
   it('cuenta las asignadas que no están hechas', () => {
     const counts = openTasksByMember([t('ana', 'todo'), t('ana', 'doing'), t('ana', 'done'), t('luis', 'todo'), t(null, 'todo')]);

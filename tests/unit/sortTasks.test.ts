@@ -4,7 +4,7 @@ import type { Task } from '@/types/task';
 
 function task(id: string, overrides: Partial<Task> = {}): Task {
   return {
-    id, createdBy: 'u', updatedBy: 'u', rev: 1, title: id, description: '', status: 'todo', assigneeId: null, completedBy: null, completedAt: null,
+    id, createdBy: 'u', updatedBy: 'u', rev: 1, title: id, description: '', status: 'todo', assigneeId: null, completedBy: null, completedAt: null, projectId: null,
     priority: 'media', dueDate: null, createdAt: 0, ...overrides,
   };
 }

@@ -25,6 +25,7 @@ export async function createTask(db: Firestore, actorId: string, input: TaskInpu
     description: input.description.trim(),
     status: 'todo',
     assigneeId: input.assigneeId,
+    projectId: input.projectId,
     completedBy: null,
     completedAt: null,
     priority: input.priority,

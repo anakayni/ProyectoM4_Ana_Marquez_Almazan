@@ -28,7 +28,7 @@ const person = (uid: string, name: string, role: Role, active = true): UserProfi
 });
 const task = (assigneeId: string): Task => ({
   id: Math.random().toString(), createdBy: 'x', updatedBy: 'x', rev: 1, title: 't', description: '', status: 'todo',
-  assigneeId, completedBy: null, completedAt: null, priority: 'media', dueDate: null, createdAt: 1,
+  assigneeId, completedBy: null, completedAt: null, projectId: null, priority: 'media', dueDate: null, createdAt: 1,
 });
 const row = (name: string) => screen.getByText(name).closest('li')!;
 

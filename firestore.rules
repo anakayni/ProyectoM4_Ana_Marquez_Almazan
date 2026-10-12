@@ -22,6 +22,7 @@ service cloud.firestore {
     function entityPath(type, id) {
       return type == 'task' ? /databases/$(database)/documents/tasks/$(id)
         : type == 'invitation' ? /databases/$(database)/documents/invitations/$(id)
+        : type == 'project' ? /databases/$(database)/documents/projects/$(id)
         : /databases/$(database)/documents/users/$(id);
     }
     function audited(type, id, rev) {
@@ -34,7 +35,7 @@ service cloud.firestore {
       let d = request.resource.data;
       let path = entityPath(d.entityType, d.entityId);
       return d.keys().hasOnly(['entityType', 'entityId', 'rev', 'action', 'actorId', 'at', 'before', 'after'])
-        && d.entityType in ['task', 'invitation', 'user']
+        && d.entityType in ['task', 'invitation', 'user', 'project']
         && logId == d.entityType + '_' + d.entityId + '_' + string(d.rev)
         && d.actorId == request.auth.uid
         && d.at == request.time
@@ -49,7 +50,7 @@ service cloud.firestore {
     }
 
     match /auditLog/{logId} {
-      allow read: if isAdmin() || (isActive() && resource.data.entityType == 'task');
+      allow read: if isAdmin() || (isActive() && resource.data.entityType in ['task', 'project']);
       allow create: if signedIn() && validAudit(logId);
       allow update, delete: if false;
     }
@@ -57,16 +58,24 @@ service cloud.firestore {
     // ─── Tareas (todo el equipo las ve) ───────────────────────────
     function validTask(d) {
       return d.keys().hasOnly(['createdBy', 'title', 'description', 'status', 'assigneeId', 'completedBy', 'completedAt',
-                               'priority', 'dueDate', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
+                               'projectId', 'priority', 'dueDate', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
         && d.title is string && d.title.size() > 0 && d.title.size() <= 80
         && d.description is string && d.description.size() <= 500
         && d.status in ['todo', 'doing', 'done']
         && (d.assigneeId == null || d.assigneeId is string)
+        && (d.projectId == null || d.projectId is string)
         && d.priority in ['alta', 'media', 'baja']
         && (d.dueDate == null || (d.dueDate is string && d.dueDate.size() == 10))
         && d.rev is int
         && d.updatedBy == request.auth.uid
         && d.updatedAt == request.time;
+    }
+
+    function projectPath(id) { return /databases/$(database)/documents/projects/$(id); }
+
+    // Proyecto de una tarea: debe existir y no estar archivado (solo se revisa cuando cambia).
+    function validProjectRef(id) {
+      return id == null || (exists(projectPath(id)) && get(projectPath(id)).data.archived == false);
     }
 
     // Responsable: debe existir y ser admin o miembro activo (solo se revisa cuando cambia).
@@ -100,6 +109,7 @@ service cloud.firestore {
         && request.resource.data.rev == 1
         && validAssignee(request.resource.data.assigneeId)
         && completionOnCreate(request.resource.data)
+        && validProjectRef(request.resource.data.projectId)
         && audited('task', taskId, 1);
       allow update: if canEdit()
         && validTask(request.resource.data)
@@ -107,10 +117,48 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && (!changed().hasAny(['assigneeId']) || validAssignee(request.resource.data.assigneeId))
         && completionOnUpdate(request.resource.data, resource.data)
+        && (!changed().hasAny(['projectId']) || validProjectRef(request.resource.data.projectId))
         && nextRev()
         && audited('task', taskId, request.resource.data.rev);
       allow delete: if (isAdmin() || (hasRole(['member']) && resource.data.createdBy == request.auth.uid))
         && audited('task', taskId, resource.data.rev + 1);
+    }
+
+    // ─── Proyectos ────────────────────────────────────────────────
+    function validProject(d) {
+      return d.keys().hasOnly(['name', 'description', 'color', 'ownerId', 'startDate', 'endDate', 'archived',
+                               'createdBy', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && d.description is string && d.description.size() <= 500
+        && d.color is string && d.color.matches('^#[0-9A-Fa-f]{6}$')
+        && d.ownerId is string
+        && d.startDate is string && d.startDate.size() == 10
+        && d.endDate is string && d.endDate.size() == 10
+        && d.endDate >= d.startDate
+        && d.archived is bool
+        && d.rev is int
+        && d.updatedBy == request.auth.uid
+        && d.updatedAt == request.time;
+    }
+
+    match /projects/{projectId} {
+      allow read: if isActive();
+      allow create: if canEdit()
+        && validProject(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.rev == 1
+        && request.resource.data.archived == false
+        && validAssignee(request.resource.data.ownerId)
+        && audited('project', projectId, 1);
+      allow update: if canEdit()
+        && validProject(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (!changed().hasAny(['ownerId']) || validAssignee(request.resource.data.ownerId))
+        && nextRev()
+        && audited('project', projectId, request.resource.data.rev);
+      allow delete: if isAdmin() && audited('project', projectId, resource.data.rev + 1);
     }
 
     // ─── Invitaciones (ID = email en minúsculas) ──────────────────

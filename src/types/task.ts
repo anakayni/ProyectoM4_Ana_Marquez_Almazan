@@ -18,6 +18,8 @@ export interface Task {
   /** Quién la pasó a Hecha y cuándo (ms); null si no está hecha */
   completedBy: string | null;
   completedAt: number | null;
+  /** Proyecto, o null = "Sin proyecto" */
+  projectId: string | null;
   priority: Priority;
   /** Fecha local en formato YYYY-MM-DD, o null si no tiene vencimiento */
   dueDate: string | null;
@@ -26,7 +28,7 @@ export interface Task {
 }
 
 /** Campos que el usuario completa en el formulario */
-export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'assigneeId'>;
+export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'assigneeId' | 'projectId'>;
 
 export type TaskPatch = Partial<TaskInput & Pick<Task, 'status'>>;
 

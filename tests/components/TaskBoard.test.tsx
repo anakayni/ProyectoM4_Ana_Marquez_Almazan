@@ -6,7 +6,7 @@ import type { Task, TaskStatus } from '@/types/task';
 
 const task = (id: string, status: TaskStatus): Task => ({
   id, createdBy: 'u', updatedBy: 'u', rev: 1, title: `Tarea ${id}`, description: '', status, assigneeId: null,
-  completedBy: null, completedAt: null, priority: 'media', dueDate: null, createdAt: 1,
+  completedBy: null, completedAt: null, projectId: null, priority: 'media', dueDate: null, createdAt: 1,
 });
 const tasks = [task('1', 'todo'), task('2', 'todo'), task('3', 'doing')];
 const nameOf = () => null;

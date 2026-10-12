@@ -5,7 +5,7 @@ import { createTask, deleteTask, updateTask } from '@/services/audited/tasks';
 import { createEnv, dbAs, seedUser } from './helpers';
 
 let env: Awaited<ReturnType<typeof createEnv>>;
-const input = { title: 'Llamar', description: '', priority: 'media' as const, dueDate: null, assigneeId: null };
+const input = { title: 'Llamar', description: '', priority: 'media' as const, dueDate: null, assigneeId: null, projectId: null };
 const as = (uid: string) => dbAs(env, uid, `${uid}@test.com`);
 
 beforeAll(async () => {

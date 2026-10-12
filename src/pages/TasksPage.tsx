@@ -180,7 +180,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
         <Modal title="Nueva tarea" onClose={() => setCreating(false)}>
           <TodoForm
             // Empieza asignada a quien la crea: si no, desaparecería de "Mías" al guardarla.
-            initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid }}
+            initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid, projectId: null }}
             submitLabel="Crear tarea"
             assignees={assigneeOptions(members, profile.uid)}
             onSubmit={handleCreate}
@@ -198,6 +198,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
               priority: editing.priority,
               dueDate: editing.dueDate,
               assigneeId: editing.assigneeId,
+              projectId: editing.projectId,
             }}
             submitLabel="Guardar cambios"
             assignees={assigneeOptions(members, editing.assigneeId)}

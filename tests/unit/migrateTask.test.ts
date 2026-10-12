@@ -9,7 +9,7 @@ describe('migrateTask', () => {
     expect(result?.action).toBe('update');
     expect(result?.data).toEqual({
       ...base, createdBy: 'ana', updatedBy: 'luis', updatedAt: 200, rev: 4,
-      status: 'todo', assigneeId: null, completedBy: null, completedAt: null,
+      status: 'todo', assigneeId: null, completedBy: null, completedAt: null, projectId: null,
     });
   });
 
@@ -24,14 +24,21 @@ describe('migrateTask', () => {
     expect(result?.action).toBe('create');
     expect(result?.data).toEqual({
       ...base, createdBy: 'ana', updatedBy: 'ana', rev: 1,
-      status: 'done', assigneeId: null, completedBy: 'ana', completedAt: 100,
+      status: 'done', assigneeId: null, completedBy: 'ana', completedAt: 100, projectId: null,
     });
     expect(result?.data).not.toHaveProperty('userId');
   });
 
   it('una tarea ya migrada no se toca', () => {
     expect(
-      migrateTask({ ...base, createdBy: 'ana', updatedBy: 'ana', rev: 2, status: 'doing', assigneeId: 'luis', completedBy: null, completedAt: null }),
+      migrateTask({ ...base, createdBy: 'ana', updatedBy: 'ana', rev: 2, status: 'doing', assigneeId: 'luis', completedBy: null, completedAt: null, projectId: null }),
     ).toBeNull();
+  });
+
+  it('una tarea de la etapa 3 sin proyecto recibe projectId: null', () => {
+    const result = migrateTask({
+      ...base, createdBy: 'ana', updatedBy: 'ana', rev: 2, status: 'todo', assigneeId: null, completedBy: null, completedAt: null,
+    });
+    expect(result?.data).toMatchObject({ projectId: null, rev: 3 });
   });
 });
