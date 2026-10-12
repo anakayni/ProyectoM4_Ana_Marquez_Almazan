@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { BrandMark } from '@/components/layout/BrandMark';
+import { CreditsFooter } from '@/components/layout/CreditsFooter';
 import styles from './AuthLayout.module.css';
 
 // Clases compartidas por LoginPage y RegisterPage.
@@ -24,14 +25,18 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
           <span /><span /><span /><span />
         </div>
       </aside>
-      <main className={styles.main}>
-        <div className={styles.card}>
-          <h1 className={styles.title}>{title}</h1>
-          <p className={styles.subtitle}>{subtitle}</p>
-          {children}
-          {footer && <p className={styles.footer}>{footer}</p>}
-        </div>
-      </main>
+      <div className={styles.side}>
+        <main className={styles.main}>
+          <div className={styles.card}>
+            <h1 className={styles.title}>{title}</h1>
+            <p className={styles.subtitle}>{subtitle}</p>
+            {children}
+            {footer && <p className={styles.footer}>{footer}</p>}
+          </div>
+        </main>
+        {/* Fuera de <main> para que sea el pie de la página (landmark contentinfo) */}
+        <CreditsFooter />
+      </div>
     </div>
   );
 }

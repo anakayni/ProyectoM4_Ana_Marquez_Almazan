@@ -4,6 +4,7 @@ import type { NavItem } from '@/features/navigation/navItems';
 import { ROLE_LABEL, type UserProfile } from '@/types/auth';
 import { Avatar } from './Avatar';
 import { BrandMark } from './BrandMark';
+import { CreditsFooter } from './CreditsFooter';
 import styles from './Sidebar.module.css';
 
 type SidebarProps = { items: NavItem[]; profile: UserProfile; onLogout: () => void; onOpenProfile: () => void };
@@ -45,6 +46,7 @@ export function Sidebar({ items, profile, onLogout, onOpenProfile }: SidebarProp
           <LogOut size={18} aria-hidden="true" />
         </button>
       </div>
+      <CreditsFooter variant="dark" />
     </aside>
   );
 }

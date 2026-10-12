@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { UserProfile } from '@/types/auth';
 import styles from './AppShell.module.css';
 import { BottomTabs } from './BottomTabs';
+import { CreditsFooter } from './CreditsFooter';
 import { MobileTopBar } from './MobileTopBar';
 import { Sidebar } from './Sidebar';
 
@@ -29,6 +30,7 @@ export function AppShell() {
       <MobileTopBar profile={user} onLogout={onLogout} onOpenProfile={() => setProfileOpen(true)} />
       <div className={styles.content}>
         <Outlet />
+        <div className={styles.mobileCredits}><CreditsFooter /></div>
       </div>
       <BottomTabs items={items} onUnavailable={(item) => setToast({ kind: 'info', message: `${item.label}: próximamente.` })} />
       {profileOpen && <ProfileDialog profile={user} onClose={() => setProfileOpen(false)} />}
