@@ -106,3 +106,12 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
   - El diseño original reemplazaba `completed` por el estado sin guardar quién completaba: lo noté al revisar el documento y se corrigió antes de programar.
   - La herramienta de calidad (oxlint) avisó que calcular la fecha de "hoy" en cada render podía dar resultados inestables; se calcula una vez al abrir la página.
   - Los tests del panel no encontraban su contenido: el navegador simulado de los tests no tiene `showModal()` y la ventana quedaba cerrada. Se comprobó con una prueba mínima y `Modal` ahora se abre igual cuando esa función no existe.
+
+## v2 — Etapa 4: Equipo y Mi perfil
+- **Qué pedí:** la sección Equipo para ver a los integrantes y gestionarlos, y que cuando alguien se desactiva sus tareas no se pierdan.
+- **Qué generó / propuso:** preguntas de a una y maquetas de Equipo (vista admin y vista miembro) y de Mi perfil. Después, un plan de 6 tareas: foto protegida por las reglas, funciones puras (recorte cuadrado, tareas abiertas por persona, texto del aviso), avatar con foto y estado inactivo en toda la app, la pantalla Equipo y Mi perfil.
+- **Qué revisé o cambié yo:** elegí que todos vean Equipo pero solo el admin lo gestione, y que las tareas de quien se desactiva queden a su nombre con un aviso. Propuse agregar un avatar con foto y que se note quién está desactivado; para no pagar Firebase Storage, la foto se achica en el navegador y se guarda en Firestore. Probé todo como admin y como lector.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Un test fallaba con el mismo error que simulaba el servicio, aunque el componente lo capturaba bien. Se investigó paso a paso con pruebas mínimas: el `beforeEach` de una sola línea devolvía el mock, y Vitest ejecuta como "limpieza" cualquier función que devuelva un hook. Se corrigió escribiéndolo con llaves.
+  - Al abrir Equipo para todos, `navItems` dejó de usar el perfil; se mantuvo el parámetro (como `_profile`) porque Ajustes, en la etapa 8, va a depender del rol.

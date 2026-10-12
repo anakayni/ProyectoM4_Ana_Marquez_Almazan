@@ -211,7 +211,7 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 
 ## v2 en desarrollo (rama `v2`)
 
-Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial.
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial. **Etapa 4 (lista):** Equipo y Mi perfil con foto.
 
 ### Entornos
 
@@ -279,6 +279,13 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Email de resumen:** cuenta Pendientes, En curso y Hechas de las tareas **asignadas** a quien lo pide.
 - **Migración:** `npm run migrate-tasks` convierte las tareas de formatos anteriores (incluido el de producción, con `userId`) dejando una entrada de auditoría por tarea con actor "system". Se niega a correr fuera de `matecode-tasks-dev` salvo con `--confirmar-produccion`.
 
+### Equipo y Mi perfil (etapa 4)
+
+- **Equipo para todos:** cada integrante con su foto o inicial, email, rol y cantidad de tareas abiertas. El admin además invita ("+ Invitar"), cambia roles, desactiva y reactiva, y ve las invitaciones pendientes. Nadie cambia su propio rol ni se desactiva.
+- **Desactivar no borra:** la persona ya no entra, sus tareas quedan a su nombre y el aviso previo dice cuántas tiene sin terminar. En toda la app se ve en gris, con "Inactiva" en Equipo y "(inactiva)" junto a su nombre en las tareas.
+- **Foto de perfil sin Firebase Storage** (que exige el plan pago): el navegador recorta la imagen en cuadrado y la reduce a 128×128 JPEG (~10 KB) con un `<canvas>`, y se guarda dentro del perfil en Firestore. Las reglas solo aceptan un JPEG de hasta 50 KB, y cada persona cambia solo su propia foto y su nombre (ni el admin puede cambiar los de otra persona).
+- **Mi perfil:** se abre desde el nombre al pie del menú lateral o desde el menú de la inicial en el celular.
+
 ### Comandos nuevos
 
 | Script | Qué hace |
@@ -287,7 +294,7 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
 | `npm run migrate-tasks` | Migra las tareas al formato de la etapa 3, con auditoría (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 199 de la app (`npm test`) y 43 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 227 de la app (`npm test`) y 46 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
 
 ## Mejoras futuras
 
