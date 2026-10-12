@@ -49,4 +49,27 @@ describe('describeChange', () => {
   it('una edición sin cambios visibles igual queda contada', () => {
     expect(describeChange(entry({}), nameOf)).toEqual(['Ana actualizó la tarea']);
   });
+
+  describe('proyecto y subtareas', () => {
+    const projectNameOf = (id: string | null) => (id === 'p1' ? 'Portal' : null);
+    const sub = (id: string, title: string, done = false) => ({ id, title, done });
+
+    it('mover a un proyecto y quitarlo', () => {
+      expect(describeChange(entry({ before: { ...base, projectId: null }, after: { ...base, projectId: 'p1' } }), nameOf, projectNameOf))
+        .toEqual(['Ana movió la tarea a «Portal»']);
+      expect(describeChange(entry({ before: { ...base, projectId: 'p1' }, after: { ...base, projectId: null } }), nameOf, projectNameOf))
+        .toEqual(['Ana quitó la tarea del proyecto']);
+    });
+
+    it('agregar, completar, reabrir y quitar subtareas', () => {
+      const before = { ...base, subtasks: [sub('a', 'Revisar'), sub('b', 'Probar', true), sub('c', 'Viejo')] };
+      const after = { ...base, subtasks: [sub('a', 'Revisar', true), sub('b', 'Probar'), sub('d', 'Nuevo')] };
+      expect(describeChange(entry({ before, after }), nameOf)).toEqual([
+        'Ana completó la subtarea «Revisar»',
+        'Ana reabrió la subtarea «Probar»',
+        'Ana quitó la subtarea «Viejo»',
+        'Ana agregó la subtarea «Nuevo»',
+      ]);
+    });
+  });
 });
