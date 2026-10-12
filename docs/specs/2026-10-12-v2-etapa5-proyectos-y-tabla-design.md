@@ -73,7 +73,7 @@ Del mockup **no** se construye: banner "Firebase Live", latencia, almacenamiento
 | Función | Qué hace |
 |---|---|
 | `projectProgress(tasks, endDate, today)` | `{ total, todo, doing, done, percent, late }` |
-| `readableTextColor(hex)` | `'#FFFFFF'` o `'#1B2F4F'` según contraste |
+| `readableTextColor(hex)` | `'#FFFFFF'` o `'#000000'` según contraste |
 | `contrastRatio(a, b)` | razón de contraste WCAG entre dos hex (para el test de tokens) |
 | `formatTaskNumber(n)` | `'MC-108'` |
 | `searchTasks(tasks, query)` | coincide por título, descripción o número (`'mc-108'`, `'108'`), sin distinguir mayúsculas ni acentos |

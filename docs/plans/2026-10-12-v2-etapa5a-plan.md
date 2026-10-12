@@ -58,7 +58,7 @@
 - Produces:
   ```ts
   export function contrastRatio(a: string, b: string): number;       // hex '#RRGGBB'
-  export function readableTextColor(background: string): '#FFFFFF' | '#1B2F4F';
+  export function readableTextColor(background: string): '#FFFFFF' | '#000000';
   ```
 
 - [ ] **Step 1: Tests que fallan**
@@ -81,8 +81,8 @@ describe('readableTextColor', () => {
   it.each([
     ['#1B4079', '#FFFFFF'],
     ['#4D7C8A', '#FFFFFF'],
-    ['#CBDF90', '#1B2F4F'],
-    ['#8FAD88', '#1B2F4F'],
+    ['#CBDF90', '#000000'],
+    ['#8FAD88', '#000000'],
   ])('%s → %s', (bg, text) => {
     expect(readableTextColor(bg)).toBe(text);
   });
@@ -135,10 +135,10 @@ export function contrastRatio(a: string, b: string): number {
 }
 
 const LIGHT_TEXT = '#FFFFFF';
-const DARK_TEXT = '#1B2F4F';
+const DARK_TEXT = '#000000';
 
 /** Letra blanca u oscura, la que mejor se lea sobre `background` (p. ej. el color de un proyecto). */
-export function readableTextColor(background: string): '#FFFFFF' | '#1B2F4F' {
+export function readableTextColor(background: string): '#FFFFFF' | '#000000' {
   return contrastRatio(LIGHT_TEXT, background) >= contrastRatio(DARK_TEXT, background) ? LIGHT_TEXT : DARK_TEXT;
 }
 ```
@@ -592,7 +592,7 @@ describe('ProjectTag', () => {
   it('muestra el nombre con el color del proyecto y letra legible', () => {
     render(<ProjectTag project={project('#CBDF90')} />);
     const tag = screen.getByText('Portal');
-    expect(tag).toHaveStyle({ backgroundColor: '#CBDF90', color: '#1B2F4F' });
+    expect(tag).toHaveStyle({ backgroundColor: '#CBDF90', color: '#000000' });
   });
   it('en color oscuro usa letra blanca', () => {
     render(<ProjectTag project={project('#1B4079')} />);

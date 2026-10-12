@@ -19,6 +19,7 @@
   --color-gray-300: #C8C8C1;
   --color-gray-400: #A9A9A2;
   --color-gray-500: #8A8A81;
+  --color-gray-550: #636A65; /* texto atenuado: 5.5:1 sobre blanco */
   --color-gray-600: #55554E;
   --color-gray-700: #3D3E45;
   --color-gray-900: #14151A;
@@ -54,7 +55,7 @@
   /* ─── Layer 2: semantic colour ────────────────────────────── */
   --color-text-primary: var(--color-gray-900);
   --color-text-secondary: var(--color-gray-600);
-  --color-text-muted: var(--color-gray-500);
+  --color-text-muted: var(--color-gray-550);
   --color-text-inverse: var(--color-gray-50);
   --color-text-disabled: var(--color-gray-400);
   --color-text-heading: var(--brand-1);
