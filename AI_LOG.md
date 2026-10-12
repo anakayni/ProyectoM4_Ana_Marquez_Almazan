@@ -125,3 +125,12 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
   - Al medir el contraste, el gris atenuado de la app daba 3.48:1 (por debajo de 4.5:1): se oscureció y un test lo vigila.
   - El color de letra de las etiquetas: el azul oscuro elegido al principio no llegaba a 4.5:1 con algunos colores medios. Se probaron todos los colores posibles y solo el negro (junto con el blanco) lo garantiza.
   - Un reemplazo automático en los datos de prueba se cortó en una coma dentro de `new Date(...)`; el build lo detectó y en la parte siguiente se usaron reemplazos exactos.
+
+## v2 — Etapa 6: Calendario (Mes y Gantt)
+- **Qué pedí:** el calendario, y al ver la maqueta del mes pregunté si se podía tener también la vista Gantt de mi mockup: quedaron las dos, con pestañas.
+- **Qué generó / propuso:** usar solo datos que ya existen (vencimiento de tareas y fechas de proyectos) sin crear "hitos" nuevos; maquetas del mes, la agenda del celular y el Gantt; funciones puras para la grilla del mes y las semanas del Gantt (con casos difíciles como febrero bisiesto y la semana 53); y separar el panel y "Nueva tarea" en un componente reutilizable para no duplicar código.
+- **Qué revisé o cambié yo:** elegí crear con "+" en cada día y cambiar fechas desde el panel (sin arrastrar), ver las hechas tachadas con opción de ocultarlas, y hacer Mes y Gantt juntos en dos partes. Probé ambas vistas en computadora y celular.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Un test del Gantt fallaba porque el nombre del proyecto aparece dos veces a propósito (en la columna fija y dentro de la barra); se ajustó el test para buscarlo en la columna.
+  - Para no gastar tanto contexto en sesiones largas, se creó `CLAUDE.md` con el estado del proyecto y la forma de trabajar.

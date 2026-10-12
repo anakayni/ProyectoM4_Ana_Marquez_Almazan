@@ -211,7 +211,7 @@ Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fas
 
 ## v2 en desarrollo (rama `v2`)
 
-Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial. **Etapa 4 (lista):** Equipo y Mi perfil con foto. **Etapa 5 (lista):** Proyectos y tareas en tabla.
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial. **Etapa 4 (lista):** Equipo y Mi perfil con foto. **Etapa 5 (lista):** Proyectos y tareas en tabla. **Etapa 6 (lista):** Calendario con vistas Mes y Gantt.
 
 ### Entornos
 
@@ -296,6 +296,13 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Accesibilidad:** el texto atenuado y los placeholders tienen contraste ≥ 4.5:1, verificado por un test. La letra de las etiquetas de proyecto es blanca o negra según el color, porque solo esas dos garantizan 4.5:1 sobre cualquier color.
 - Del mockup de referencia no se construyó lo que no tiene datos reales (latencia, almacenamiento, SLA, "PRO").
 
+### Calendario (etapa 6)
+
+- **Mes:** las tareas aparecen en su día de vencimiento (con el color de su proyecto, tachadas si están hechas, en rojo si están vencidas) junto al inicio y fin de cada proyecto. "+" en cada día crea una tarea con esa fecha; "+N más" abre el día completo; clic abre el mismo panel editable. En el celular se ve como agenda.
+- **Gantt:** una fila por proyecto con su barra de inicio a fin (color, % real, "Atrasado") y las tareas como ◆ en su vencimiento; línea de "Hoy", ventanas de 5 semanas, filtro de archivados. Las barras y ◆ tienen etiquetas completas para lectores de pantalla.
+- Filtros comunes: Mías / Todo el equipo / Sin asignar, Proyecto y "Ocultar hechas" (recordado).
+- Usa solo datos existentes (vencimiento de tareas y fechas de proyectos). Del mockup de referencia no se construyó lo que no tiene datos reales (sprints, despliegues, guardias, hitos propios) ni arrastrar para cambiar fechas.
+
 ### Comandos nuevos
 
 | Script | Qué hace |
@@ -304,7 +311,7 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
 | `npm run migrate-tasks` | Migra las tareas al formato actual (estado, proyecto, número, subtareas) con auditoría y crea el contador (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 288 de la app (`npm test`) y 56 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 335 de la app (`npm test`) y 56 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
 
 ## Mejoras futuras
 
