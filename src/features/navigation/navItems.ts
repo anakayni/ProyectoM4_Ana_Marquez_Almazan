@@ -13,7 +13,7 @@ export type NavItem = { key: NavKey; label: string; shortLabel: string; icon: Lu
 export function navItems(_profile: UserProfile): NavItem[] {
   return [
     { key: 'tasks', label: 'Mis tareas', shortLabel: 'Tareas', icon: ListChecks, to: '/tasks' },
-    { key: 'projects', label: 'Proyectos', shortLabel: 'Proyectos', icon: FolderKanban, to: null },
+    { key: 'projects', label: 'Proyectos', shortLabel: 'Proyectos', icon: FolderKanban, to: '/projects' },
     { key: 'calendar', label: 'Calendario', shortLabel: 'Calendario', icon: CalendarDays, to: null },
     { key: 'team', label: 'Equipo', shortLabel: 'Equipo', icon: Users, to: '/team' },
     { key: 'settings', label: 'Ajustes', shortLabel: 'Ajustes', icon: Settings, to: null },

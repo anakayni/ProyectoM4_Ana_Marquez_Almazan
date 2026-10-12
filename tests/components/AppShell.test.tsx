@@ -56,15 +56,15 @@ describe('AppShell', () => {
 
   it('las secciones pendientes están desactivadas con "Próximamente"', () => {
     const sidebar = renderAt('/tasks');
-    expect(sidebar.queryByRole('link', { name: /Proyectos/ })).not.toBeInTheDocument();
-    expect(sidebar.getAllByText('Próximamente')).toHaveLength(3);
+    expect(sidebar.queryByRole('link', { name: /Calendario/ })).not.toBeInTheDocument();
+    expect(sidebar.getAllByText('Próximamente')).toHaveLength(2);
   });
 
   it('un miembro también entra a Equipo', () => {
     asRole('member');
     const sidebar = renderAt('/tasks');
     expect(sidebar.getByRole('link', { name: 'Equipo' })).toBeInTheDocument();
-    expect(sidebar.getAllByText('Próximamente')).toHaveLength(3);
+    expect(sidebar.getAllByText('Próximamente')).toHaveLength(2);
   });
 
   it('el admin navega a Equipo', async () => {
@@ -82,8 +82,8 @@ describe('AppShell', () => {
   it('tocar una pestaña pendiente muestra "Próximamente"', async () => {
     renderAt('/tasks');
     // En las pestañas las secciones pendientes son botones; en el menú lateral, texto sin acción.
-    await userEvent.click(screen.getByRole('button', { name: /Proyectos/ }));
-    expect(screen.getByRole('status')).toHaveTextContent('Proyectos: próximamente.');
+    await userEvent.click(screen.getByRole('button', { name: /Calendario/ }));
+    expect(screen.getByRole('status')).toHaveTextContent('Calendario: próximamente.');
   });
 
   it('el celular tiene menú de cuenta', () => {
