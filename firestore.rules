@@ -23,6 +23,7 @@ service cloud.firestore {
       return type == 'task' ? /databases/$(database)/documents/tasks/$(id)
         : type == 'invitation' ? /databases/$(database)/documents/invitations/$(id)
         : type == 'project' ? /databases/$(database)/documents/projects/$(id)
+        : type == 'settings' ? /databases/$(database)/documents/settings/$(id)
         : /databases/$(database)/documents/users/$(id);
     }
     function audited(type, id, rev) {
@@ -35,7 +36,7 @@ service cloud.firestore {
       let d = request.resource.data;
       let path = entityPath(d.entityType, d.entityId);
       return d.keys().hasOnly(['entityType', 'entityId', 'rev', 'action', 'actorId', 'at', 'before', 'after'])
-        && d.entityType in ['task', 'invitation', 'user', 'project']
+        && d.entityType in ['task', 'invitation', 'user', 'project', 'settings']
         && logId == d.entityType + '_' + d.entityId + '_' + string(d.rev)
         && d.actorId == request.auth.uid
         && d.at == request.time
@@ -174,6 +175,29 @@ service cloud.firestore {
         && nextRev()
         && audited('project', projectId, request.resource.data.rev);
       allow delete: if isAdmin() && audited('project', projectId, resource.data.rev + 1);
+    }
+
+    // ─── Ajustes del espacio (lectura pública: el login muestra nombre, logo y colores) ───
+    function validSettings(d) {
+      return d.keys().hasOnly(['name', 'logo', 'palette', 'taskPrefix', 'updatedAt', 'updatedBy', 'rev'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 60
+        && (d.logo == null || (d.logo is string && d.logo.size() <= 100000 && d.logo.matches('^data:image/png;base64,[A-Za-z0-9+/=]+$')))
+        && d.palette is list && d.palette.size() == 5
+        && d.palette[0].matches('^#[0-9A-Fa-f]{6}$') && d.palette[1].matches('^#[0-9A-Fa-f]{6}$')
+        && d.palette[2].matches('^#[0-9A-Fa-f]{6}$') && d.palette[3].matches('^#[0-9A-Fa-f]{6}$')
+        && d.palette[4].matches('^#[0-9A-Fa-f]{6}$')
+        && d.taskPrefix is string && d.taskPrefix.matches('^[A-Z0-9]{1,5}$')
+        && d.rev is int
+        && d.updatedBy == request.auth.uid
+        && d.updatedAt == request.time;
+    }
+
+    match /settings/workspace {
+      allow read: if true;
+      allow create: if isAdmin() && validSettings(request.resource.data) && request.resource.data.rev == 1
+        && audited('settings', 'workspace', 1);
+      allow update: if isAdmin() && validSettings(request.resource.data) && nextRev()
+        && audited('settings', 'workspace', request.resource.data.rev);
     }
 
     // ─── Invitaciones (ID = email en minúsculas) ──────────────────

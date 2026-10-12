@@ -1,4 +1,4 @@
-export type EntityType = 'task' | 'invitation' | 'user' | 'project';
+export type EntityType = 'task' | 'invitation' | 'user' | 'project' | 'settings';
 export type AuditAction = 'create' | 'update' | 'delete';
 
 /** Foto de un documento tal como estaba guardado en Firestore. */
