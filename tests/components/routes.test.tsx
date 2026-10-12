@@ -12,7 +12,7 @@ vi.mock('@/pages/RegisterPage', () => ({ RegisterPage: () => <h1>Registro</h1> }
 vi.mock('@/pages/VerifyEmailPage', () => ({ VerifyEmailPage: () => <h1>Confirma tu email</h1> }));
 vi.mock('@/pages/NoAccessPage', () => ({ NoAccessPage: () => <h1>Sin acceso</h1> }));
 vi.mock('@/pages/TasksPage', () => ({ TasksPage: () => <h1>Mis tareas</h1> }));
-vi.mock('@/pages/InvitePage', () => ({ InvitePage: () => <h1>Equipo</h1> }));
+vi.mock('@/pages/TeamPage', () => ({ TeamPage: () => <h1>Equipo</h1> }));
 vi.mock('@/components/layout/AppShell', async () => {
   const { Outlet } = await import('react-router');
   return { AppShell: () => <div data-testid="shell"><Outlet /></div> };
@@ -72,11 +72,11 @@ describe('rutas por estado de acceso', () => {
     expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
   });
 
-  it('un miembro no entra a Equipo', () => {
+  it('un miembro entra a Equipo', () => {
     authState.access = 'active';
     authState.profile = profile('member');
     renderAt('/team');
-    expect(screen.getByRole('heading', { name: 'Mis tareas' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Equipo' })).toBeInTheDocument();
   });
 
   it('un admin entra a Equipo', () => {

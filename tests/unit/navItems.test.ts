@@ -18,10 +18,8 @@ describe('navItems', () => {
     expect(find(role, 'tasks').to).toBe('/tasks');
   });
 
-  it('Equipo está disponible solo para el admin', () => {
-    expect(find('admin', 'team').to).toBe('/team');
-    expect(find('member', 'team').to).toBeNull();
-    expect(find('viewer', 'team').to).toBeNull();
+  it.each(['admin', 'member', 'viewer'] as const)('Equipo está disponible para %s', (role) => {
+    expect(find(role, 'team').to).toBe('/team');
   });
 
   it.each(['projects', 'calendar', 'settings'])('%s es "Próximamente" para todos', (key) => {

@@ -1,12 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
-import { InvitePage } from '@/pages/InvitePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NoAccessPage } from '@/pages/NoAccessPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { TasksPage } from '@/pages/TasksPage';
+import { TeamPage } from '@/pages/TeamPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
-import { AdminRoute } from './AdminRoute';
 import { RequireAccess } from './RequireAccess';
 
 /** Rutas de la app (sin el router, para poder testearlas con MemoryRouter). */
@@ -23,7 +22,7 @@ export function AppRoutes() {
       {/* Páginas internas: comparten el marco con el menú */}
       <Route element={<RequireAccess allow={['active']}><AppShell /></RequireAccess>}>
         <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/team" element={<AdminRoute><InvitePage /></AdminRoute>} />
+        <Route path="/team" element={<TeamPage />} />
       </Route>
       <Route path="/team/invite" element={<Navigate to="/team" replace />} />
       <Route path="*" element={<Navigate to="/tasks" replace />} />

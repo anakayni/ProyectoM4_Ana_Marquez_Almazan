@@ -59,11 +59,11 @@ describe('AppShell', () => {
     expect(sidebar.getAllByText('Próximamente')).toHaveLength(3);
   });
 
-  it('para un miembro, Equipo también es "Próximamente"', () => {
+  it('un miembro también entra a Equipo', () => {
     asRole('member');
     const sidebar = renderAt('/tasks');
-    expect(sidebar.queryByRole('link', { name: /Equipo/ })).not.toBeInTheDocument();
-    expect(sidebar.getAllByText('Próximamente')).toHaveLength(4);
+    expect(sidebar.getByRole('link', { name: 'Equipo' })).toBeInTheDocument();
+    expect(sidebar.getAllByText('Próximamente')).toHaveLength(3);
   });
 
   it('el admin navega a Equipo', async () => {
