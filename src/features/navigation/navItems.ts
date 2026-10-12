@@ -14,7 +14,7 @@ export function navItems(_profile: UserProfile): NavItem[] {
   return [
     { key: 'tasks', label: 'Mis tareas', shortLabel: 'Tareas', icon: ListChecks, to: '/tasks' },
     { key: 'projects', label: 'Proyectos', shortLabel: 'Proyectos', icon: FolderKanban, to: '/projects' },
-    { key: 'calendar', label: 'Calendario', shortLabel: 'Calendario', icon: CalendarDays, to: null },
+    { key: 'calendar', label: 'Calendario', shortLabel: 'Calendario', icon: CalendarDays, to: '/calendar' },
     { key: 'team', label: 'Equipo', shortLabel: 'Equipo', icon: Users, to: '/team' },
     { key: 'settings', label: 'Ajustes', shortLabel: 'Ajustes', icon: Settings, to: null },
   ];

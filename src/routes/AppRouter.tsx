@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
+import { CalendarPage } from '@/pages/CalendarPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NoAccessPage } from '@/pages/NoAccessPage';
 import { ProjectPage } from '@/pages/ProjectPage';
@@ -26,6 +27,7 @@ export function AppRoutes() {
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:id" element={<ProjectPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/team" element={<TeamPage />} />
       </Route>
       <Route path="/team/invite" element={<Navigate to="/team" replace />} />

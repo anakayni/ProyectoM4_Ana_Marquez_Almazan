@@ -26,7 +26,11 @@ describe('navItems', () => {
     expect(find(role, 'projects').to).toBe('/projects');
   });
 
-  it.each(['calendar', 'settings'])('%s es "Próximamente" para todos', (key) => {
+  it.each(['admin', 'member', 'viewer'] as const)('Calendario está disponible para %s', (role) => {
+    expect(find(role, 'calendar').to).toBe('/calendar');
+  });
+
+  it.each(['settings'])('%s es "Próximamente" para todos', (key) => {
     expect(find('admin', key).to).toBeNull();
   });
 

@@ -13,6 +13,7 @@ vi.mock('@/pages/VerifyEmailPage', () => ({ VerifyEmailPage: () => <h1>Confirma 
 vi.mock('@/pages/NoAccessPage', () => ({ NoAccessPage: () => <h1>Sin acceso</h1> }));
 vi.mock('@/pages/TasksPage', () => ({ TasksPage: () => <h1>Mis tareas</h1> }));
 vi.mock('@/pages/TeamPage', () => ({ TeamPage: () => <h1>Equipo</h1> }));
+vi.mock('@/pages/CalendarPage', () => ({ CalendarPage: () => <h1>Calendario</h1> }));
 vi.mock('@/pages/ProjectsPage', () => ({ ProjectsPage: () => <h1>Proyectos</h1> }));
 vi.mock('@/pages/ProjectPage', () => ({ ProjectPage: () => <h1>Proyecto</h1> }));
 vi.mock('@/components/layout/AppShell', async () => {
