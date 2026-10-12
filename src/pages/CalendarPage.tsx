@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { DayDialog } from '@/components/calendar/DayDialog';
+import { GanttView } from '@/components/calendar/GanttView';
 import { MonthView } from '@/components/calendar/MonthView';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TaskDialogs } from '@/components/tasks/TaskDialogs';
@@ -11,6 +12,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
+import { addDays, ganttRange, rangeAround, rangeLabel, type GanttRange } from '@/features/calendar/gantt';
 import { addMonths, agendaDays, monthGrid, monthLabel, projectMarkers, tasksByDay } from '@/features/calendar/month';
 import { makeProjectOf } from '@/features/projects/projectOf';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
@@ -39,6 +41,9 @@ export function CalendarPage() {
   const [scope, setScope] = usePreference<TaskScope>('matecode.scope.calendar', 'team', SCOPES);
   const [hideDone, setHideDone] = usePreference<'yes' | 'no'>('matecode.calendar.hideDone', 'no', ['yes', 'no']);
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>('all');
+  const [view, setView] = usePreference<'month' | 'gantt'>('matecode.calendar.view', 'month', ['month', 'gantt']);
+  const [range, setRange] = useState<GanttRange>(() => rangeAround(today));
+  const [withArchived, setWithArchived] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState<Partial<TaskInput> | null>(null);
   const [openDay, setOpenDay] = useState<string | null>(null);
@@ -52,6 +57,9 @@ export function CalendarPage() {
   );
   const markedProjects =
     projectFilter === 'none' ? [] : projects.filter((p) => !p.archived && (projectFilter === 'all' || p.id === projectFilter));
+  const ganttProjects = projectFilter === 'none'
+    ? []
+    : projects.filter((p) => (withArchived || !p.archived) && (projectFilter === 'all' || p.id === projectFilter));
   const grid = monthGrid(cursor.year, cursor.month, today);
   const byDay = tasksByDay(visible);
   const markers = projectMarkers(markedProjects);
@@ -60,18 +68,41 @@ export function CalendarPage() {
 
   return (
     <>
-      <PageHeader title="Calendario" />
+      <PageHeader
+        title="Calendario"
+        actions={
+          <SegmentedControl
+            label="Vista del calendario" name="calendar-view" value={view} onChange={setView}
+            options={[{ value: 'month', label: 'Mes' }, { value: 'gantt', label: 'Gantt' }]}
+          />
+        }
+      />
       <main className={styles.page}>
         <div className={styles.toolbar}>
           <div className={styles.month}>
-            <Button size="sm" variant="secondary" aria-label="Mes anterior" onClick={() => setCursor(addMonths(cursor.year, cursor.month, -1))}>
-              <ChevronLeft size={16} aria-hidden="true" />
-            </Button>
-            <h2 className={styles.monthTitle} aria-live="polite">{monthLabel(cursor.year, cursor.month)}</h2>
-            <Button size="sm" variant="secondary" aria-label="Mes siguiente" onClick={() => setCursor(addMonths(cursor.year, cursor.month, 1))}>
-              <ChevronRight size={16} aria-hidden="true" />
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setCursor(current)}>Hoy</Button>
+            {view === 'month' ? (
+              <>
+                <Button size="sm" variant="secondary" aria-label="Mes anterior" onClick={() => setCursor(addMonths(cursor.year, cursor.month, -1))}>
+                  <ChevronLeft size={16} aria-hidden="true" />
+                </Button>
+                <h2 className={styles.monthTitle} aria-live="polite">{monthLabel(cursor.year, cursor.month)}</h2>
+                <Button size="sm" variant="secondary" aria-label="Mes siguiente" onClick={() => setCursor(addMonths(cursor.year, cursor.month, 1))}>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setCursor(current)}>Hoy</Button>
+              </>
+            ) : (
+              <>
+                <Button size="sm" variant="secondary" aria-label="Semanas anteriores" onClick={() => setRange(ganttRange(addDays(range.start, -35)))}>
+                  <ChevronLeft size={16} aria-hidden="true" />
+                </Button>
+                <h2 className={styles.monthTitle} aria-live="polite">{rangeLabel(range)}</h2>
+                <Button size="sm" variant="secondary" aria-label="Semanas siguientes" onClick={() => setRange(ganttRange(addDays(range.start, 35)))}>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setRange(rangeAround(today))}>Hoy</Button>
+              </>
+            )}
           </div>
           <div className={styles.filters}>
             <SegmentedControl
@@ -90,12 +121,24 @@ export function CalendarPage() {
               <input type="checkbox" checked={hideDone === 'yes'} onChange={(e) => setHideDone(e.target.checked ? 'yes' : 'no')} />
               Ocultar hechas
             </label>
+            {view === 'gantt' && (
+              <label className={styles.check}>
+                <input type="checkbox" checked={withArchived} onChange={(e) => setWithArchived(e.target.checked)} />
+                Incluir archivados
+              </label>
+            )}
           </div>
         </div>
 
         {loading && <Spinner label="Cargando tareas…" />}
         {error && <Alert kind="error">{error} <Button size="sm" variant="ghost" onClick={retry}>Reintentar</Button></Alert>}
-        {!loading && !error && (
+        {!loading && !error && view === 'gantt' && (
+          <GanttView
+            projects={ganttProjects} tasks={visible} range={range} today={today} nameOf={nameOf}
+            onOpenTask={(t) => openTask(t.id)}
+          />
+        )}
+        {!loading && !error && view === 'month' && (
           <>
             <MonthView
               grid={grid} byDay={byDay} markers={markers} projectOf={projectOf} today={today}
