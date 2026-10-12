@@ -1,4 +1,4 @@
-import { collection, doc, runTransaction, serverTimestamp, writeBatch, type DocumentData, type Firestore } from 'firebase/firestore';
+import { collection, doc, runTransaction, serverTimestamp, type DocumentData, type Firestore } from 'firebase/firestore';
 import type { TaskInput, TaskPatch } from '@/types/task';
 import { auditEntry, auditRef } from './audit';
 
@@ -6,6 +6,7 @@ function cleanPatch(patch: TaskPatch): TaskPatch {
   const cleaned: TaskPatch = { ...patch };
   if (cleaned.title !== undefined) cleaned.title = cleaned.title.trim();
   if (cleaned.description !== undefined) cleaned.description = cleaned.description.trim();
+  if (cleaned.subtasks !== undefined) cleaned.subtasks = cleaned.subtasks.map((s) => ({ ...s, title: s.title.trim() }));
   return cleaned;
 }
 
@@ -19,29 +20,37 @@ function completion(before: DocumentData, patch: TaskPatch, actorId: string) {
 
 export async function createTask(db: Firestore, actorId: string, input: TaskInput): Promise<string> {
   const ref = doc(collection(db, 'tasks'));
-  const data = {
-    createdBy: actorId,
-    title: input.title.trim(),
-    description: input.description.trim(),
-    status: 'todo',
-    assigneeId: input.assigneeId,
-    projectId: input.projectId,
-    completedBy: null,
-    completedAt: null,
-    priority: input.priority,
-    dueDate: input.dueDate,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    updatedBy: actorId,
-    rev: 1,
-  };
-  const batch = writeBatch(db);
-  batch.set(ref, data);
-  batch.set(
-    auditRef(db, 'task', ref.id, 1),
-    auditEntry({ type: 'task', id: ref.id, rev: 1, action: 'create', actorId, before: null, after: data }),
-  );
-  await batch.commit();
+  const counter = doc(db, 'counters', 'tasks');
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(counter);
+    if (!snap.exists()) throw new Error('Falta el contador de tareas: corre "npm run migrate-tasks".');
+    const number: number = snap.data().next;
+    const data = {
+      createdBy: actorId,
+      title: input.title.trim(),
+      description: input.description.trim(),
+      status: 'todo',
+      assigneeId: input.assigneeId,
+      projectId: input.projectId,
+      completedBy: null,
+      completedAt: null,
+      number,
+      subtasks: [],
+      priority: input.priority,
+      dueDate: input.dueDate,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedBy: actorId,
+      rev: 1,
+    };
+    // Si dos personas crean a la vez, Firestore reintenta la transacción y el número no se repite.
+    tx.update(counter, { next: number + 1 });
+    tx.set(ref, data);
+    tx.set(
+      auditRef(db, 'task', ref.id, 1),
+      auditEntry({ type: 'task', id: ref.id, rev: 1, action: 'create', actorId, before: null, after: data }),
+    );
+  });
   return ref.id;
 }
 

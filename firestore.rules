@@ -58,18 +58,22 @@ service cloud.firestore {
     // ─── Tareas (todo el equipo las ve) ───────────────────────────
     function validTask(d) {
       return d.keys().hasOnly(['createdBy', 'title', 'description', 'status', 'assigneeId', 'completedBy', 'completedAt',
-                               'projectId', 'priority', 'dueDate', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
+                               'projectId', 'number', 'subtasks', 'priority', 'dueDate', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
         && d.title is string && d.title.size() > 0 && d.title.size() <= 80
         && d.description is string && d.description.size() <= 500
         && d.status in ['todo', 'doing', 'done']
         && (d.assigneeId == null || d.assigneeId is string)
         && (d.projectId == null || d.projectId is string)
+        && d.number is int && d.number >= 1
+        && d.subtasks is list && d.subtasks.size() <= 20
         && d.priority in ['alta', 'media', 'baja']
         && (d.dueDate == null || (d.dueDate is string && d.dueDate.size() == 10))
         && d.rev is int
         && d.updatedBy == request.auth.uid
         && d.updatedAt == request.time;
     }
+
+    function counterPath() { return /databases/$(database)/documents/counters/tasks; }
 
     function projectPath(id) { return /databases/$(database)/documents/projects/$(id); }
 
@@ -110,11 +114,14 @@ service cloud.firestore {
         && validAssignee(request.resource.data.assigneeId)
         && completionOnCreate(request.resource.data)
         && validProjectRef(request.resource.data.projectId)
+        && request.resource.data.number == get(counterPath()).data.next
+        && getAfter(counterPath()).data.next == request.resource.data.number + 1
         && audited('task', taskId, 1);
       allow update: if canEdit()
         && validTask(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.number == resource.data.number
         && (!changed().hasAny(['assigneeId']) || validAssignee(request.resource.data.assigneeId))
         && completionOnUpdate(request.resource.data, resource.data)
         && (!changed().hasAny(['projectId']) || validProjectRef(request.resource.data.projectId))
@@ -122,6 +129,14 @@ service cloud.firestore {
         && audited('task', taskId, request.resource.data.rev);
       allow delete: if (isAdmin() || (hasRole(['member']) && resource.data.createdBy == request.auth.uid))
         && audited('task', taskId, resource.data.rev + 1);
+    }
+
+    // ─── Contador de números de tarea (lo crea la migración) ──────
+    match /counters/tasks {
+      allow read: if isActive();
+      allow update: if canEdit()
+        && request.resource.data.keys().hasOnly(['next'])
+        && request.resource.data.next == resource.data.next + 1;
     }
 
     // ─── Proyectos ────────────────────────────────────────────────

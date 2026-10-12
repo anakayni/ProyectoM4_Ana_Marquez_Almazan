@@ -39,3 +39,8 @@ export async function seedUser(env: RulesTestEnvironment, uid: string, role: Rol
     }),
   );
 }
+
+/** El contador de números de tarea (en producción lo crea la migración). */
+export async function seedCounter(env: RulesTestEnvironment, next = 1): Promise<void> {
+  await seed(env, (db) => setDoc(doc(db, 'counters', 'tasks'), { next }));
+}

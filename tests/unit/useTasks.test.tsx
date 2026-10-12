@@ -20,7 +20,7 @@ vi.mock('@/services/tasks.service', () => ({
 import * as service from '@/services/tasks.service';
 import { useTasks } from '@/hooks/useTasks';
 
-const task: Task = { id: 't1', createdBy: 'u1', updatedBy: 'u1', rev: 1, title: 'Comprar yerba', description: '', status: 'todo', assigneeId: null, completedBy: null, completedAt: null, projectId: null, priority: 'media', dueDate: null, createdAt: 1 };
+const task: Task = { id: 't1', createdBy: 'u1', updatedBy: 'u1', rev: 1, title: 'Comprar yerba', description: '', status: 'todo', assigneeId: null, completedBy: null, completedAt: null, projectId: null, number: 1, subtasks: [], priority: 'media', dueDate: null, createdAt: 1 };
 
 describe('useTasks', () => {
   beforeEach(() => vi.clearAllMocks());

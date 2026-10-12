@@ -1,4 +1,4 @@
-// Convierte las tareas al formato de la etapa 3 (estado, responsable, completado) dejando auditoría.
+// Convierte las tareas al formato actual (estado, responsable, completado, proyecto, número, subtareas) dejando auditoría.
 // Uso: npm run migrate-tasks                              (solo matecode-tasks-dev)
 //      npm run migrate-tasks -- --confirmar-produccion    (al integrar la v2 a main)
 import { cert, initializeApp } from 'firebase-admin/app';
@@ -23,13 +23,23 @@ const db = getFirestore(app);
 // firebase-admin no pasa por las Security Rules: la auditoría la escribe el script con actor "system".
 let migrated = 0;
 let skipped = 0;
-for (const snap of (await db.collection('tasks').get()).docs) {
+// Orden de creación: así los números siguen el orden en que se crearon las tareas.
+const docs = (await db.collection('tasks').get()).docs.sort(
+  (a, b) => (a.data().createdAt?.toMillis?.() ?? 0) - (b.data().createdAt?.toMillis?.() ?? 0),
+);
+const counterRef = db.doc('counters/tasks');
+const counterSnap = await counterRef.get();
+const highest = Math.max(0, ...docs.map((d) => (typeof d.data().number === 'number' ? d.data().number : 0)));
+let next = Math.max(counterSnap.exists ? counterSnap.data().next : 1, highest + 1);
+
+for (const snap of docs) {
   const before = snap.data();
-  const result = migrateTask(before);
+  const result = migrateTask(before, next);
   if (!result) {
     skipped++;
     continue;
   }
+  if (result.data.number === next) next++;
   const after = { ...result.data, updatedAt: FieldValue.serverTimestamp() };
   const batch = db.batch();
   batch.set(snap.ref, after);
@@ -47,5 +57,7 @@ for (const snap of (await db.collection('tasks').get()).docs) {
   migrated++;
 }
 
-console.log(`✓ ${migrated} tareas migradas y ${skipped} ya estaban al día en ${e.FIREBASE_ADMIN_PROJECT_ID}.`);
+await counterRef.set({ next });
+
+console.log(`✓ ${migrated} tareas migradas y ${skipped} ya estaban al día en ${e.FIREBASE_ADMIN_PROJECT_ID} · próximo número: ${next}.`);
 process.exit(0);

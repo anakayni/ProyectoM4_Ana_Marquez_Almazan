@@ -5,7 +5,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { createInvitation } from '@/services/audited/invitations';
 import { createTask } from '@/services/audited/tasks';
-import { createEnv, dbAs, seedUser } from './helpers';
+import { createEnv, dbAs, seedCounter, seedUser } from './helpers';
 
 let env: Awaited<ReturnType<typeof createEnv>>;
 const input = { title: 'T', description: '', priority: 'media' as const, dueDate: null, assigneeId: null, projectId: null };
@@ -22,6 +22,7 @@ beforeEach(async () => {
   await seedUser(env, 'admin', 'admin');
   await seedUser(env, 'ana', 'member');
   await seedUser(env, 'vera', 'viewer');
+  await seedCounter(env);
 });
 
 describe('auditLog', () => {

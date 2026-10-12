@@ -3,7 +3,7 @@ import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firesto
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createProject, deleteProject, updateProject } from '@/services/audited/projects';
 import { createTask, updateTask } from '@/services/audited/tasks';
-import { createEnv, dbAs, seedUser } from './helpers';
+import { createEnv, dbAs, seedCounter, seedUser } from './helpers';
 
 let env: Awaited<ReturnType<typeof createEnv>>;
 const as = (uid: string) => dbAs(env, uid, `${uid}@test.com`);
@@ -23,6 +23,7 @@ beforeEach(async () => {
   await seedUser(env, 'admin', 'admin');
   await seedUser(env, 'ana', 'member');
   await seedUser(env, 'vera', 'viewer');
+  await seedCounter(env);
 });
 
 describe('proyectos', () => {

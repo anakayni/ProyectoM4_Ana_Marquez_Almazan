@@ -4,7 +4,7 @@ import type { Task, TaskStatus } from '@/types/task';
 
 const t = (status: TaskStatus): Task => ({
   id: Math.random().toString(), createdBy: 'x', updatedBy: 'x', rev: 1, title: 't', description: '', status, assigneeId: null,
-  completedBy: null, completedAt: null, projectId: 'p', priority: 'media', dueDate: null, createdAt: 1,
+  completedBy: null, completedAt: null, projectId: 'p', number: 1, subtasks: [], priority: 'media', dueDate: null, createdAt: 1,
 });
 const tasks = [t('done'), t('done'), t('done'), t('done'), t('doing'), t('doing'), t('doing'), t('todo'), t('todo'), t('todo')];
 

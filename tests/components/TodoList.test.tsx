@@ -6,8 +6,8 @@ import type { Task } from '@/types/task';
 
 const base = { createdBy: 'u', updatedBy: 'u', rev: 1, priority: 'media' as const, dueDate: null, createdAt: 1 };
 const tasks: Task[] = [
-  { ...base, id: '1', title: 'Comprar yerba', description: 'Dos kilos', status: 'todo', assigneeId: 'ana', completedBy: null, completedAt: null, projectId: null },
-  { ...base, id: '2', title: 'Pagar luz', description: '', status: 'done', assigneeId: null, completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime(), projectId: null },
+  { ...base, id: '1', title: 'Comprar yerba', description: 'Dos kilos', status: 'todo', assigneeId: 'ana', completedBy: null, completedAt: null, projectId: null, number: 1, subtasks: [] },
+  { ...base, id: '2', title: 'Pagar luz', description: '', status: 'done', assigneeId: null, completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime(), projectId: null, number: 1, subtasks: [] },
 ];
 const nameOf = (uid: string | null) => (uid === 'ana' ? 'Ana' : null);
 const portal = {

@@ -16,6 +16,8 @@ function toTask(snapshot: QueryDocumentSnapshot): Task {
     status: data.status,
     assigneeId: data.assigneeId ?? null,
     projectId: data.projectId ?? null,
+    number: data.number ?? 0,
+    subtasks: data.subtasks ?? [],
     completedBy: data.completedBy ?? null,
     completedAt: (data.completedAt as Timestamp | null)?.toMillis() ?? null,
     priority: data.priority ?? 'media',

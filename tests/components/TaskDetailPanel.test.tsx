@@ -9,7 +9,7 @@ import type { Task } from '@/types/task';
 
 const task: Task = {
   id: 't', createdBy: 'luis', updatedBy: 'ana', rev: 3, title: 'Revisar factura', description: 'Del proveedor',
-  status: 'done', assigneeId: 'ana', completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime(), projectId: null,
+  status: 'done', assigneeId: 'ana', completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime(), projectId: null, number: 1, subtasks: [],
   priority: 'alta', dueDate: null, createdAt: new Date(2026, 9, 3).getTime(),
 };
 const names: Record<string, string> = { ana: 'Ana', luis: 'Luis' };

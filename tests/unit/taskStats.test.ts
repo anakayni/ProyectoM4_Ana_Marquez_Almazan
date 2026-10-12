@@ -5,7 +5,7 @@ import type { Task, TaskStatus } from '@/types/task';
 const TODAY = '2026-10-08';
 const task = (id: string, status: TaskStatus, dueDate: string | null = null): Task => ({
   id, createdBy: 'x', updatedBy: 'x', rev: 1, title: id, description: '', status, assigneeId: null,
-  completedBy: null, completedAt: null, projectId: null, priority: 'media', dueDate, createdAt: 1,
+  completedBy: null, completedAt: null, projectId: null, number: 1, subtasks: [], priority: 'media', dueDate, createdAt: 1,
 });
 const tasks = [
   task('vencida', 'todo', '2026-10-07'),

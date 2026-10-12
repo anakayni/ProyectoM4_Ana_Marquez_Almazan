@@ -2,6 +2,12 @@ export type Priority = 'alta' | 'media' | 'baja';
 
 export type TaskStatus = 'todo' | 'doing' | 'done';
 
+export interface Subtask {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
 export interface Task {
   id: string;
   /** Quién la creó (ya no es "el dueño": todo el equipo ve todas las tareas) */
@@ -20,6 +26,10 @@ export interface Task {
   completedAt: number | null;
   /** Proyecto, o null = "Sin proyecto" */
   projectId: string | null;
+  /** Número correlativo del espacio (se muestra como MC-n) */
+  number: number;
+  /** Pasos dentro de la tarea (máximo 20) */
+  subtasks: Subtask[];
   priority: Priority;
   /** Fecha local en formato YYYY-MM-DD, o null si no tiene vencimiento */
   dueDate: string | null;
@@ -30,7 +40,7 @@ export interface Task {
 /** Campos que el usuario completa en el formulario */
 export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'assigneeId' | 'projectId'>;
 
-export type TaskPatch = Partial<TaskInput & Pick<Task, 'status'>>;
+export type TaskPatch = Partial<TaskInput & Pick<Task, 'status' | 'subtasks'>>;
 
 export type SortMode = 'recent' | 'due' | 'priority';
 

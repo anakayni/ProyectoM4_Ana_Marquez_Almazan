@@ -4,7 +4,7 @@ import type { Task } from '@/types/task';
 
 const task = (id: string, assigneeId: string | null): Task => ({
   id, createdBy: 'x', updatedBy: 'x', rev: 1, title: id, description: '', status: 'todo', assigneeId,
-  completedBy: null, completedAt: null, projectId: null, priority: 'media', dueDate: null, createdAt: 1,
+  completedBy: null, completedAt: null, projectId: null, number: 1, subtasks: [], priority: 'media', dueDate: null, createdAt: 1,
 });
 const tasks = [task('a', 'ana'), task('b', 'luis'), task('c', null)];
 

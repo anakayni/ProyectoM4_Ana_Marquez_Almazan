@@ -20,7 +20,7 @@ import { TaskWorkspace } from '@/components/tasks/TaskWorkspace';
 const me: UserProfile = { uid: 'ana', email: 'a@x.com', displayName: 'Ana', role: 'member', active: true, invitedBy: null, rev: 1 };
 const task = (id: string, projectId: string | null): Task => ({
   id, createdBy: 'ana', updatedBy: 'ana', rev: 1, title: `Tarea ${id}`, description: '', status: 'todo', assigneeId: 'ana',
-  completedBy: null, completedAt: null, projectId, priority: 'media', dueDate: null, createdAt: 1,
+  completedBy: null, completedAt: null, projectId, number: 1, subtasks: [], priority: 'media', dueDate: null, createdAt: 1,
 });
 
 describe('TaskWorkspace', () => {
