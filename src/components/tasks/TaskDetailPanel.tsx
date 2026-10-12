@@ -1,79 +1,231 @@
-import { useState } from 'react';
-import { ProjectTag } from '@/components/projects/ProjectTag';
+import { useState, type FormEvent } from 'react';
+import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { Field, fieldInputClass } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import type { ProjectOf } from '@/features/projects/projectOf';
-import type { NameOf } from '@/features/team/members';
-import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
-import { formatDay, formatDueDate } from '@/utils/formatDate';
-import { StatusSelect } from './StatusSelect';
+import { MAX_SUBTASKS, newSubtask, SUBTASK_TITLE_MAX, subtaskProgress } from '@/features/tasks/subtasks';
+import { formatTaskNumber } from '@/features/tasks/taskNumber';
+import type { AssigneeOption, NameOf } from '@/features/team/members';
+import type { Project } from '@/types/project';
+import {
+  PRIORITIES, PRIORITY_LABEL, STATUSES, STATUS_LABEL,
+  type Priority, type Subtask, type Task, type TaskPatch, type TaskStatus,
+} from '@/types/task';
+import { formatDay } from '@/utils/formatDate';
+import { validateTask } from '@/utils/validators';
 import styles from './TaskDetailPanel.module.css';
 import { TaskHistory } from './TaskHistory';
+
+type Draft = Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'dueDate' | 'assigneeId' | 'projectId' | 'subtasks'>;
+
+const FIELDS: (keyof Draft)[] = ['title', 'description', 'status', 'priority', 'dueDate', 'assigneeId', 'projectId', 'subtasks'];
+
+function toDraft(task: Task): Draft {
+  return {
+    title: task.title, description: task.description, status: task.status, priority: task.priority,
+    dueDate: task.dueDate, assigneeId: task.assigneeId, projectId: task.projectId, subtasks: task.subtasks,
+  };
+}
+
+/** Solo los campos que cambiaron respecto de la tarea guardada. */
+function changedFields(task: Task, draft: Draft): TaskPatch {
+  const before = toDraft(task);
+  const patch: Record<string, unknown> = {};
+  for (const field of FIELDS) {
+    if (JSON.stringify(before[field]) !== JSON.stringify(draft[field])) patch[field] = draft[field];
+  }
+  return patch as TaskPatch;
+}
 
 type Props = {
   task: Task;
   nameOf: NameOf;
   projectOf: ProjectOf;
+  assignees: AssigneeOption[];
+  projects: Project[];
   canEdit: boolean;
   canDelete: boolean;
   onClose: () => void;
-  onEdit: (task: Task) => void;
+  onSave: (patch: TaskPatch) => Promise<void>;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: TaskStatus) => void;
 };
 
-/** Todo sobre una tarea: datos, acciones según permisos e historial de cambios. */
-export function TaskDetailPanel({ task, nameOf, projectOf, canEdit, canDelete, onClose, onEdit, onDelete, onStatusChange }: Props) {
-  const [confirming, setConfirming] = useState(false);
-  const project = projectOf(task.projectId);
+/** Todo sobre una tarea, editable en el lugar: se guarda junto con "Guardar cambios". */
+export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, canEdit, canDelete, onClose, onSave, onDelete }: Props) {
+  const [draft, setDraft] = useState<Draft>(() => toDraft(task));
+  const [newTitle, setNewTitle] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
+  const set = (change: Partial<Draft>) => setDraft((d) => ({ ...d, ...change }));
+  const patch = changedFields(task, draft);
+  const dirty = Object.keys(patch).length > 0;
+  const progress = subtaskProgress(draft.subtasks);
+  const projectName = (id: string | null) => projectOf(id)?.name ?? null;
+
+  function requestClose() {
+    if (dirty) setConfirm('discard');
+    else onClose();
+  }
+
+  function updateSubtask(id: string, change: Partial<Subtask>) {
+    set({ subtasks: draft.subtasks.map((s) => (s.id === id ? { ...s, ...change } : s)) });
+  }
+
+  function addSubtask() {
+    const title = newTitle.trim();
+    if (!title || draft.subtasks.length >= MAX_SUBTASKS) return;
+    set({ subtasks: [...draft.subtasks, newSubtask(title)] });
+    setNewTitle('');
+  }
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    const errors = validateTask({ title: draft.title, description: draft.description });
+    const problem = errors.title ?? errors.description ?? null;
+    setError(problem);
+    if (problem || !dirty) return;
+    setSaving(true);
+    try {
+      await onSave(patch);
+    } catch (err) {
+      console.error('Error al guardar la tarea:', err);
+      setError('No pudimos guardar los cambios. Inténtalo de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
-    <Modal title={task.title} onClose={onClose} variant="panel">
-      <div className={styles.body}>
-        {task.description && <p className={styles.description}>{task.description}</p>}
-        <dl className={styles.facts}>
-          <dt>Estado</dt>
-          <dd><StatusSelect status={task.status} taskTitle={task.title} canEdit={canEdit} onChange={(s) => onStatusChange(task.id, s)} /></dd>
-          <dt>Responsable</dt>
-          <dd>{nameOf(task.assigneeId) ?? 'Sin asignar'}</dd>
-          <dt>Proyecto</dt>
-          <dd>{project ? <ProjectTag project={project} /> : 'Sin proyecto'}</dd>
-          <dt>Prioridad</dt>
-          <dd>{PRIORITY_LABEL[task.priority]}</dd>
-          <dt>Vence</dt>
-          <dd>{task.dueDate ? formatDueDate(task.dueDate) : 'Sin fecha'}</dd>
-          {task.completedAt !== null && (
-            <>
-              <dt>Hecha por</dt>
-              <dd>{nameOf(task.completedBy) ?? 'alguien'} · {formatDay(task.completedAt)}</dd>
-            </>
-          )}
-          <dt>Creada por</dt>
-          <dd>{nameOf(task.createdBy) ?? 'alguien'} · {formatDay(task.createdAt)}</dd>
-        </dl>
+    <Modal title={task.title} onClose={requestClose} variant="panel">
+      <form className={styles.body} onSubmit={save} noValidate>
+        <p className={styles.meta}>
+          <span className={styles.number}>{formatTaskNumber(task.number)}</span>
+          Creada por {nameOf(task.createdBy) ?? 'alguien'} · {formatDay(task.createdAt)}
+          {task.completedAt !== null && ` · Hecha por ${nameOf(task.completedBy) ?? 'alguien'} · ${formatDay(task.completedAt)}`}
+        </p>
+        {error && <Alert kind="error">{error}</Alert>}
 
-        {(canEdit || canDelete) && (
-          <div className={styles.actions}>
-            {confirming ? (
-              <>
-                <span className={styles.confirmText}>¿Eliminar esta tarea?</span>
-                <Button size="sm" variant="danger" onClick={() => onDelete(task.id)}>Sí, eliminar</Button>
-                <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Button>
-              </>
-            ) : (
-              <>
-                {canEdit && <Button size="sm" variant="secondary" onClick={() => onEdit(task)}>Editar</Button>}
-                {canDelete && <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>Eliminar</Button>}
-              </>
-            )}
+        <fieldset className={styles.fields} disabled={!canEdit}>
+          <legend className="visually-hidden">Datos de la tarea</legend>
+          <Field id="panel-title" label="Título">
+            <input id="panel-title" className={fieldInputClass} maxLength={80} value={draft.title} onChange={(e) => set({ title: e.target.value })} />
+          </Field>
+          <div className={styles.grid}>
+            <Field id="panel-status" label="Estado">
+              <select id="panel-status" className={fieldInputClass} value={draft.status} onChange={(e) => set({ status: e.target.value as TaskStatus })}>
+                {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+              </select>
+            </Field>
+            <Field id="panel-priority" label="Prioridad">
+              <select id="panel-priority" className={fieldInputClass} value={draft.priority} onChange={(e) => set({ priority: e.target.value as Priority })}>
+                {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
+              </select>
+            </Field>
+            <Field id="panel-due" label="Vence">
+              <input
+                id="panel-due" type="date" className={fieldInputClass}
+                value={draft.dueDate ?? ''} onChange={(e) => set({ dueDate: e.target.value || null })}
+              />
+            </Field>
+            <Field id="panel-project" label="Proyecto">
+              <select id="panel-project" className={fieldInputClass} value={draft.projectId ?? ''} onChange={(e) => set({ projectId: e.target.value || null })}>
+                <option value="">Sin proyecto</option>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
+              </select>
+            </Field>
+          </div>
+          <Field id="panel-assignee" label="Responsable">
+            <select id="panel-assignee" className={fieldInputClass} value={draft.assigneeId ?? ''} onChange={(e) => set({ assigneeId: e.target.value || null })}>
+              <option value="">Sin asignar</option>
+              {assignees.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
+            </select>
+          </Field>
+          <Field id="panel-description" label="Descripción">
+            <textarea
+              id="panel-description" className={fieldInputClass} maxLength={500}
+              value={draft.description} onChange={(e) => set({ description: e.target.value })}
+            />
+          </Field>
+
+          <section aria-labelledby="subtasks-title" className={styles.subtasks}>
+            <h3 id="subtasks-title" className={styles.sectionTitle}>
+              <span>Subtareas ({progress.done} de {progress.total})</span>
+              {progress.total > 0 && <span className={styles.percent}>{progress.percent}%</span>}
+            </h3>
+            <ul className={styles.subList}>
+              {draft.subtasks.map((s) => (
+                <li key={s.id} className={styles.subItem}>
+                  <label className={styles.subLabel}>
+                    <input type="checkbox" checked={s.done} onChange={(e) => updateSubtask(s.id, { done: e.target.checked })} />
+                    <span className={s.done ? styles.subDone : undefined}>{s.title}</span>
+                  </label>
+                  {canEdit && (
+                    <button
+                      type="button" className={styles.subRemove} aria-label={`Quitar la subtarea «${s.title}»`}
+                      onClick={() => set({ subtasks: draft.subtasks.filter((x) => x.id !== s.id) })}
+                    >
+                      ×
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {canEdit &&
+              (draft.subtasks.length < MAX_SUBTASKS ? (
+                <div className={styles.subAdd}>
+                  <label className="visually-hidden" htmlFor="panel-new-subtask">Nueva subtarea</label>
+                  <input
+                    id="panel-new-subtask" className={fieldInputClass} maxLength={SUBTASK_TITLE_MAX} placeholder="+ Agregar subtarea"
+                    value={newTitle} onChange={(e) => setNewTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addSubtask();
+                      }
+                    }}
+                  />
+                  <Button size="sm" variant="secondary" onClick={addSubtask}>Agregar</Button>
+                </div>
+              ) : (
+                <p className={styles.hint}>Llegaste al máximo de {MAX_SUBTASKS} subtareas.</p>
+              ))}
+          </section>
+        </fieldset>
+
+        {confirm === 'discard' && (
+          <div className={styles.confirm} role="group" aria-label="Confirmar descarte">
+            <p>¿Descartar los cambios?</p>
+            <div className={styles.actions}>
+              <Button size="sm" variant="ghost" onClick={() => setConfirm(null)}>Seguir editando</Button>
+              <Button size="sm" variant="danger" onClick={onClose}>Descartar</Button>
+            </div>
+          </div>
+        )}
+        {confirm === 'delete' && (
+          <div className={styles.confirm} role="group" aria-label="Confirmar eliminación">
+            <p>¿Eliminar esta tarea? No se puede deshacer.</p>
+            <div className={styles.actions}>
+              <Button size="sm" variant="ghost" onClick={() => setConfirm(null)}>Cancelar</Button>
+              <Button size="sm" variant="danger" onClick={() => onDelete(task.id)}>Sí, eliminar</Button>
+            </div>
           </div>
         )}
 
+        <div className={styles.footer}>
+          {canDelete && <Button size="sm" variant="ghost" className={styles.delete} onClick={() => setConfirm('delete')}>Eliminar</Button>}
+          <div className={styles.actions}>
+            <Button size="sm" variant="ghost" onClick={requestClose}>Cerrar</Button>
+            {canEdit && <Button size="sm" type="submit" loading={saving} disabled={!dirty}>Guardar cambios</Button>}
+          </div>
+        </div>
+
         <section aria-labelledby="history-title" className={styles.history}>
           <h3 id="history-title" className={styles.sectionTitle}>Historial</h3>
-          <TaskHistory key={task.id} taskId={task.id} nameOf={nameOf} />
+          <TaskHistory key={task.id} taskId={task.id} nameOf={nameOf} projectNameOf={projectName} />
         </section>
-      </div>
+      </form>
     </Modal>
   );
 }

@@ -22,6 +22,11 @@ export function Modal({ title, onClose, children, variant = 'center' }: ModalPro
     <dialog
       ref={ref} className={`${styles.dialog} ${variant === 'panel' ? styles.panel : ''}`}
       aria-labelledby="modal-title" onClose={onClose}
+      onCancel={(event) => {
+        // Escape: en vez de que el navegador cierre el diálogo, decide quien lo usa (p. ej. preguntar si hay cambios).
+        event.preventDefault();
+        onClose();
+      }}
     >
       <header className={styles.header}>
         <h2 id="modal-title" className={styles.title}>{title}</h2>

@@ -24,7 +24,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type Task, type TaskInput, type TaskScope, type TaskView } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import styles from './TaskWorkspace.module.css';
 
@@ -44,7 +44,6 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const members = useTeamMembers();
   const { projects } = useProjects();
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<Task | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [sort, setSort] = useState<SortMode>('recent');
@@ -89,12 +88,6 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
     setToast({ kind: 'success', message: 'Tarea creada.' });
   }
 
-  async function handleEdit(values: TaskInput) {
-    if (!editing) return;
-    await update(editing.id, values);
-    setEditing(null);
-    setToast({ kind: 'success', message: 'Tarea actualizada.' });
-  }
 
   return (
     <>
@@ -208,21 +201,25 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
         </section>
       </main>
 
-      {openTask && !editing && (
-        // Mientras se edita, el panel se oculta y vuelve con los datos ya actualizados.
+      {openTask && (
         <TaskDetailPanel
+          key={openTask.id}
           task={openTask}
           nameOf={nameOf}
           projectOf={projectOf}
+          assignees={assigneeOptions(members, openTask.assigneeId)}
+          projects={projects.filter((p) => !p.archived || p.id === openTask.projectId)}
           canEdit={canEdit}
           canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
           onClose={() => setOpenId(null)}
-          onEdit={setEditing}
+          onSave={async (patch) => {
+            await update(openTask.id, patch); // si falla, el panel muestra el error
+            setToast({ kind: 'success', message: 'Cambios guardados.' });
+          }}
           onDelete={(id) => {
             setOpenId(null);
             void safely(() => remove(id), 'Tarea eliminada.');
           }}
-          onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
         />
       )}
 
@@ -236,26 +233,6 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
             projects={projects.filter((p) => !p.archived)}
             onSubmit={handleCreate}
             onCancel={() => setCreating(false)}
-          />
-        </Modal>
-      )}
-
-      {editing && (
-        <Modal title="Editar tarea" onClose={() => setEditing(null)}>
-          <TodoForm
-            initialValues={{
-              title: editing.title,
-              description: editing.description,
-              priority: editing.priority,
-              dueDate: editing.dueDate,
-              assigneeId: editing.assigneeId,
-              projectId: editing.projectId,
-            }}
-            submitLabel="Guardar cambios"
-            assignees={assigneeOptions(members, editing.assigneeId)}
-            projects={projects.filter((p) => !p.archived || p.id === editing.projectId)}
-            onSubmit={handleEdit}
-            onCancel={() => setEditing(null)}
           />
         </Modal>
       )}
