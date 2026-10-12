@@ -1,6 +1,6 @@
-/** Prefijo de los números de tarea (en la etapa 8 se podrá cambiar desde Ajustes). */
+/** Prefijo por defecto de los números de tarea (el admin lo cambia en Ajustes). */
 export const TASK_PREFIX = 'MC';
 
-export function formatTaskNumber(n: number): string {
-  return `${TASK_PREFIX}-${n}`;
+export function formatTaskNumber(n: number, prefix = TASK_PREFIX): string {
+  return `${prefix}-${n}`;
 }

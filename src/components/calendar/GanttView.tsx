@@ -3,12 +3,12 @@ import { Link } from 'react-router';
 import { addDays, barPosition, pointPosition, type GanttRange } from '@/features/calendar/gantt';
 import { dayLabel } from '@/features/calendar/month';
 import { projectProgress } from '@/features/projects/projectProgress';
-import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import { isOverdue } from '@/features/tasks/taskStats';
 import type { NameOf } from '@/features/team/members';
 import type { Project } from '@/types/project';
 import { STATUS_LABEL, type Task } from '@/types/task';
 import { readableTextColor } from '@/utils/color';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
 import styles from './GanttView.module.css';
 
 type Props = {
@@ -22,6 +22,7 @@ type Props = {
 
 /** Una fila por proyecto: barra de inicio a fin con su progreso real y las tareas como ◆ en su vencimiento. */
 export function GanttView({ projects, tasks, range, today, nameOf, onOpenTask }: Props) {
+  const formatNumber = useTaskNumberFormat();
   const rows = projects
     .map((project) => ({ project, bar: barPosition(project.startDate, project.endDate, range) }))
     .filter((row) => row.bar !== null);
@@ -76,8 +77,8 @@ export function GanttView({ projects, tasks, range, today, nameOf, onOpenTask }:
                     <button
                       key={t.id} type="button" className={`${styles.point} ${state}`}
                       style={{ left: `${pointPosition(t.dueDate!, range)}%` }}
-                      aria-label={`${formatTaskNumber(t.number)} ${t.title}, vence ${dayLabel(t.dueDate!)}, ${STATUS_LABEL[t.status]}`}
-                      title={`${formatTaskNumber(t.number)} ${t.title}`}
+                      aria-label={`${formatNumber(t.number)} ${t.title}, vence ${dayLabel(t.dueDate!)}, ${STATUS_LABEL[t.status]}`}
+                      title={`${formatNumber(t.number)} ${t.title}`}
                       onClick={() => onOpenTask(t)}
                     />
                   );

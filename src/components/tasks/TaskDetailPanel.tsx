@@ -5,7 +5,6 @@ import { Field, fieldInputClass } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import type { ProjectOf } from '@/features/projects/projectOf';
 import { MAX_SUBTASKS, newSubtask, SUBTASK_TITLE_MAX, subtaskProgress } from '@/features/tasks/subtasks';
-import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import type { AssigneeOption, NameOf } from '@/features/team/members';
 import type { Project } from '@/types/project';
 import {
@@ -14,6 +13,7 @@ import {
 } from '@/types/task';
 import { formatDay } from '@/utils/formatDate';
 import { validateTask } from '@/utils/validators';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
 import styles from './TaskDetailPanel.module.css';
 import { TaskHistory } from './TaskHistory';
 
@@ -53,6 +53,7 @@ type Props = {
 
 /** Todo sobre una tarea, editable en el lugar: se guarda junto con "Guardar cambios". */
 export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, canEdit, canDelete, onClose, onSave, onDelete }: Props) {
+  const formatNumber = useTaskNumberFormat();
   const [draft, setDraft] = useState<Draft>(() => toDraft(task));
   const [newTitle, setNewTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +102,7 @@ export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, 
     <Modal title={task.title} onClose={requestClose} variant="panel">
       <form className={styles.body} onSubmit={save} noValidate>
         <p className={styles.meta}>
-          <span className={styles.number}>{formatTaskNumber(task.number)}</span>
+          <span className={styles.number}>{formatNumber(task.number)}</span>
           Creada por {nameOf(task.createdBy) ?? 'alguien'} · {formatDay(task.createdAt)}
           {task.completedAt !== null && ` · Hecha por ${nameOf(task.completedBy) ?? 'alguien'} · ${formatDay(task.completedAt)}`}
         </p>

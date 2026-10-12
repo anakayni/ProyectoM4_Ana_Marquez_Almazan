@@ -23,6 +23,9 @@ describe('searchTasks', () => {
   it('por descripción', () => {
     expect(ids(searchTasks(tasks, 'login'))).toEqual([108]);
   });
+  it('entiende el prefijo vigente', () => {
+    expect(ids(searchTasks(tasks, 'fl-109', 'FL'))).toEqual([109]);
+  });
   it('por número con o sin prefijo', () => {
     expect(ids(searchTasks(tasks, 'mc-109'))).toEqual([109]);
     expect(ids(searchTasks(tasks, '108'))).toEqual([108]);

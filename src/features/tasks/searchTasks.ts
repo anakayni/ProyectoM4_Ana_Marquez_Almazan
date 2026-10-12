@@ -1,5 +1,5 @@
 import type { Priority, Task } from '@/types/task';
-import { formatTaskNumber } from './taskNumber';
+import { formatTaskNumber, TASK_PREFIX } from './taskNumber';
 
 export type PriorityFilter = Priority | 'all';
 /** Un id de proyecto, 'all' (todos) o 'none' (sin proyecto). */
@@ -11,14 +11,14 @@ function normalize(text: string): string {
 }
 
 /** Coincide por título, descripción o número ("MC-108" o "108"). */
-export function searchTasks(tasks: readonly Task[], query: string): Task[] {
+export function searchTasks(tasks: readonly Task[], query: string, prefix = TASK_PREFIX): Task[] {
   const q = normalize(query);
   if (!q) return [...tasks];
   return tasks.filter(
     (t) =>
       normalize(t.title).includes(q)
       || normalize(t.description).includes(q)
-      || normalize(formatTaskNumber(t.number)) === q
+      || normalize(formatTaskNumber(t.number, prefix)) === q
       || String(t.number) === q,
   );
 }

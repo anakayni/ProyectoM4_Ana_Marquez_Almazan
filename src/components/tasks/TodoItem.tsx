@@ -2,10 +2,10 @@ import { Avatar } from '@/components/layout/Avatar';
 import { ProjectTag } from '@/components/projects/ProjectTag';
 import type { ProjectOf } from '@/features/projects/projectOf';
 import { subtaskProgress } from '@/features/tasks/subtasks';
-import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import type { NameOf, PersonOf } from '@/features/team/members';
 import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { dueStatus, formatDay, formatDueDate } from '@/utils/formatDate';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
 import { StatusSelect } from './StatusSelect';
 import styles from './TodoItem.module.css';
 
@@ -25,6 +25,7 @@ type TodoItemProps = TodoItemHandlers & {
 };
 
 export function TodoItem({ task, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: TodoItemProps) {
+  const formatNumber = useTaskNumberFormat();
   const done = task.status === 'done';
   const assignee = nameOf(task.assigneeId);
   const person = personOf(task.assigneeId);
@@ -43,7 +44,7 @@ export function TodoItem({ task, nameOf, personOf, projectOf, canEdit, onStatusC
         </h3>
         {task.description && <p className={styles.description}>{task.description}</p>}
         <p className={styles.meta}>
-          <span className={styles.number}>{formatTaskNumber(task.number)}</span>
+          <span className={styles.number}>{formatNumber(task.number)}</span>
           <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
           {project && <ProjectTag project={project} />}
           {sub.total > 0 && <span className={styles.sub}>☑ {sub.done} de {sub.total}</span>}

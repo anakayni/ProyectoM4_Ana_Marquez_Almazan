@@ -1,10 +1,10 @@
 import type { AgendaDay } from '@/features/calendar/month';
 import { dayLabel } from '@/features/calendar/month';
 import type { ProjectOf } from '@/features/projects/projectOf';
-import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import { isOverdue } from '@/features/tasks/taskStats';
 import type { NameOf } from '@/features/team/members';
 import { STATUS_LABEL, type Task } from '@/types/task';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
 import { MarkerChip } from './CalendarItem';
 import styles from './AgendaView.module.css';
 
@@ -27,6 +27,7 @@ type Props = {
 
 /** Agenda del celular: un bloque por día con tareas o fechas de proyecto. */
 export function AgendaView({ days, projectOf, nameOf, today, onOpenTask, onCreate }: Props) {
+  const formatNumber = useTaskNumberFormat();
   return (
     <div className={styles.agenda}>
       {days.length === 0 && <p className={styles.empty}>No hay tareas ni fechas de proyectos este mes.</p>}
@@ -47,7 +48,7 @@ export function AgendaView({ days, projectOf, nameOf, today, onOpenTask, onCreat
                 key={task.id} type="button" className={`${styles.item} ${state}`}
                 style={{ borderLeftColor: project?.color ?? 'var(--color-border-strong)' }} onClick={() => onOpenTask(task)}
               >
-                <span className={styles.itemTitle}>{formatTaskNumber(task.number)} {task.title}</span>
+                <span className={styles.itemTitle}>{formatNumber(task.number)} {task.title}</span>
                 <span className={styles.itemMeta}>
                   {project?.name ?? 'Sin proyecto'} · {STATUS_LABEL[task.status]} · {nameOf(task.assigneeId) ?? 'Sin asignar'}
                 </span>

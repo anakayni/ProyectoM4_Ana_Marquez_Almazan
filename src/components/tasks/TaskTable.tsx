@@ -2,10 +2,10 @@ import { Avatar } from '@/components/layout/Avatar';
 import { ProjectTag } from '@/components/projects/ProjectTag';
 import type { ProjectOf } from '@/features/projects/projectOf';
 import { subtaskProgress } from '@/features/tasks/subtasks';
-import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import type { NameOf, PersonOf } from '@/features/team/members';
 import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { dueStatus, formatDueDate } from '@/utils/formatDate';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
 import { StatusSelect } from './StatusSelect';
 import styles from './TaskTable.module.css';
 
@@ -21,6 +21,7 @@ type Props = {
 
 /** Vista Tabla. En pantallas angostas cada fila se muestra como tarjeta (ver CSS). */
 export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: Props) {
+  const formatNumber = useTaskNumberFormat();
   return (
     <div className={styles.wrap}>
       <table className={styles.table}>
@@ -44,7 +45,7 @@ export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
             const sub = subtaskProgress(task.subtasks);
             return (
               <tr key={task.id} className={done ? styles.done : undefined}>
-                <td data-label="#" className={styles.number}>{formatTaskNumber(task.number)}</td>
+                <td data-label="#" className={styles.number}>{formatNumber(task.number)}</td>
                 <td data-label="Tarea">
                   <button type="button" className={styles.title} onClick={() => onOpen(task)}>{task.title}</button>
                   {task.description && <p className={styles.description}>{task.description}</p>}

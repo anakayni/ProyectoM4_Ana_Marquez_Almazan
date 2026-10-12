@@ -18,6 +18,7 @@ import { filterByPriority, filterByProject, searchTasks, type PriorityFilter, ty
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { countTasks, filterByCard } from '@/features/tasks/taskStats';
 import { usePreference } from '@/hooks/usePreference';
+import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
@@ -41,6 +42,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const canEdit = can(profile, 'task:edit');
   const members = useTeamMembers();
   const { projects } = useProjects();
+  const { taskPrefix } = useWorkspaceSettings();
   const [creating, setCreating] = useState<Partial<TaskInput> | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
@@ -64,7 +66,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const inProject = projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
   const scoped = scopeTasks(inProject, scope, profile.uid);
   // Las tarjetas cuentan lo que queda tras buscar y filtrar, así coinciden con lo que se ve.
-  const filtered = filterByProject(filterByPriority(searchTasks(scoped, query), priority), projectId ? 'all' : projectFilter);
+  const filtered = filterByProject(filterByPriority(searchTasks(scoped, query, taskPrefix), priority), projectId ? 'all' : projectFilter);
   const stats = countTasks(filtered, today);
   const visibleTasks = sortTasks(filterByCard(filtered, card, today), sort);
 
@@ -100,7 +102,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                 <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
                 <input
                   id="task-search" type="search" className={styles.search} value={query}
-                  placeholder="Buscar por título, descripción o MC-…" onChange={(e) => setQuery(e.target.value)}
+                  placeholder={`Buscar por título, descripción o ${taskPrefix}-…`} onChange={(e) => setQuery(e.target.value)}
                 />
                 <label className={styles.sort}>
                   Prioridad

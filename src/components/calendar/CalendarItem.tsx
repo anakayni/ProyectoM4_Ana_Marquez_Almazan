@@ -1,14 +1,15 @@
 import type { ProjectMarker } from '@/features/calendar/month';
 import type { ProjectOf } from '@/features/projects/projectOf';
-import { formatTaskNumber } from '@/features/tasks/taskNumber';
 import { isOverdue } from '@/features/tasks/taskStats';
 import type { Task } from '@/types/task';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
 import styles from './CalendarItem.module.css';
 
 type TaskChipProps = { task: Task; projectOf: ProjectOf; today: string; onOpen: (task: Task) => void };
 
 /** Una tarea en el calendario: borde con el color de su proyecto, tachada si está hecha, roja si está vencida. */
 export function TaskChip({ task, projectOf, today, onOpen }: TaskChipProps) {
+  const formatNumber = useTaskNumberFormat();
   const project = projectOf(task.projectId);
   const state = task.status === 'done' ? styles.done : isOverdue(task, today) ? styles.overdue : '';
   return (
@@ -16,7 +17,7 @@ export function TaskChip({ task, projectOf, today, onOpen }: TaskChipProps) {
       type="button" className={`${styles.chip} ${state}`} style={{ borderLeftColor: project?.color ?? 'var(--color-border-strong)' }}
       onClick={() => onOpen(task)}
     >
-      {formatTaskNumber(task.number)} {task.title}
+      {formatNumber(task.number)} {task.title}
     </button>
   );
 }
