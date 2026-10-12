@@ -17,7 +17,7 @@ const nameOf = (uid: string | null) => (uid ? names[uid] ?? null : null);
 
 function setup(perms = { canEdit: true, canDelete: true }) {
   const handlers = { onClose: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn(), onStatusChange: vi.fn() };
-  render(<TaskDetailPanel task={task} nameOf={nameOf} {...perms} {...handlers} />);
+  render(<TaskDetailPanel task={task} nameOf={nameOf} projectOf={() => null} {...perms} {...handlers} />);
   return handlers;
 }
 

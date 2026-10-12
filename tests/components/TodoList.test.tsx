@@ -10,12 +10,17 @@ const tasks: Task[] = [
   { ...base, id: '2', title: 'Pagar luz', description: '', status: 'done', assigneeId: null, completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime(), projectId: null },
 ];
 const nameOf = (uid: string | null) => (uid === 'ana' ? 'Ana' : null);
+const portal = {
+  id: 'p1', name: 'Portal', description: '', color: '#4D7C8A', ownerId: 'a', startDate: '2026-10-01', endDate: '2026-11-30',
+  archived: false, createdBy: 'a', createdAt: 1, rev: 1,
+};
+const projectOf = (id: string | null) => (id === 'p1' ? portal : null);
 const personOf = (uid: string | null) =>
   uid === 'ana' ? { name: 'Ana', photo: null, active: true } : uid === 'mario' ? { name: 'Mario', photo: null, active: false } : null;
 
 function setup(list: Task[] = tasks, props: Partial<Parameters<typeof TodoList>[0]> = {}) {
   const handlers = { onStatusChange: vi.fn(), onOpen: vi.fn() };
-  render(<TodoList tasks={list} nameOf={nameOf} personOf={personOf} {...handlers} {...props} />);
+  render(<TodoList tasks={list} nameOf={nameOf} personOf={personOf} projectOf={projectOf} {...handlers} {...props} />);
   return handlers;
 }
 
@@ -31,6 +36,11 @@ describe('TodoList', () => {
   it('el avatar de un responsable inactivo se ve atenuado', () => {
     setup([{ ...tasks[0], assigneeId: 'mario' }]);
     expect(document.querySelector('.inactive')).not.toBeNull();
+  });
+
+  it('muestra la etiqueta del proyecto', () => {
+    setup([{ ...tasks[0], projectId: 'p1' }]);
+    expect(screen.getByText('Portal')).toBeInTheDocument();
   });
 
   it('muestra quién completó y cuándo', () => {

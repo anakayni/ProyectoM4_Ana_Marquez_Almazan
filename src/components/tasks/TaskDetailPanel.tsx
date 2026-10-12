@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { ProjectTag } from '@/components/projects/ProjectTag';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import type { ProjectOf } from '@/features/projects/projectOf';
 import type { NameOf } from '@/features/team/members';
 import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { formatDay, formatDueDate } from '@/utils/formatDate';
@@ -11,6 +13,7 @@ import { TaskHistory } from './TaskHistory';
 type Props = {
   task: Task;
   nameOf: NameOf;
+  projectOf: ProjectOf;
   canEdit: boolean;
   canDelete: boolean;
   onClose: () => void;
@@ -20,8 +23,9 @@ type Props = {
 };
 
 /** Todo sobre una tarea: datos, acciones según permisos e historial de cambios. */
-export function TaskDetailPanel({ task, nameOf, canEdit, canDelete, onClose, onEdit, onDelete, onStatusChange }: Props) {
+export function TaskDetailPanel({ task, nameOf, projectOf, canEdit, canDelete, onClose, onEdit, onDelete, onStatusChange }: Props) {
   const [confirming, setConfirming] = useState(false);
+  const project = projectOf(task.projectId);
 
   return (
     <Modal title={task.title} onClose={onClose} variant="panel">
@@ -32,6 +36,8 @@ export function TaskDetailPanel({ task, nameOf, canEdit, canDelete, onClose, onE
           <dd><StatusSelect status={task.status} taskTitle={task.title} canEdit={canEdit} onChange={(s) => onStatusChange(task.id, s)} /></dd>
           <dt>Responsable</dt>
           <dd>{nameOf(task.assigneeId) ?? 'Sin asignar'}</dd>
+          <dt>Proyecto</dt>
+          <dd>{project ? <ProjectTag project={project} /> : 'Sin proyecto'}</dd>
           <dt>Prioridad</dt>
           <dd>{PRIORITY_LABEL[task.priority]}</dd>
           <dt>Vence</dt>

@@ -78,4 +78,18 @@ describe('TodoForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ assigneeId: 'luis' }));
   });
+
+  it('permite elegir proyecto', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const portal = {
+      id: 'p1', name: 'Portal', description: '', color: '#4D7C8A', ownerId: 'a', startDate: '2026-10-01',
+      endDate: '2026-11-30', archived: false, createdBy: 'a', createdAt: 1, rev: 1,
+    };
+    render(<TodoForm onSubmit={onSubmit} projects={[portal]} />);
+    await userEvent.type(screen.getByLabelText('Título'), 'Llamar');
+    expect(screen.getByLabelText('Proyecto')).toHaveValue('');
+    await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'p1');
+    await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'p1' }));
+  });
 });

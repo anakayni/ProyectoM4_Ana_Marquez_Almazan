@@ -14,12 +14,14 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
+import { makeProjectOf } from '@/features/projects/projectOf';
 import { assigneeOptions, makeNameOf, makePersonOf } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { countTasks, filterByCard } from '@/features/tasks/taskStats';
 import { useAuth } from '@/hooks/useAuth';
 import { usePreference } from '@/hooks/usePreference';
+import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
@@ -38,6 +40,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
   const canCreate = can(profile, 'task:create');
   const canEdit = can(profile, 'task:edit');
   const members = useTeamMembers();
+  const { projects } = useProjects();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -52,6 +55,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
 
   const nameOf = makeNameOf(members);
   const personOf = makePersonOf(members);
+  const projectOf = makeProjectOf(projects);
   const scoped = scopeTasks(tasks, scope, profile.uid);
   const stats = countTasks(scoped, today);
   const visibleTasks = sortTasks(filterByCard(scoped, card, today), sort);
@@ -135,6 +139,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
                   tasks={visibleTasks}
                   nameOf={nameOf}
                   personOf={personOf}
+                  projectOf={projectOf}
                   canEdit={canEdit}
                   onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
                   onOpen={(task) => setOpenId(task.id)}
@@ -144,6 +149,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
                   tasks={visibleTasks}
                   nameOf={nameOf}
                   personOf={personOf}
+                  projectOf={projectOf}
                   canEdit={canEdit}
                   {...(card !== null
                     ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
@@ -164,6 +170,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
         <TaskDetailPanel
           task={openTask}
           nameOf={nameOf}
+          projectOf={projectOf}
           canEdit={canEdit}
           canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
           onClose={() => setOpenId(null)}
@@ -183,6 +190,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
             initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid, projectId: null }}
             submitLabel="Crear tarea"
             assignees={assigneeOptions(members, profile.uid)}
+            projects={projects.filter((p) => !p.archived)}
             onSubmit={handleCreate}
             onCancel={() => setCreating(false)}
           />
@@ -202,6 +210,7 @@ function TasksView({ profile }: { profile: UserProfile }) {
             }}
             submitLabel="Guardar cambios"
             assignees={assigneeOptions(members, editing.assigneeId)}
+            projects={projects.filter((p) => !p.archived || p.id === editing.projectId)}
             onSubmit={handleEdit}
             onCancel={() => setEditing(null)}
           />

@@ -3,6 +3,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field, fieldInputClass } from '@/components/ui/Field';
 import type { AssigneeOption } from '@/features/team/members';
+import type { Project } from '@/types/project';
 import { PRIORITIES, PRIORITY_LABEL, type Priority, type TaskInput } from '@/types/task';
 import { DESCRIPTION_MAX, hasErrors, validateTask, type FieldErrors } from '@/utils/validators';
 import styles from './TodoForm.module.css';
@@ -13,13 +14,15 @@ type TodoFormProps = {
   submitLabel?: string;
   /** Personas que se pueden elegir como responsable */
   assignees?: AssigneeOption[];
+  /** Proyectos elegibles (activos + el actual) */
+  projects?: Project[];
   onSubmit: (values: TaskInput) => Promise<void>;
   onCancel?: () => void;
 };
 
 const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null, assigneeId: null, projectId: null };
 
-export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assignees = [], onSubmit, onCancel }: TodoFormProps) {
+export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assignees = [], projects = [], onSubmit, onCancel }: TodoFormProps) {
   const [values, setValues] = useState<TaskInput>(initialValues ?? EMPTY);
   const [errors, setErrors] = useState<FieldErrors<'title' | 'description'>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -79,6 +82,15 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assigne
           />
         </Field>
       </div>
+      <Field id="task-project" label="Proyecto">
+        <select
+          id="task-project" className={fieldInputClass}
+          value={values.projectId ?? ''} onChange={(e) => setValues((v) => ({ ...v, projectId: e.target.value || null }))}
+        >
+          <option value="">Sin proyecto</option>
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
+        </select>
+      </Field>
       <Field id="task-assignee" label="Responsable">
         <select
           id="task-assignee" className={fieldInputClass}

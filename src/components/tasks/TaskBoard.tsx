@@ -1,4 +1,6 @@
 import { Avatar } from '@/components/layout/Avatar';
+import { ProjectTag } from '@/components/projects/ProjectTag';
+import type { ProjectOf } from '@/features/projects/projectOf';
 import type { NameOf, PersonOf } from '@/features/team/members';
 import { PRIORITY_LABEL, STATUSES, STATUS_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { dueStatus, formatDueDate } from '@/utils/formatDate';
@@ -11,13 +13,14 @@ type Props = {
   tasks: Task[];
   nameOf: NameOf;
   personOf: PersonOf;
+  projectOf: ProjectOf;
   canEdit: boolean;
   onStatusChange: (id: string, status: TaskStatus) => void;
   onOpen: (task: Task) => void;
 };
 
 /** Tablero de 3 columnas. Sin arrastrar: la tarea cambia de columna con su selector de estado. */
-export function TaskBoard({ tasks, nameOf, personOf, canEdit, onStatusChange, onOpen }: Props) {
+export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: Props) {
   return (
     <div className={styles.board}>
       {STATUSES.map((status) => {
@@ -34,11 +37,13 @@ export function TaskBoard({ tasks, nameOf, personOf, canEdit, onStatusChange, on
                 {column.map((task) => {
                   const assignee = nameOf(task.assigneeId);
                   const person = personOf(task.assigneeId);
+                  const project = projectOf(task.projectId);
                   return (
                     <li key={task.id} className={styles.card}>
                       <button type="button" className={styles.title} onClick={() => onOpen(task)}>{task.title}</button>
                       <div className={styles.meta}>
                         <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
+                        {project && <ProjectTag project={project} />}
                         {task.dueDate && status !== 'done' && (
                           <span className={`${styles.due} ${styles[dueStatus(task.dueDate)]}`}>{formatDueDate(task.dueDate)}</span>
                         )}

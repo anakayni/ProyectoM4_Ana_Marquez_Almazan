@@ -1,4 +1,6 @@
 import { Avatar } from '@/components/layout/Avatar';
+import { ProjectTag } from '@/components/projects/ProjectTag';
+import type { ProjectOf } from '@/features/projects/projectOf';
 import type { NameOf, PersonOf } from '@/features/team/members';
 import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
 import { dueStatus, formatDay, formatDueDate } from '@/utils/formatDate';
@@ -15,14 +17,16 @@ type TodoItemProps = TodoItemHandlers & {
   task: Task;
   nameOf: NameOf;
   personOf: PersonOf;
+  projectOf: ProjectOf;
   /** Puede cambiar el estado (admin y miembro) */
   canEdit: boolean;
 };
 
-export function TodoItem({ task, nameOf, personOf, canEdit, onStatusChange, onOpen }: TodoItemProps) {
+export function TodoItem({ task, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: TodoItemProps) {
   const done = task.status === 'done';
   const assignee = nameOf(task.assigneeId);
   const person = personOf(task.assigneeId);
+  const project = projectOf(task.projectId);
 
   return (
     <li className={`${styles.item} ${done ? styles.completed : ''}`}>
@@ -37,6 +41,7 @@ export function TodoItem({ task, nameOf, personOf, canEdit, onStatusChange, onOp
         {task.description && <p className={styles.description}>{task.description}</p>}
         <p className={styles.meta}>
           <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
+          {project && <ProjectTag project={project} />}
           {task.dueDate && !done && (
             <span className={`${styles.due} ${styles[dueStatus(task.dueDate)]}`}>{formatDueDate(task.dueDate)}</span>
           )}
