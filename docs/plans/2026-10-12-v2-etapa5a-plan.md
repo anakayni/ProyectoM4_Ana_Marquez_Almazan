@@ -516,13 +516,12 @@ describe('projectProgress', () => {
   it('no está atrasado si llegó al 100%', () => {
     expect(projectProgress([t('done')], '2026-10-01', '2026-10-12')).toMatchObject({ percent: 100, late: false });
   });
-  it('sin tareas: 0% y no atrasado aunque la fecha haya pasado', () => {
+  it('sin tareas y con la fecha de fin pasada: 0% y atrasado', () => {
     expect(projectProgress([], '2026-10-01', '2026-10-12')).toEqual({ total: 0, todo: 0, doing: 0, done: 0, percent: 0, late: true });
   });
 });
 ```
 
-> El último caso: un proyecto sin tareas cuyo fin ya pasó **sí** está atrasado (no llegó al 100%).
 
 - [ ] **Step 2: Correr y ver que falla** — `npx vitest run tests/unit/projectProgress.test.ts` → FAIL.
 
