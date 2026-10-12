@@ -20,7 +20,7 @@ import { TaskWorkspace } from '@/components/tasks/TaskWorkspace';
 const me: UserProfile = { uid: 'ana', email: 'a@x.com', displayName: 'Ana', role: 'member', active: true, invitedBy: null, rev: 1 };
 const task = (id: string, projectId: string | null): Task => ({
   id, createdBy: 'ana', updatedBy: 'ana', rev: 1, title: `Tarea ${id}`, description: '', status: 'todo', assigneeId: 'ana',
-  completedBy: null, completedAt: null, projectId, number: 1, subtasks: [], priority: 'media', dueDate: null, createdAt: 1,
+  completedBy: null, completedAt: null, projectId, number: Number(id), subtasks: [], priority: 'media', dueDate: null, createdAt: 1,
 });
 
 describe('TaskWorkspace', () => {
@@ -41,5 +41,26 @@ describe('TaskWorkspace', () => {
     await userEvent.type(screen.getByLabelText('Título'), 'Nueva');
     await userEvent.click(screen.getByRole('button', { name: 'Crear tarea' }));
     expect(state.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Nueva', projectId: 'p1' }));
+  });
+
+  it('busca por texto y filtra por prioridad', async () => {
+    state.tasks = [
+      { ...task('1', null), title: 'Llamar proveedor', priority: 'alta' },
+      { ...task('2', null), title: 'Pagar luz', priority: 'baja' },
+    ];
+    render(<TaskWorkspace profile={me} renderHeader={() => null} />);
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar tareas' }), 'pagar');
+    expect(screen.queryByText('Llamar proveedor')).not.toBeInTheDocument();
+    expect(screen.getByText('Pagar luz')).toBeInTheDocument();
+    await userEvent.clear(screen.getByRole('searchbox', { name: 'Buscar tareas' }));
+    await userEvent.selectOptions(screen.getByLabelText('Prioridad'), 'alta');
+    expect(screen.getByText('Llamar proveedor')).toBeInTheDocument();
+    expect(screen.queryByText('Pagar luz')).not.toBeInTheDocument();
+  });
+
+  it('dentro de un proyecto no muestra el filtro de proyecto', () => {
+    state.tasks = [task('1', 'p1')];
+    render(<TaskWorkspace profile={me} projectId="p1" renderHeader={() => null} />);
+    expect(screen.queryByLabelText('Proyecto')).not.toBeInTheDocument();
   });
 });

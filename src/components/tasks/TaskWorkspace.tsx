@@ -15,6 +15,7 @@ import { can } from '@/features/auth/permissions';
 import { makeProjectOf } from '@/features/projects/projectOf';
 import { assigneeOptions, makeNameOf, makePersonOf } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
+import { filterByPriority, filterByProject, searchTasks, type PriorityFilter, type ProjectFilter } from '@/features/tasks/searchTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
 import { countTasks, filterByCard } from '@/features/tasks/taskStats';
 import { usePreference } from '@/hooks/usePreference';
@@ -22,7 +23,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type Task, type TaskInput, type TaskScope } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type Task, type TaskInput, type TaskScope } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import styles from './TaskWorkspace.module.css';
 
@@ -52,6 +53,9 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   );
   const [view, setView] = usePreference<TaskView>('matecode.view', 'list', ['list', 'board']);
   const [card, setCard] = useState<StatCard | null>(null);
+  const [query, setQuery] = useState('');
+  const [priority, setPriority] = useState<PriorityFilter>('all');
+  const [projectFilter, setProjectFilter] = useState<ProjectFilter>('all');
   // "Hoy" se fija al abrir la página (para saber qué está vencido); recargar actualiza la fecha.
   const [today] = useState(() => toDateInputValue(new Date()));
   const dismissToast = useCallback(() => setToast(null), []);
@@ -61,8 +65,10 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const projectOf = makeProjectOf(projects);
   const inProject = projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
   const scoped = scopeTasks(inProject, scope, profile.uid);
-  const stats = countTasks(scoped, today);
-  const visibleTasks = sortTasks(filterByCard(scoped, card, today), sort);
+  // Las tarjetas cuentan lo que queda tras buscar y filtrar, así coinciden con lo que se ve.
+  const filtered = filterByProject(filterByPriority(searchTasks(scoped, query), priority), projectId ? 'all' : projectFilter);
+  const stats = countTasks(filtered, today);
+  const visibleTasks = sortTasks(filterByCard(filtered, card, today), sort);
   // Se busca en la lista viva: si alguien borra la tarea, el panel se cierra solo.
   const openTask = tasks.find((t) => t.id === openId) ?? null;
 
@@ -107,6 +113,30 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
           )}
           {!loading && !error && (
             <>
+              <div className={styles.filters}>
+                <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
+                <input
+                  id="task-search" type="search" className={styles.search} value={query}
+                  placeholder="Buscar por título, descripción o MC-…" onChange={(e) => setQuery(e.target.value)}
+                />
+                <label className={styles.sort}>
+                  Prioridad
+                  <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityFilter)}>
+                    <option value="all">Todas</option>
+                    {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
+                  </select>
+                </label>
+                {!projectId && (
+                  <label className={styles.sort}>
+                    Proyecto
+                    <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+                      <option value="all">Todos</option>
+                      <option value="none">Sin proyecto</option>
+                      {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
+                    </select>
+                  </label>
+                )}
+              </div>
               <div className={styles.toolbar}>
                 <SegmentedControl
                   label="Mostrar" name="scope" value={scope}
@@ -147,11 +177,13 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                   personOf={personOf}
                   projectOf={projectOf}
                   canEdit={canEdit}
-                  {...(card !== null
-                    ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
-                    : scope === 'mine'
-                      ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
-                      : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
+                  {...(query.trim()
+                    ? { emptyTitle: 'No encontramos tareas', emptyHint: 'Prueba con otras palabras o con el número (MC-…).' }
+                    : card !== null
+                      ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
+                      : scope === 'mine'
+                        ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
+                        : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
                   onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
                   onOpen={(task) => setOpenId(task.id)}
                 />
