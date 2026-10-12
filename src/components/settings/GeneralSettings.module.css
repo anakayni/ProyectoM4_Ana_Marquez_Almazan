@@ -1,0 +1,14 @@
+.form { display: flex; flex-direction: column; gap: var(--space-6); }
+.section { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); background: var(--color-surface-default); border: 1px solid var(--color-border-default); border-radius: var(--radius-lg); }
+.title { font-size: var(--text-xl); font-weight: var(--weight-semibold); color: var(--color-text-heading); }
+.logoRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.logoBox { display: grid; place-items: center; min-width: 120px; height: 72px; padding: var(--space-2); border: 1px dashed var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-nav-bg); }
+.logo { max-height: 64px; max-width: 240px; }
+.noLogo { font-size: var(--text-md); color: var(--color-nav-text-muted); }
+.upload { display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--space-3); border: 1px solid var(--color-action-secondary-border); border-radius: var(--radius-md); font-weight: var(--weight-medium); cursor: pointer; }
+.upload:has(input:focus-visible) { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.swatches { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.swatch { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-text-secondary); }
+.swatch input { width: 44px; height: 36px; padding: 0; border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: none; cursor: pointer; }
+.hint { font-size: var(--text-md); color: var(--color-text-secondary); }
+.actions { display: flex; justify-content: flex-end; }

@@ -30,8 +30,10 @@ describe('navItems', () => {
     expect(find(role, 'calendar').to).toBe('/calendar');
   });
 
-  it.each(['settings'])('%s es "Próximamente" para todos', (key) => {
-    expect(find('admin', key).to).toBeNull();
+  it('Ajustes solo aparece para el admin', () => {
+    expect(find('admin', 'settings').to).toBe('/settings');
+    expect(navItems(profile('member')).map((i) => i.key)).not.toContain('settings');
+    expect(navItems(profile('viewer')).map((i) => i.key)).not.toContain('settings');
   });
 
   it('cada sección tiene ícono y etiqueta corta', () => {

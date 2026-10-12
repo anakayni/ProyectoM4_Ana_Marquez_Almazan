@@ -6,6 +6,7 @@ import { NoAccessPage } from '@/pages/NoAccessPage';
 import { ProjectPage } from '@/pages/ProjectPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { TasksPage } from '@/pages/TasksPage';
 import { TeamPage } from '@/pages/TeamPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
@@ -29,6 +30,7 @@ export function AppRoutes() {
         <Route path="/projects/:id" element={<ProjectPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/team" element={<TeamPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="/team/invite" element={<Navigate to="/team" replace />} />
       <Route path="*" element={<Navigate to="/tasks" replace />} />
