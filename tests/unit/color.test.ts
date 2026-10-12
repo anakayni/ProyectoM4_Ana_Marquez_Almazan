@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, readableTextColor } from '@/utils/color';
+import { contrastRatio, mixColors, readableTextColor } from '@/utils/color';
 
 describe('contrastRatio', () => {
   it('negro sobre blanco es 21', () => {
@@ -23,5 +23,12 @@ describe('readableTextColor', () => {
     for (const bg of ['#FF0000', '#00FF00', '#0000FF', '#777777', '#FFD700', '#C2410C', '#4B7D87', '#C36E64']) {
       expect(contrastRatio(readableTextColor(bg), bg)).toBeGreaterThanOrEqual(4.5);
     }
+  });
+});
+
+describe('mixColors', () => {
+  it('mezcla como color-mix en srgb', () => {
+    expect(mixColors('#FFFFFF', '#000000', 50)).toBe('#808080');
+    expect(mixColors('#1B4079', '#FFFFFF', 100)).toBe('#1B4079');
   });
 });

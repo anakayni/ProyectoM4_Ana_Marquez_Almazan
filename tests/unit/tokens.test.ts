@@ -31,4 +31,9 @@ describe('contraste de los textos', () => {
   it.each(['color-gray-550', 'color-gray-600', 'color-gray-900'])('%s tiene contraste ≥ 4.5:1', (name) => {
     for (const bg of BACKGROUNDS) expect(contrastRatio(hex(name), bg)).toBeGreaterThanOrEqual(4.5);
   });
+
+  it('info y la inicial del avatar usan versiones oscurecidas', () => {
+    expect(tokens).toMatch(/--color-status-info:\s*color-mix\(in srgb, var\(--brand-2\) 85%, black\);/);
+    expect(tokens).toMatch(/--color-avatar-text:\s*color-mix\(in srgb, var\(--brand-1\) 70%, black\);/);
+  });
 });

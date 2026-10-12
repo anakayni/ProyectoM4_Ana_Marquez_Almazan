@@ -83,7 +83,7 @@
   --color-status-neutral: var(--color-gray-600);
   --color-status-neutral-surface: var(--color-gray-50);
   --color-status-neutral-border: var(--color-gray-200);
-  --color-status-info: var(--brand-2);
+  --color-status-info: color-mix(in srgb, var(--brand-2) 85%, black);
   --color-status-info-surface: color-mix(in srgb, var(--brand-2) 12%, white);
   --color-status-info-border: color-mix(in srgb, var(--brand-2) 30%, white);
   --color-status-success: color-mix(in srgb, var(--brand-4) 55%, black);
@@ -104,7 +104,7 @@
   --color-nav-active-bg: var(--brand-5);
   --color-nav-active-text: var(--brand-1);
   --color-avatar-bg: var(--brand-4);
-  --color-avatar-text: var(--brand-1);
+  --color-avatar-text: color-mix(in srgb, var(--brand-1) 70%, black);
 
   /* ─── Layer 3: AI context — provenance ONLY, never severity ── */
   --color-ai-surface: var(--color-violet-100);

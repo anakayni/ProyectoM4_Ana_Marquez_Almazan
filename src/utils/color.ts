@@ -23,3 +23,12 @@ const DARK_TEXT = '#000000';
 export function readableTextColor(background: string): '#FFFFFF' | '#000000' {
   return contrastRatio(LIGHT_TEXT, background) >= contrastRatio(DARK_TEXT, background) ? LIGHT_TEXT : DARK_TEXT;
 }
+
+const toRgb = (hex: string) => [0, 2, 4].map((i) => parseInt(hex.replace('#', '').slice(i, i + 2), 16));
+
+/** Igual que `color-mix(in srgb, a weight%, b)` de CSS (mezcla canal por canal). */
+export function mixColors(a: string, b: string, weight: number): string {
+  const [ra, rb] = [toRgb(a), toRgb(b)];
+  const p = weight / 100;
+  return `#${ra.map((c, i) => Math.round(c * p + rb[i] * (1 - p)).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+}
