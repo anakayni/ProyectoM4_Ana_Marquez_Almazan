@@ -1,0 +1,126 @@
+import { useState, type ReactNode } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
+import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { TaskWorkspace } from '@/components/tasks/TaskWorkspace';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Spinner } from '@/components/ui/Spinner';
+import { can } from '@/features/auth/permissions';
+import { projectProgress } from '@/features/projects/projectProgress';
+import { makeNameOf } from '@/features/team/members';
+import { useAuth } from '@/hooks/useAuth';
+import { useProjects } from '@/hooks/useProjects';
+import { useTasks } from '@/hooks/useTasks';
+import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { deleteProject, updateProject } from '@/services/projects.service';
+import type { UserProfile } from '@/types/auth';
+import { formatDateLabel, toDateInputValue } from '@/utils/formatDate';
+import styles from './ProjectPage.module.css';
+
+type Confirm = 'archive' | 'delete' | null;
+
+/** Un proyecto: encabezado con sus datos y acciones, y debajo sus tareas con las mismas vistas de Mis tareas. */
+export function ProjectPage() {
+  const { id = '' } = useParams();
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const me = profile as UserProfile; // RequireAccess garantiza un perfil activo
+  const { projects, loading } = useProjects();
+  const { tasks } = useTasks(me.uid);
+  const members = useTeamMembers();
+  const [editing, setEditing] = useState(false);
+  const [confirm, setConfirm] = useState<Confirm>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [today] = useState(() => toDateInputValue(new Date()));
+
+  const project = projects.find((p) => p.id === id);
+  if (loading) return <Spinner label="Cargando proyecto…" />;
+  if (!project) {
+    return (
+      <main className={styles.missing}>
+        <p>Este proyecto no existe o fue eliminado.</p>
+        <Link to="/projects">Volver a Proyectos</Link>
+      </main>
+    );
+  }
+
+  const canEdit = can(me, 'task:edit');
+  const isAdmin = can(me, 'team:manage');
+  const progress = projectProgress(tasks.filter((t) => t.projectId === project.id), project.endDate, today);
+  const owner = makeNameOf(members)(project.ownerId);
+
+  async function run(action: () => Promise<void>, onDone?: () => void) {
+    setError(null);
+    try {
+      await action();
+      setConfirm(null);
+      onDone?.();
+    } catch (err) {
+      console.error('Error en el proyecto:', err);
+      setError('No pudimos guardar el cambio. Inténtalo de nuevo.');
+    }
+  }
+
+  const header = (newTaskButton: ReactNode) => (
+    <header className={styles.header} style={{ borderTopColor: project.color }}>
+      <Link to="/projects" className={styles.back}>← Proyectos</Link>
+      <div className={styles.top}>
+        <div>
+          <h1 className={styles.title}>{project.name}</h1>
+          {project.description && <p className={styles.description}>{project.description}</p>}
+          <p className={styles.meta}>
+            {formatDateLabel(project.startDate)} → {formatDateLabel(project.endDate)}
+            {owner && ` · A cargo: ${owner}`} · {progress.percent}% ({progress.done} de {progress.total})
+            {project.archived && ' · Archivado'}
+          </p>
+          {progress.late && <p className={styles.late}>Atrasado</p>}
+        </div>
+        <div className={styles.actions}>
+          {canEdit && <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>Editar</Button>}
+          {canEdit &&
+            (project.archived ? (
+              <Button size="sm" variant="secondary" onClick={() => void run(() => updateProject(me.uid, project.id, { archived: false }))}>
+                Reactivar
+              </Button>
+            ) : (
+              <Button size="sm" variant="secondary" onClick={() => setConfirm('archive')}>Archivar</Button>
+            ))}
+          {isAdmin && <Button size="sm" variant="ghost" onClick={() => setConfirm('delete')}>Eliminar</Button>}
+          {!project.archived && newTaskButton}
+        </div>
+      </div>
+      {error && <Alert kind="error">{error}</Alert>}
+      {confirm && (
+        <div className={styles.confirm}>
+          <p>
+            {confirm === 'archive'
+              ? `¿Archivar "${project.name}"? Ya no se podrán agregar tareas; puedes reactivarlo cuando quieras.`
+              : `¿Eliminar "${project.name}"? No se puede deshacer; sus tareas quedarán "Sin proyecto".`}
+          </p>
+          <div className={styles.actions}>
+            <Button size="sm" variant="ghost" onClick={() => setConfirm(null)}>Cancelar</Button>
+            {confirm === 'archive' ? (
+              <Button size="sm" variant="danger" onClick={() => void run(() => updateProject(me.uid, project.id, { archived: true }))}>
+                Sí, archivar
+              </Button>
+            ) : (
+              <Button
+                size="sm" variant="danger"
+                onClick={() => void run(() => deleteProject(me.uid, project.id), () => navigate('/projects'))}
+              >
+                Sí, eliminar
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+
+  return (
+    <>
+      <TaskWorkspace profile={me} projectId={project.id} renderHeader={header} />
+      {editing && <ProjectDialog actorId={me.uid} project={project} members={members} onClose={() => setEditing(false)} />}
+    </>
+  );
+}

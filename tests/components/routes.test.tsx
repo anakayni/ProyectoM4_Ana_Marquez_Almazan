@@ -13,6 +13,8 @@ vi.mock('@/pages/VerifyEmailPage', () => ({ VerifyEmailPage: () => <h1>Confirma 
 vi.mock('@/pages/NoAccessPage', () => ({ NoAccessPage: () => <h1>Sin acceso</h1> }));
 vi.mock('@/pages/TasksPage', () => ({ TasksPage: () => <h1>Mis tareas</h1> }));
 vi.mock('@/pages/TeamPage', () => ({ TeamPage: () => <h1>Equipo</h1> }));
+vi.mock('@/pages/ProjectsPage', () => ({ ProjectsPage: () => <h1>Proyectos</h1> }));
+vi.mock('@/pages/ProjectPage', () => ({ ProjectPage: () => <h1>Proyecto</h1> }));
 vi.mock('@/components/layout/AppShell', async () => {
   const { Outlet } = await import('react-router');
   return { AppShell: () => <div data-testid="shell"><Outlet /></div> };
@@ -91,5 +93,12 @@ describe('rutas por estado de acceso', () => {
     authState.profile = profile('admin');
     renderAt('/team/invite');
     expect(screen.getByRole('heading', { name: 'Equipo' })).toBeInTheDocument();
+  });
+
+  it('la página de un proyecto va dentro del marco', () => {
+    authState.access = 'active';
+    authState.profile = profile('viewer');
+    renderAt('/projects/p1');
+    expect(screen.getByTestId('shell')).toContainElement(screen.getByRole('heading', { name: 'Proyecto' }));
   });
 });

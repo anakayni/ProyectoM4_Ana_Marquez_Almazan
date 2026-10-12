@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoginPage } from '@/pages/LoginPage';
 import { NoAccessPage } from '@/pages/NoAccessPage';
+import { ProjectPage } from '@/pages/ProjectPage';
 import { ProjectsPage } from '@/pages/ProjectsPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { TasksPage } from '@/pages/TasksPage';
@@ -24,6 +25,7 @@ export function AppRoutes() {
       <Route element={<RequireAccess allow={['active']}><AppShell /></RequireAccess>}>
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:id" element={<ProjectPage />} />
         <Route path="/team" element={<TeamPage />} />
       </Route>
       <Route path="/team/invite" element={<Navigate to="/team" replace />} />
