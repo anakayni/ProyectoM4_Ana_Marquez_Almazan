@@ -198,6 +198,22 @@ service cloud.firestore {
         && d.updatedAt == request.time;
     }
 
+    // Tarjeta de una persona del proyecto: copia fiel de su perfil (después de la escritura).
+    function cardMatches(uid) {
+      let d = request.resource.data;
+      let u = getAfter(userPath(uid)).data;
+      return d.keys().hasOnly(['uid', 'displayName', 'photo', 'active', 'role'])
+        && d.uid == uid
+        && d.displayName == u.displayName
+        && d.photo == u.get('photo', null)
+        && d.active == u.active
+        && d.role == (u.role == 'guest' ? 'guest' : 'team');
+    }
+    function personOfProjectAfter(pid, uid) {
+      let p = getAfter(projectPath(pid)).data;
+      return uid == p.ownerId || uid in p.get('memberIds', []);
+    }
+
     match /projects/{projectId} {
       allow read: if isTeam() || (isGuest() && 'memberIds' in resource.data && request.auth.uid in resource.data.memberIds);
       allow create: if canEdit()
@@ -218,6 +234,15 @@ service cloud.firestore {
         && nextRev()
         && audited('project', projectId, request.resource.data.rev);
       allow delete: if isAdmin() && audited('project', projectId, resource.data.rev + 1);
+
+      // Tarjetas: lo único que el Invitado ve de las personas (sin email ni rol).
+      match /people/{uid} {
+        allow read: if isTeam() || (isGuest() && guestIn(projectId));
+        allow create, update: if isActive() && existsAfter(projectPath(projectId))
+          && personOfProjectAfter(projectId, uid) && cardMatches(uid);
+        allow delete: if isActive()
+          && (!existsAfter(projectPath(projectId)) || !personOfProjectAfter(projectId, uid));
+      }
     }
 
     // ─── Ajustes del espacio (lectura pública: el login muestra nombre, logo y colores) ───
@@ -327,6 +352,11 @@ service cloud.firestore {
           && validPhoto(request.resource.data))
       );
       allow delete: if false;
+    }
+
+    // Buscar las tarjetas de una persona en todos los proyectos (para actualizarlas).
+    match /{path=**}/people/{uid} {
+      allow read: if isTeam() || (signedIn() && resource.data.uid == request.auth.uid);
     }
   }
 }

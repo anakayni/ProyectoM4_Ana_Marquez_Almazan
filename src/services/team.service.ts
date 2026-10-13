@@ -1,5 +1,6 @@
 import { collection, doc, onSnapshot, type DocumentData, type Timestamp } from 'firebase/firestore';
 import * as invitations from '@/services/audited/invitations';
+import { syncPersonCards } from '@/services/audited/people';
 import * as users from '@/services/audited/users';
 import type { AuthUser, Role, UserProfile } from '@/types/auth';
 import type { Invitation } from '@/types/invitation';
@@ -76,7 +77,16 @@ export const claimInvitation = (user: AuthUser) => users.claimInvitation(db, use
 export const createInvitation = (actorId: string, email: string, role: Role) =>
   invitations.createInvitation(db, actorId, email, role);
 export const revokeInvitation = (actorId: string, email: string) => invitations.revokeInvitation(db, actorId, email);
+
+/**
+ * Después de guardar el perfil, copia los datos a sus tarjetas de proyecto.
+ * Si eso falla, el perfil ya quedó guardado: las tarjetas se corrigen en el próximo cambio.
+ */
+function syncCards(uid: string): Promise<void> {
+  return syncPersonCards(db, uid).catch((err: unknown) => console.error('No se pudieron actualizar las tarjetas:', err));
+}
+
 export const updateMember = (actorId: string, uid: string, patch: { role?: Role; active?: boolean }) =>
-  users.updateMember(db, actorId, uid, patch);
+  users.updateMember(db, actorId, uid, patch).then(() => syncCards(uid));
 export const updateOwnProfile = (uid: string, patch: { displayName?: string; photo?: string | null }) =>
-  users.updateOwnProfile(db, uid, patch);
+  users.updateOwnProfile(db, uid, patch).then(() => syncCards(uid));

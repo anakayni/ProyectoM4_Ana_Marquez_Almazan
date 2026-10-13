@@ -1,4 +1,5 @@
 import { collection, onSnapshot, type QueryDocumentSnapshot, type Timestamp } from 'firebase/firestore';
+import { setProjectMembers as setMembers } from '@/services/audited/people';
 import * as audited from '@/services/audited/projects';
 import type { Project, ProjectInput, ProjectPatch } from '@/types/project';
 import { db } from './firebase';
@@ -33,3 +34,6 @@ export function subscribeToProjects(onData: (projects: Project[]) => void, onErr
 export const createProject = (actorId: string, input: ProjectInput) => audited.createProject(db, actorId, input);
 export const updateProject = (actorId: string, id: string, patch: ProjectPatch) => audited.updateProject(db, actorId, id, patch);
 export const deleteProject = (actorId: string, id: string) => audited.deleteProject(db, actorId, id);
+/** Solo el admin: quiénes están en el proyecto (auditado, con sus tarjetas). */
+export const setProjectMembers = (actorId: string, projectId: string, memberIds: string[]) =>
+  setMembers(db, actorId, projectId, memberIds);
