@@ -6,8 +6,9 @@ let emitData: (tasks: Task[]) => void = () => {};
 let emitError: (error: Error) => void = () => {};
 const unsubscribe = vi.fn();
 
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ profile: { uid: 'u1', role: 'member' } }) }));
 vi.mock('@/services/tasks.service', () => ({
-  subscribeToTasks: vi.fn((onData: typeof emitData, onError: typeof emitError) => {
+  subscribeToTasks: vi.fn((_viewer: unknown, onData: typeof emitData, onError: typeof emitError) => {
     emitData = onData;
     emitError = onError;
     return unsubscribe;
@@ -28,7 +29,7 @@ describe('useTasks', () => {
   it('se suscribe a las tareas de todo el equipo y las expone', () => {
     const { result } = renderHook(() => useTasks('u1'));
     expect(result.current.loading).toBe(true);
-    expect(service.subscribeToTasks).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
+    expect(service.subscribeToTasks).toHaveBeenCalledWith({ uid: 'u1', role: 'member' }, expect.any(Function), expect.any(Function));
 
     act(() => emitData([task]));
     expect(result.current.loading).toBe(false);

@@ -1,6 +1,7 @@
-import { collection, onSnapshot, type QueryDocumentSnapshot, type Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, type QueryDocumentSnapshot, type Timestamp } from 'firebase/firestore';
 import { setProjectMembers as setMembers } from '@/services/audited/people';
 import * as audited from '@/services/audited/projects';
+import type { Viewer } from '@/types/auth';
 import type { Project, ProjectInput, ProjectPatch } from '@/types/project';
 import { db } from './firebase';
 
@@ -15,17 +16,34 @@ function toProject(snap: QueryDocumentSnapshot): Project {
     startDate: d.startDate,
     endDate: d.endDate,
     archived: Boolean(d.archived),
+    memberIds: d.memberIds ?? [],
     createdBy: d.createdBy,
     createdAt: (d.createdAt as Timestamp | null)?.toMillis() ?? Date.now(),
     rev: d.rev,
   };
 }
 
-/** Todos los proyectos en tiempo real, ordenados por fecha de fin. */
-export function subscribeToProjects(onData: (projects: Project[]) => void, onError: (error: Error) => void): () => void {
+/** Proyectos en tiempo real, ordenados por fecha de fin. El Invitado pide solo los suyos (las reglas lo exigen). */
+export function subscribeToProjects(
+  viewer: Viewer,
+  onData: (projects: Project[]) => void,
+  onError: (error: Error) => void,
+): () => void {
+  const source = viewer.role === 'guest'
+    ? query(collection(db, 'projects'), where('memberIds', 'array-contains', viewer.uid))
+    : collection(db, 'projects');
   return onSnapshot(
-    collection(db, 'projects'),
+    source,
     (snap) => onData(snap.docs.map(toProject).sort((a, b) => a.endDate.localeCompare(b.endDate) || a.name.localeCompare(b.name))),
+    onError,
+  );
+}
+
+/** IDs de los proyectos del Invitado, en tiempo real (base para pedir sus tareas y sus personas). */
+export function subscribeToGuestProjectIds(uid: string, onIds: (ids: string[]) => void, onError: (error: Error) => void): () => void {
+  return onSnapshot(
+    query(collection(db, 'projects'), where('memberIds', 'array-contains', uid)),
+    (snap) => onIds(snap.docs.map((d) => d.id)),
     onError,
   );
 }

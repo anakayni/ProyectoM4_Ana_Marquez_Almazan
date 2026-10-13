@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { subscribeToProjects } from '@/services/projects.service';
 import type { Project } from '@/types/project';
 
-/** Proyectos del espacio en tiempo real. */
+/** Proyectos que la persona puede ver, en tiempo real (el Invitado, solo los suyos). */
 export function useProjects() {
+  const { profile } = useAuth();
+  const uid = profile?.uid ?? '';
+  const role = profile?.role ?? 'viewer';
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +15,7 @@ export function useProjects() {
   useEffect(
     () =>
       subscribeToProjects(
+        { uid, role },
         (next) => {
           setProjects(next);
           setLoading(false);
@@ -21,7 +26,7 @@ export function useProjects() {
           setLoading(false);
         },
       ),
-    [],
+    [uid, role],
   );
 
   return { projects, loading, error };

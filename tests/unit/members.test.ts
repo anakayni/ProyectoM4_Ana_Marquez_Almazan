@@ -63,3 +63,16 @@ describe('deactivateMessage', () => {
     expect(deactivateMessage('Luis', 0)).toBe('¿Desactivar a Luis? Ya no podrá entrar.');
   });
 });
+
+describe('desconocidos', () => {
+  it('con un nombre para desconocidos, lo usa solo si hay alguien asignado', () => {
+    const nameOf = makeNameOf([], 'Alguien del equipo');
+    expect(nameOf('x')).toBe('Alguien del equipo');
+    expect(nameOf(null)).toBeNull();
+    expect(makePersonOf([], 'Alguien del equipo')('x')).toEqual({ name: 'Alguien del equipo', photo: null, active: true });
+  });
+
+  it('sin él, sigue devolviendo null', () => {
+    expect(makeNameOf([])('x')).toBeNull();
+  });
+});

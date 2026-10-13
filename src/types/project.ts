@@ -10,6 +10,8 @@ export interface Project {
   startDate: string;
   endDate: string;
   archived: boolean;
+  /** Personas agregadas por el admin (los Invitados ven el proyecto si están acá). */
+  memberIds?: string[];
   createdBy: string;
   createdAt: number;
   rev: number;

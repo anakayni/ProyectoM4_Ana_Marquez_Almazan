@@ -1,5 +1,8 @@
 export type Role = 'admin' | 'member' | 'viewer' | 'guest';
 
+/** Quién mira: define qué datos se piden (el Invitado, solo los de sus proyectos). */
+export type Viewer = { uid: string; role: Role };
+
 export const ROLE_LABEL: Record<Role, string> = { admin: 'Administrador', member: 'Miembro', viewer: 'Lector', guest: 'Invitado' };
 
 /** Usuario de Firebase Auth (la sesión). */

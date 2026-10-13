@@ -8,7 +8,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { can } from '@/features/auth/permissions';
 import { projectProgress } from '@/features/projects/projectProgress';
-import { makePersonOf } from '@/features/team/members';
+import { makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -33,7 +33,7 @@ export function ProjectsPage() {
   // "Hoy" se fija al abrir la página (para saber qué proyecto está atrasado).
   const [today] = useState(() => toDateInputValue(new Date()));
 
-  const personOf = makePersonOf(members);
+  const personOf = makePersonOf(members, unknownPersonFor(me.role));
   const active = projects.filter((p) => !p.archived);
   const archived = projects.filter((p) => p.archived);
   const shown = filter === 'active' ? active : archived;

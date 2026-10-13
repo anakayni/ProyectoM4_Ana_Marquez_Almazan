@@ -2,7 +2,7 @@ import { Modal } from '@/components/ui/Modal';
 import type { ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
 import { makeProjectOf } from '@/features/projects/projectOf';
-import { assigneeOptions, makeNameOf } from '@/features/team/members';
+import { assigneeOptions, makeNameOf, unknownPersonFor } from '@/features/team/members';
 import type { useTasks } from '@/hooks/useTasks';
 import type { UserProfile } from '@/types/auth';
 import type { Project } from '@/types/project';
@@ -30,7 +30,7 @@ export function TaskDialogs({
   profile, tasks, members, projects, openId, onCloseTask, creating, onCloseCreate, actions, onToast,
 }: TaskDialogsProps) {
   const openTask = tasks.find((t) => t.id === openId) ?? null;
-  const nameOf = makeNameOf(members);
+  const nameOf = makeNameOf(members, unknownPersonFor(profile.role));
   const projectOf = makeProjectOf(projects);
 
   async function handleCreate(values: TaskInput) {

@@ -12,7 +12,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
 import { makeProjectOf } from '@/features/projects/projectOf';
-import { makeNameOf, makePersonOf } from '@/features/team/members';
+import { makeNameOf, makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { filterByPriority, filterByProject, searchTasks, type PriorityFilter, type ProjectFilter } from '@/features/tasks/searchTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
@@ -61,8 +61,8 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const [today] = useState(() => toDateInputValue(new Date()));
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const nameOf = makeNameOf(members);
-  const personOf = makePersonOf(members);
+  const nameOf = makeNameOf(members, unknownPersonFor(profile.role));
+  const personOf = makePersonOf(members, unknownPersonFor(profile.role));
   const projectOf = makeProjectOf(projects);
   const inProject = projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
   const scoped = scopeTasks(inProject, scope, profile.uid);

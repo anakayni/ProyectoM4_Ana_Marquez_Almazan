@@ -1,4 +1,4 @@
-import type { UserProfile } from '@/types/auth';
+import type { Role, UserProfile } from '@/types/auth';
 import type { Task } from '@/types/task';
 
 export type AssigneeOption = { uid: string; label: string };
@@ -14,18 +14,26 @@ export function assigneeOptions(members: readonly UserProfile[], currentId: stri
   return options;
 }
 
-export function makeNameOf(members: readonly UserProfile[]): NameOf {
+/** Para el Invitado: quien no está en sus proyectos aparece así (sin revelar quién es). */
+export const UNKNOWN_PERSON = 'Alguien del equipo';
+
+export function unknownPersonFor(role: Role): string | null {
+  return role === 'guest' ? UNKNOWN_PERSON : null;
+}
+
+/** `unknown`: nombre para alguien asignado que no está en la lista (solo para el Invitado). */
+export function makeNameOf(members: readonly UserProfile[], unknown: string | null = null): NameOf {
   const names = new Map(members.map((m) => [m.uid, m.active ? m.displayName : `${m.displayName} (inactiva)`]));
-  return (uid) => (uid ? names.get(uid) ?? null : null);
+  return (uid) => (uid ? names.get(uid) ?? unknown : null);
 }
 
 export type Person = { name: string; photo: string | null; active: boolean };
 export type PersonOf = (uid: string | null) => Person | null;
 
 /** Datos para el avatar de una persona (foto y si está activa). */
-export function makePersonOf(members: readonly UserProfile[]): PersonOf {
+export function makePersonOf(members: readonly UserProfile[], unknown: string | null = null): PersonOf {
   const people = new Map(members.map((m) => [m.uid, { name: m.displayName, photo: m.photo ?? null, active: m.active }]));
-  return (uid) => (uid ? people.get(uid) ?? null : null);
+  return (uid) => (uid ? people.get(uid) ?? (unknown ? { name: unknown, photo: null, active: true } : null) : null);
 }
 
 /** Tareas asignadas sin terminar, por persona. */

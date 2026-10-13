@@ -1,7 +1,10 @@
-import { collection, onSnapshot, type QueryDocumentSnapshot, type Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, type QueryDocumentSnapshot, type Timestamp } from 'firebase/firestore';
 import * as audited from '@/services/audited/tasks';
+import type { Viewer } from '@/types/auth';
 import type { Task, TaskInput, TaskPatch } from '@/types/task';
+import { subscribeFanOut } from '@/utils/fanOut';
 import { db } from './firebase';
+import { subscribeToGuestProjectIds } from './projects.service';
 
 function toTask(snapshot: QueryDocumentSnapshot): Task {
   // 'estimate': mientras el servidor no confirma, createdAt usa la hora local en vez de null.
@@ -26,14 +29,21 @@ function toTask(snapshot: QueryDocumentSnapshot): Task {
   };
 }
 
+const newestFirst = (tasks: Task[]) => tasks.sort((a, b) => b.createdAt - a.createdAt);
+
 /**
- * Todas las tareas del equipo en tiempo real (las reglas exigen un perfil activo).
- * Se ordena en el cliente: la más nueva primero.
+ * Tareas en tiempo real. El equipo ve todas; el Invitado, las de sus proyectos
+ * (una consulta por proyecto: es lo que las reglas pueden comprobar). La más nueva primero.
  */
-export function subscribeToTasks(onData: (tasks: Task[]) => void, onError: (error: Error) => void): () => void {
-  return onSnapshot(
-    collection(db, 'tasks'),
-    (snapshot) => onData(snapshot.docs.map(toTask).sort((a, b) => b.createdAt - a.createdAt)),
+export function subscribeToTasks(viewer: Viewer, onData: (tasks: Task[]) => void, onError: (error: Error) => void): () => void {
+  if (viewer.role !== 'guest') {
+    return onSnapshot(collection(db, 'tasks'), (snapshot) => onData(newestFirst(snapshot.docs.map(toTask))), onError);
+  }
+  return subscribeFanOut<Task>(
+    (onIds, onErr) => subscribeToGuestProjectIds(viewer.uid, onIds, onErr),
+    (projectId, onItems, onErr) =>
+      onSnapshot(query(collection(db, 'tasks'), where('projectId', '==', projectId)), (snap) => onItems(snap.docs.map(toTask)), onErr),
+    (tasks) => onData(newestFirst(tasks)),
     onError,
   );
 }

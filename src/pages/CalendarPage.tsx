@@ -17,7 +17,7 @@ import { addMonths, agendaDays, monthGrid, monthLabel, projectMarkers, tasksByDa
 import { makeProjectOf } from '@/features/projects/projectOf';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { filterByProject, type ProjectFilter } from '@/features/tasks/searchTasks';
-import { makeNameOf } from '@/features/team/members';
+import { makeNameOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { usePreference } from '@/hooks/usePreference';
 import { useProjects } from '@/hooks/useProjects';
@@ -51,7 +51,7 @@ export function CalendarPage() {
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const nameOf = makeNameOf(members);
+  const nameOf = makeNameOf(members, unknownPersonFor(me.role));
   const projectOf = makeProjectOf(projects);
   const visible = filterByProject(scopeTasks(tasks, scope, me.uid), projectFilter).filter(
     (t) => hideDone === 'no' || t.status !== 'done',

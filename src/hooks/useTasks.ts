@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { createTask, deleteTask, subscribeToTasks, updateTask } from '@/services/tasks.service';
 import type { Task, TaskInput, TaskPatch, TaskStatus } from '@/types/task';
 
 export const LOAD_ERROR = 'No pudimos cargar tus tareas. Revisa tu conexión e inténtalo de nuevo.';
 
 /**
- * Tareas de todo el equipo en tiempo real + acciones CRUD.
+ * Tareas que la persona puede ver (el Invitado, las de sus proyectos) en tiempo real + acciones CRUD.
  * `actorId` es quien hace los cambios: queda registrado en la auditoría.
  * No hace falta volver a pedir la lista tras crear/editar/borrar:
  * onSnapshot avisa cada cambio y la UI se actualiza sola.
  */
 export function useTasks(actorId: string) {
+  const { profile } = useAuth();
+  const uid = profile?.uid ?? actorId;
+  const role = profile?.role ?? 'viewer';
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +22,7 @@ export function useTasks(actorId: string) {
 
   useEffect(() => {
     return subscribeToTasks(
+      { uid, role },
       (next) => {
         setTasks(next);
         setLoading(false);
@@ -29,7 +34,7 @@ export function useTasks(actorId: string) {
         setLoading(false);
       },
     );
-  }, [attempt]);
+  }, [attempt, uid, role]);
 
   // Reinicia el estado y fuerza una nueva suscripción (el efecto depende de `attempt`).
   const retry = useCallback(() => {

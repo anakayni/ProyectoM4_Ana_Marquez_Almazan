@@ -1,10 +1,12 @@
 import { collection, doc, onSnapshot, type DocumentData, type Timestamp } from 'firebase/firestore';
 import * as invitations from '@/services/audited/invitations';
-import { syncPersonCards } from '@/services/audited/people';
+import { syncPersonCards, type PersonCard } from '@/services/audited/people';
 import * as users from '@/services/audited/users';
 import type { AuthUser, Role, UserProfile } from '@/types/auth';
 import type { Invitation } from '@/types/invitation';
+import { subscribeFanOut } from '@/utils/fanOut';
 import { db } from './firebase';
+import { subscribeToGuestProjectIds } from './projects.service';
 
 export { InvitationError } from '@/services/audited/invitations';
 export { NoInvitationError } from '@/services/audited/users';
@@ -69,6 +71,30 @@ export function subscribeToInvitations(
           })
           .sort((a, b) => b.createdAt - a.createdAt),
       ),
+    onError,
+  );
+}
+
+/**
+ * Lo que el Invitado ve del equipo: las tarjetas de sus proyectos, unidas por persona.
+ * Se adaptan a UserProfile para que el resto de la app las use igual (sin email; "team" cuenta como miembro).
+ */
+export function subscribeToGuestPeople(uid: string, onData: (members: UserProfile[]) => void, onError: (error: Error) => void): () => void {
+  return subscribeFanOut<PersonCard>(
+    (onIds, onErr) => subscribeToGuestProjectIds(uid, onIds, onErr),
+    (projectId, onItems, onErr) =>
+      onSnapshot(collection(db, 'projects', projectId, 'people'), (snap) => onItems(snap.docs.map((d) => d.data() as PersonCard)), onErr),
+    (cards) => {
+      const byUid = new Map(cards.map((c) => [c.uid, c]));
+      onData(
+        [...byUid.values()]
+          .map((c): UserProfile => ({
+            uid: c.uid, email: '', displayName: c.displayName, photo: c.photo, active: c.active,
+            role: c.role === 'guest' ? 'guest' : 'member', invitedBy: null, rev: 0,
+          }))
+          .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+      );
+    },
     onError,
   );
 }

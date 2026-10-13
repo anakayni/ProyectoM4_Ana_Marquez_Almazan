@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { can } from '@/features/auth/permissions';
 import { projectProgress } from '@/features/projects/projectProgress';
-import { makeNameOf } from '@/features/team/members';
+import { makeNameOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -47,7 +47,7 @@ export function ProjectPage() {
   const canEdit = can(me, 'project:edit');
   const isAdmin = can(me, 'team:manage');
   const progress = projectProgress(tasks.filter((t) => t.projectId === project.id), project.endDate, today);
-  const owner = makeNameOf(members)(project.ownerId);
+  const owner = makeNameOf(members, unknownPersonFor(me.role))(project.ownerId);
 
   async function run(action: () => Promise<void>, onDone?: () => void) {
     setError(null);
