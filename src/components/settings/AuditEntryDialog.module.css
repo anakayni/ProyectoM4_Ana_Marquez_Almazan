@@ -1,0 +1,9 @@
+.facts { display: grid; grid-template-columns: auto 1fr; gap: var(--space-1) var(--space-3); margin: 0 0 var(--space-3); font-size: var(--text-md); }
+.facts dt { color: var(--color-text-secondary); }
+.facts dd { margin: 0; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.sentences { margin: 0 0 var(--space-4); padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-1); }
+.scroll { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-md); }
+.table th, .table td { padding: var(--space-2); border-bottom: 1px solid var(--color-border-subtle); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.table thead th { color: var(--color-text-secondary); font-weight: var(--weight-semibold); }
+.table tbody th { color: var(--color-text-heading); font-weight: var(--weight-semibold); }
