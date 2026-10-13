@@ -44,3 +44,19 @@ export async function seedUser(env: RulesTestEnvironment, uid: string, role: Rol
 export async function seedCounter(env: RulesTestEnvironment, next = 1): Promise<void> {
   await seed(env, (db) => setDoc(doc(db, 'counters', 'tasks'), { next }));
 }
+
+/** Proyecto válido (sin pasar por las reglas). `memberIds` se omite si no se pasa, como en los proyectos viejos. */
+export async function seedProject(
+  env: RulesTestEnvironment,
+  id: string,
+  data: { ownerId: string; memberIds?: string[]; archived?: boolean },
+): Promise<void> {
+  await seed(env, (db) =>
+    setDoc(doc(db, 'projects', id), {
+      name: id, description: '', color: '#1B4079', ownerId: data.ownerId,
+      startDate: '2026-10-01', endDate: '2026-12-31', archived: data.archived ?? false,
+      createdBy: data.ownerId, createdAt: Timestamp.now(), updatedAt: Timestamp.now(), updatedBy: data.ownerId, rev: 1,
+      ...(data.memberIds && { memberIds: data.memberIds }),
+    }),
+  );
+}
