@@ -38,20 +38,22 @@ export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
                   const assignee = nameOf(task.assigneeId);
                   const person = personOf(task.assigneeId);
                   const project = projectOf(task.projectId);
+                  const done = task.status === 'done';
                   return (
-                    <li key={task.id} className={styles.card}>
+                    <li key={task.id} className={`${styles.card} ${done ? styles.done : ''}`}>
                       <span className={styles.number}>{formatNumber(task.number)}</span>
+                      {done && <span className="visually-hidden">Hecha: </span>}
                       <button type="button" className={styles.title} onClick={() => onOpen(task)}>{task.title}</button>
                       <div className={styles.meta}>
                         <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
-                        {project && <ProjectTag project={project} />}
+                        {project && <ProjectTag project={project} muted={done} />}
                         {task.dueDate && status !== 'done' && (
                           <span className={`${styles.due} ${styles[dueStatus(task.dueDate)]}`}>{formatDueDate(task.dueDate)}</span>
                         )}
                       </div>
                       <div className={styles.footer}>
                         <span title={assignee ?? 'Sin asignar'}>
-                          <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} />
+                          <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} muted={done} />
                           <span className="visually-hidden">{assignee ? `Responsable: ${assignee}` : 'Sin asignar'}</span>
                         </span>
                         <StatusSelect status={task.status} taskTitle={task.title} canEdit={canEdit} onChange={(s) => onStatusChange(task.id, s)} />

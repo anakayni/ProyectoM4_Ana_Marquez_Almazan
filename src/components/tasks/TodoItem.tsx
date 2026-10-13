@@ -33,26 +33,27 @@ export function TodoItem({ task, nameOf, personOf, projectOf, canEdit, onStatusC
   const sub = subtaskProgress(task.subtasks);
 
   return (
-    <li className={`${styles.item} ${done ? styles.completed : ''}`}>
+    <li className={`${styles.item} ${done ? styles.done : ''}`}>
       <span className={styles.assignee} title={assignee ?? 'Sin asignar'}>
-        <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} />
+        <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} muted={done} />
         <span className="visually-hidden">{assignee ? `Responsable: ${assignee}` : 'Sin asignar'}</span>
       </span>
       <div className={styles.body}>
         <h3 className={styles.title}>
+          {done && <span className="visually-hidden">Hecha: </span>}
           <button type="button" className={styles.titleButton} onClick={() => onOpen(task)}>{task.title}</button>
         </h3>
         {task.description && <p className={styles.description}>{task.description}</p>}
         <p className={styles.meta}>
           <span className={styles.number}>{formatNumber(task.number)}</span>
           <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
-          {project && <ProjectTag project={project} />}
+          {project && <ProjectTag project={project} muted={done} />}
           {sub.total > 0 && <span className={styles.sub}>☑ {sub.done} de {sub.total}</span>}
           {task.dueDate && !done && (
             <span className={`${styles.due} ${styles[dueStatus(task.dueDate)]}`}>{formatDueDate(task.dueDate)}</span>
           )}
           {done && task.completedAt !== null && (
-            <span className={styles.doneBy}>Hecha por {nameOf(task.completedBy) ?? 'alguien'} · {formatDay(task.completedAt)}</span>
+            <span className={styles.doneBy}>✓ Hecha por {nameOf(task.completedBy) ?? 'alguien'} · {formatDay(task.completedAt)}</span>
           )}
         </p>
       </div>

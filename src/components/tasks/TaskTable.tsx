@@ -47,13 +47,14 @@ export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
               <tr key={task.id} className={done ? styles.done : undefined}>
                 <td data-label="#" className={styles.number}>{formatNumber(task.number)}</td>
                 <td data-label="Tarea">
+                  {done && <span className="visually-hidden">Hecha: </span>}
                   <button type="button" className={styles.title} onClick={() => onOpen(task)}>{task.title}</button>
                   {task.description && <p className={styles.description}>{task.description}</p>}
                   {sub.total > 0 && <p className={styles.sub}>☑ {sub.done} de {sub.total}</p>}
                 </td>
                 <td data-label="Prioridad y proyecto">
                   <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
-                  {project && <div className={styles.project}><ProjectTag project={project} /></div>}
+                  {project && <div className={styles.project}><ProjectTag project={project} muted={done} /></div>}
                 </td>
                 <td data-label="Vence">
                   {task.dueDate && !done ? (
@@ -64,7 +65,7 @@ export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
                 </td>
                 <td data-label="Asignado">
                   <span className={styles.person}>
-                    <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} />
+                    <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} muted={done} />
                     <span>{assignee ?? 'Sin asignar'}</span>
                   </span>
                 </td>

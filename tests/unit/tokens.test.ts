@@ -36,4 +36,13 @@ describe('contraste de los textos', () => {
     expect(tokens).toMatch(/--color-status-info:\s*color-mix\(in srgb, var\(--brand-2\) 85%, black\);/);
     expect(tokens).toMatch(/--color-avatar-text:\s*color-mix\(in srgb, var\(--brand-1\) 70%, black\);/);
   });
+
+  it('las tareas terminadas usan grises legibles sobre su fondo', () => {
+    expect(tokens).toMatch(/--color-done-surface:\s*var\(--color-gray-50\);/);
+    expect(tokens).toMatch(/--color-done-text:\s*var\(--color-gray-550\);/);
+    expect(tokens).toMatch(/--color-done-chip:\s*var\(--color-gray-100\);/);
+    expect(tokens).toMatch(/--color-done-chip-text:\s*var\(--color-gray-600\);/);
+    expect(contrastRatio(hex('color-gray-550'), hex('color-gray-50'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(hex('color-gray-600'), hex('color-gray-100'))).toBeGreaterThanOrEqual(4.5);
+  });
 });

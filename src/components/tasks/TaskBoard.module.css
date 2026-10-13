@@ -21,3 +21,9 @@
   .board { grid-template-columns: repeat(3, 1fr); align-items: start; }
 }
 .number { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-muted); }
+
+/* Tarea terminada: tachada y en gris, sin transparencias (contraste ≥ 4.5:1) */
+.done { background: var(--color-done-surface); }
+.done .title { text-decoration: line-through; color: var(--color-done-text); }
+.done .number { color: var(--color-done-text); }
+.done .badge { color: var(--color-done-chip-text); background: var(--color-done-chip); border-color: var(--color-done-chip); }
