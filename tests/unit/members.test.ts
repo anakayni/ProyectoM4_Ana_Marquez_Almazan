@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assigneeOptions, deactivateMessage, makeNameOf, makePersonOf, openTasksByMember } from '@/features/team/members';
 import type { Role, UserProfile } from '@/types/auth';
+import type { Project } from '@/types/project';
 import type { Task } from '@/types/task';
 
 const member = (uid: string, role: Role, active = true): UserProfile => ({
@@ -74,5 +75,21 @@ describe('desconocidos', () => {
 
   it('sin él, sigue devolviendo null', () => {
     expect(makeNameOf([])('x')).toBeNull();
+  });
+});
+
+describe('assigneeOptions con proyecto', () => {
+  const p = (uid: string, role: Role, active = true): UserProfile =>
+    ({ uid, email: '', displayName: uid, role, active, invitedBy: null, rev: 1 });
+  const team = [p('admin', 'admin'), p('ana', 'member'), p('gus', 'guest'), p('otro', 'guest')];
+  const project = { id: 'p1', ownerId: 'ana', memberIds: ['gus'] } as Project;
+
+  it('un miembro puede asignar al Invitado solo si está en el proyecto', () => {
+    expect(assigneeOptions(team, null, { project }).map((o) => o.uid)).toEqual(['admin', 'ana', 'gus']);
+    expect(assigneeOptions(team, null).map((o) => o.uid)).toEqual(['admin', 'ana']);
+  });
+
+  it('el Invitado asigna solo a personas del proyecto', () => {
+    expect(assigneeOptions(team, null, { project, actorRole: 'guest' }).map((o) => o.uid)).toEqual(['ana', 'gus']);
   });
 });

@@ -1,16 +1,31 @@
+import { projectPeople } from '@/features/projects/projectPeople';
 import type { Role, UserProfile } from '@/types/auth';
+import type { Project } from '@/types/project';
 import type { Task } from '@/types/task';
 
 export type AssigneeOption = { uid: string; label: string };
 export type NameOf = (uid: string | null) => string | null;
 
-const canBeAssigned = (m: UserProfile) => m.active && (m.role === 'admin' || m.role === 'member');
-
-/** Opciones de "Responsable": admins y miembros activos (+ el actual si ya no califica, para no perderlo al editar). */
-export function assigneeOptions(members: readonly UserProfile[], currentId: string | null): AssigneeOption[] {
-  const options = members.filter(canBeAssigned).map((m) => ({ uid: m.uid, label: m.displayName }));
+/**
+ * Opciones de "Responsable": admins y miembros activos, y los Invitados activos que estén en el proyecto.
+ * Si asigna un Invitado, solo personas del proyecto. Se agrega el actual si ya no califica, para no perderlo al editar.
+ */
+export function assigneeOptions(
+  members: readonly UserProfile[],
+  currentId: string | null,
+  ctx: { project?: Project | null; actorRole?: Role } = {},
+): AssigneeOption[] {
+  const project = ctx.project ?? null;
+  const inProject = new Set(project ? projectPeople(project) : []);
+  const guestsHere = new Set(project?.memberIds ?? []);
+  const assignable = (m: UserProfile) =>
+    m.active && (m.role === 'admin' || m.role === 'member' || (m.role === 'guest' && guestsHere.has(m.uid)));
+  const pool = members.filter((m) => assignable(m) && (ctx.actorRole !== 'guest' || inProject.has(m.uid)));
+  const options = pool.map((m) => ({ uid: m.uid, label: m.displayName }));
   const current = members.find((m) => m.uid === currentId);
-  if (current && !canBeAssigned(current)) options.push({ uid: current.uid, label: `${current.displayName} (inactiva)` });
+  if (current && !pool.includes(current)) {
+    options.push({ uid: current.uid, label: current.active ? current.displayName : `${current.displayName} (inactiva)` });
+  }
   return options;
 }
 

@@ -42,8 +42,12 @@ type Props = {
   task: Task;
   nameOf: NameOf;
   projectOf: ProjectOf;
-  assignees: AssigneeOption[];
+  assignees?: AssigneeOption[];
+  /** Responsables según el proyecto elegido (si no se pasa, se usa `assignees`). */
+  assigneesFor?: (projectId: string | null) => AssigneeOption[];
   projects: Project[];
+  /** El Invitado siempre trabaja dentro de un proyecto. */
+  projectRequired?: boolean;
   canEdit: boolean;
   canDelete: boolean;
   onClose: () => void;
@@ -52,7 +56,9 @@ type Props = {
 };
 
 /** Todo sobre una tarea, editable en el lugar: se guarda junto con "Guardar cambios". */
-export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, canEdit, canDelete, onClose, onSave, onDelete }: Props) {
+export function TaskDetailPanel({
+  task, nameOf, projectOf, assignees = [], assigneesFor, projects, projectRequired = false, canEdit, canDelete, onClose, onSave, onDelete,
+}: Props) {
   const formatNumber = useTaskNumberFormat();
   const [draft, setDraft] = useState<Draft>(() => toDraft(task));
   const [newTitle, setNewTitle] = useState('');
@@ -64,6 +70,7 @@ export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, 
   const dirty = Object.keys(patch).length > 0;
   const progress = subtaskProgress(draft.subtasks);
   const projectName = (id: string | null) => projectOf(id)?.name ?? null;
+  const options = assigneesFor ? assigneesFor(draft.projectId) : assignees;
 
   function requestClose() {
     if (dirty) setConfirm('discard');
@@ -131,8 +138,16 @@ export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, 
               />
             </Field>
             <Field id="panel-project" label="Proyecto">
-              <select id="panel-project" className={fieldInputClass} value={draft.projectId ?? ''} onChange={(e) => set({ projectId: e.target.value || null })}>
-                <option value="">Sin proyecto</option>
+              <select
+                id="panel-project" className={fieldInputClass} value={draft.projectId ?? ''}
+                onChange={(e) => {
+                  const projectId = e.target.value || null;
+                  // Si el responsable no puede estar en el nuevo proyecto, se quita.
+                  const allowed = !assigneesFor || draft.assigneeId === null || assigneesFor(projectId).some((a) => a.uid === draft.assigneeId);
+                  set({ projectId, ...(!allowed && { assigneeId: null }) });
+                }}
+              >
+                {!projectRequired && <option value="">Sin proyecto</option>}
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
               </select>
             </Field>
@@ -140,7 +155,7 @@ export function TaskDetailPanel({ task, nameOf, projectOf, assignees, projects, 
           <Field id="panel-assignee" label="Responsable">
             <select id="panel-assignee" className={fieldInputClass} value={draft.assigneeId ?? ''} onChange={(e) => set({ assigneeId: e.target.value || null })}>
               <option value="">Sin asignar</option>
-              {assignees.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
+              {options.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
             </select>
           </Field>
           <Field id="panel-description" label="Descripción">

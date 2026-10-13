@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { Project } from '@/types/project';
 import { TodoForm } from '@/components/tasks/TodoForm';
 
 describe('TodoForm', () => {
@@ -91,5 +92,25 @@ describe('TodoForm', () => {
     await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'p1');
     await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'p1' }));
+  });
+  it('con proyecto obligatorio no ofrece "Sin proyecto" y pide elegir uno', async () => {
+    const onSubmit = vi.fn();
+    const projects = [{ id: 'p1', name: 'Portal', archived: false } as Project];
+    render(<TodoForm projects={projects} projectRequired onSubmit={onSubmit} />);
+    expect(screen.queryByRole('option', { name: 'Sin proyecto' })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Título'), 'Tarea');
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar tarea' }));
+    expect(screen.getByText('Elige un proyecto.')).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('los responsables cambian según el proyecto elegido', async () => {
+    const projects = [{ id: 'p1', name: 'Portal', archived: false } as Project, { id: 'p2', name: 'Web', archived: false } as Project];
+    const assigneesFor = (id: string | null) => (id === 'p1' ? [{ uid: 'gus', label: 'Gus' }] : [{ uid: 'ana', label: 'Ana' }]);
+    render(<TodoForm projects={projects} assigneesFor={assigneesFor} onSubmit={vi.fn()} />);
+    await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'Portal');
+    expect(screen.getByRole('option', { name: 'Gus' })).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'Web');
+    expect(screen.queryByRole('option', { name: 'Gus' })).not.toBeInTheDocument();
   });
 });

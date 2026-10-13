@@ -16,23 +16,33 @@ type TodoFormProps = {
   assignees?: AssigneeOption[];
   /** Proyectos elegibles (activos + el actual) */
   projects?: Project[];
+  /** Responsables según el proyecto elegido (si no se pasa, se usa `assignees`). */
+  assigneesFor?: (projectId: string | null) => AssigneeOption[];
+  /** El Invitado siempre trabaja dentro de un proyecto. */
+  projectRequired?: boolean;
   onSubmit: (values: TaskInput) => Promise<void>;
   onCancel?: () => void;
 };
 
 const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null, assigneeId: null, projectId: null };
 
-export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assignees = [], projects = [], onSubmit, onCancel }: TodoFormProps) {
+export function TodoForm({
+  initialValues, submitLabel = 'Agregar tarea', assignees = [], projects = [], assigneesFor, projectRequired = false, onSubmit, onCancel,
+}: TodoFormProps) {
   const [values, setValues] = useState<TaskInput>(initialValues ?? EMPTY);
   const [errors, setErrors] = useState<FieldErrors<'title' | 'description'>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const options = assigneesFor ? assigneesFor(values.projectId) : assignees;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const nextErrors = validateTask(values);
     setErrors(nextErrors);
-    if (hasErrors(nextErrors)) return;
+    const missingProject = projectRequired && !values.projectId;
+    setProjectError(missingProject ? 'Elige un proyecto.' : null);
+    if (hasErrors(nextErrors) || missingProject) return;
 
     setSubmitError(null);
     setSubmitting(true);
@@ -82,12 +92,20 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assigne
           />
         </Field>
       </div>
-      <Field id="task-project" label="Proyecto">
+      <Field id="task-project" label="Proyecto" error={projectError ?? undefined}>
         <select
-          id="task-project" className={fieldInputClass}
-          value={values.projectId ?? ''} onChange={(e) => setValues((v) => ({ ...v, projectId: e.target.value || null }))}
+          id="task-project" className={fieldInputClass} value={values.projectId ?? ''}
+          aria-invalid={Boolean(projectError)} aria-describedby={projectError ? 'task-project-error' : undefined}
+          onChange={(e) => {
+            const projectId = e.target.value || null;
+            // Si el responsable elegido no puede estar en el nuevo proyecto, se quita.
+            setValues((v) => {
+              const allowed = !assigneesFor || v.assigneeId === null || assigneesFor(projectId).some((a) => a.uid === v.assigneeId);
+              return { ...v, projectId, assigneeId: allowed ? v.assigneeId : null };
+            });
+          }}
         >
-          <option value="">Sin proyecto</option>
+          {projectRequired ? <option value="" disabled>Elige un proyecto</option> : <option value="">Sin proyecto</option>}
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
         </select>
       </Field>
@@ -97,7 +115,7 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', assigne
           value={values.assigneeId ?? ''} onChange={(e) => setValues((v) => ({ ...v, assigneeId: e.target.value || null }))}
         >
           <option value="">Sin asignar</option>
-          {assignees.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
+          {options.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
         </select>
       </Field>
       <div className={styles.actions}>

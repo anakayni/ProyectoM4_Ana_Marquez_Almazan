@@ -32,6 +32,10 @@ export function TaskDialogs({
   const openTask = tasks.find((t) => t.id === openId) ?? null;
   const nameOf = makeNameOf(members, unknownPersonFor(profile.role));
   const projectOf = makeProjectOf(projects);
+  const isGuest = profile.role === 'guest';
+  /** Responsables posibles según el proyecto elegido en el formulario y quién asigna. */
+  const assigneesFor = (currentId: string | null) => (projectId: string | null) =>
+    assigneeOptions(members, currentId, { project: projects.find((p) => p.id === projectId) ?? null, actorRole: profile.role });
 
   async function handleCreate(values: TaskInput) {
     await actions.create(values); // si falla, TodoForm muestra el error
@@ -47,8 +51,9 @@ export function TaskDialogs({
           task={openTask}
           nameOf={nameOf}
           projectOf={projectOf}
-          assignees={assigneeOptions(members, openTask.assigneeId)}
+          assigneesFor={assigneesFor(openTask.assigneeId)}
           projects={projects.filter((p) => !p.archived || p.id === openTask.projectId)}
+          projectRequired={isGuest}
           canEdit={can(profile, 'task:edit')}
           canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
           onClose={onCloseTask}
@@ -73,10 +78,11 @@ export function TaskDialogs({
         <Modal title="Nueva tarea" onClose={onCloseCreate}>
           <TodoForm
             // Empieza asignada a quien la crea: si no, desaparecería de "Mías" al guardarla.
-            initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid, projectId: null, ...creating }}
+            initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid, projectId: isGuest && projects.length === 1 ? projects[0].id : null, ...creating }}
             submitLabel="Crear tarea"
-            assignees={assigneeOptions(members, profile.uid)}
+            assigneesFor={assigneesFor(profile.uid)}
             projects={projects.filter((p) => !p.archived)}
+            projectRequired={isGuest}
             onSubmit={handleCreate}
             onCancel={onCloseCreate}
           />
