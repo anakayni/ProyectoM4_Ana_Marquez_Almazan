@@ -247,7 +247,7 @@ El primer administrador se crea una sola vez por entorno con `npm run bootstrap-
 
 ### Auditoría obligatoria
 
-Cada cambio a una tarea, invitación o usuario se guarda en la misma escritura (batch o transacción) que una entrada en `auditLog`:
+Cada cambio a una tarea, proyecto, invitación, usuario o a los ajustes del espacio se guarda en la misma escritura (batch o transacción) que una entrada en `auditLog`:
 
 ```js
 // auditLog/task_abc123_3
@@ -265,7 +265,7 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 
 - **Marco común (`AppShell`):** las páginas internas comparten un menú lateral en la computadora y, en el celular, una barra superior (logo y menú de cuenta) con 5 pestañas abajo. Es una *layout route* de React Router: el menú se dibuja una vez y solo cambia el contenido (`<Outlet />`).
 - **Secciones:** salen de la función `navItems(perfil)`. Mis tareas y Equipo (solo admin) funcionan; Proyectos, Calendario y Ajustes se ven como "Próximamente" hasta su etapa.
-- **Paleta:** 5 variables en `tokens.css` (`--brand-1` … `--brand-5`: `#1B4079`, `#4D7C8A`, `#7F9C96`, `#8FAD88`, `#CBDF90`). Los componentes usan nombres por función (botón principal, fondo, menú) que apuntan a esas variables, y los tonos claros se calculan con `color-mix()`. En la etapa 8 el admin podrá cambiarlas desde Ajustes sin tocar componentes.
+- **Paleta:** 5 variables en `tokens.css` (`--brand-1` … `--brand-5`: `#1B4079`, `#4D7C8A`, `#7F9C96`, `#8FAD88`, `#CBDF90`). Los componentes usan nombres por función (botón principal, fondo, menú) que apuntan a esas variables, y los tonos claros se calculan con `color-mix()`. Desde la etapa 8 el admin las cambia en Ajustes sin tocar componentes.
 - **Login:** pantalla dividida con panel de marca y el aviso "Acceso solo con invitación del administrador".
 
 ### Mis tareas v2 (etapa 3)
@@ -303,6 +303,16 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - Filtros comunes: Mías / Todo el equipo / Sin asignar, Proyecto y "Ocultar hechas" (recordado).
 - Usa solo datos existentes (vencimiento de tareas y fechas de proyectos). Del mockup de referencia no se construyó lo que no tiene datos reales (sprints, despliegues, guardias, hitos propios) ni arrastrar para cambiar fechas.
 
+### Ajustes y auditoría (etapa 8)
+
+- **Solo el admin** ve Ajustes; para el resto la sección no aparece en el menú y `/settings` lleva a Mis tareas.
+- **General:** nombre y logo del espacio (en el menú y en el login; el logo se reduce en el navegador a un PNG de hasta 240×64 y se guarda en Firestore), los **5 colores de la paleta** con vista previa en vivo y prefijo del número de tarea (`MC` → por ejemplo `FL`, 1 a 5 letras o números; solo cambia cómo se muestra). La configuración vive en `settings/workspace`, se lee sin sesión (para el login) y se aplica en vivo reemplazando `--brand-1…5` en `:root`.
+- **Contraste garantizado:** antes de guardar se miden todas las combinaciones de texto que dependen de la paleta (las mismas fórmulas `color-mix()` de `tokens.css`). Si alguna no llega a 4.5:1, se explica cuál y "Guardar cambios" queda desactivado; "Restaurar paleta original" vuelve a los colores de siempre. Al medir aparecieron dos contrastes de la paleta original por debajo de 4.5:1 (texto informativo 3.97 y la inicial del avatar 4.13), que se corrigieron.
+- **Auditoría:** todos los cambios del espacio en frases ("Admin desactivó el acceso de Leo"), filtros por tipo, persona y fechas, de a 50 con "Cargar más", detalle con cada campo **antes → después** (con nombres en vez de IDs) y **Exportar CSV** de todo lo filtrado (hasta 5000 cambios; `;` y BOM para Excel en español; las celdas que empiezan con `=`, `+`, `-` o `@` llevan `'` delante para que la planilla no las ejecute como fórmula).
+- **Índices:** filtrar por tipo o persona y ordenar por fecha necesita índices compuestos, declarados en `firestore.indexes.json`.
+- **Encabezados fijos:** en todas las secciones el título y los filtros quedan arriba al desplazar.
+- **Pie "Desarrollado por Imago Design"** en el login y dentro de la app.
+
 ### Comandos nuevos
 
 | Script | Qué hace |
@@ -311,7 +321,7 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
 | `npm run migrate-tasks` | Migra las tareas al formato actual (estado, proyecto, número, subtareas) con auditoría y crea el contador (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 335 de la app (`npm test`) y 56 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 386 de la app (`npm test`) y 61 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
 
 ## Mejoras futuras
 

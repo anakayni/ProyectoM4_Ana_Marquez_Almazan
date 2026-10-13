@@ -134,3 +134,14 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué no funcionó o tuve que corregir:**
   - Un test del Gantt fallaba porque el nombre del proyecto aparece dos veces a propósito (en la columna fija y dentro de la barra); se ajustó el test para buscarlo en la columna.
   - Para no gastar tanto contexto en sesiones largas, se creó `CLAUDE.md` con el estado del proyecto y la forma de trabajar.
+
+## v2 — Etapa 8: Ajustes y auditoría
+- **Qué pedí:** que el admin personalice el espacio (logo, colores, prefijo del número) y pueda revisar toda la auditoría; un pie "Desarrollado por Imago Design"; y que en todas las secciones el título y los filtros queden fijos al desplazar.
+- **Qué generó / propuso:** preguntas de a una con recomendación y la etapa en dos partes con su plan: 8A (contraste, ajustes, tema en vivo, logo, prefijo, pie y encabezados fijos) y 8B (frases para cada tipo de cambio, lista paginada con filtros, detalle antes → después y CSV). Propuso medir el contraste de la paleta antes de guardar con las mismas fórmulas que usa el CSS, y proteger el CSV contra fórmulas escondidas en un título.
+- **Qué revisé o cambié yo:** elegí colores libres pero con control de contraste que bloquea guardar, que el prefijo solo cambie cómo se muestra, que Ajustes sea solo del admin y exportar la auditoría a CSV. Pedí los encabezados y filtros fijos. Creé los índices en la consola de Firebase y probé todo en la preview.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Al medir la paleta original aparecieron dos contrastes bajo 4.5:1 que nadie había notado (texto informativo 3.97 y la inicial del avatar 4.13); se oscurecieron y quedaron vigilados por un test.
+  - El pie del login se iba a convertir en una tercera columna; se envolvieron el formulario y el pie en una columna propia.
+  - La cuenta de servicio no tiene permiso para crear índices (403), así que se crearon a mano en la consola de Firebase y después se comprobó con una consulta que los tres respondieran.
+

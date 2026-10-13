@@ -26,12 +26,13 @@ SPA de tareas para una pyme (React 19 + TS + Vite, Firebase Auth + Firestore, Ve
 - `npm run bootstrap-admin -- email` — invitación del primer admin.
 - `vercel dev --listen 3000` — app + funciones en local.
 - Preview: `vercel --yes` y `vercel alias set <url> matecode-tasks-dev.vercel.app`; comprobar que prod responda 200.
+- **Índices en dev:** la cuenta de servicio NO puede crearlos (403); se crean en la consola de Firebase (Firestore → Índices → Compuesto) según `firestore.indexes.json`.
 - **Publicar reglas en dev:** `firebase deploy` da 403; se usa un script temporal en el scratchpad que llama a la API de Firebase Rules (`POST …/rulesets` + `PATCH …/releases/cloud.firestore`) con la cuenta de servicio del `.env`, se niega si el proyecto no es `matecode-tasks-dev`, y se borra al terminar.
 
 ## Arquitectura (lo esencial)
 
 - Capas: componente → hook → `services/` → `services/audited/` (escrituras). Los tests mockean servicios/hooks; nunca Firebase real.
-- **Auditoría obligatoria:** cada escritura (task, project, invitation, user) va en batch/transacción con `auditLog/{tipo}_{id}_{rev}` (`before`/`after`); las reglas lo exigen y verifican. `auditLog` es solo-agregar.
+- **Auditoría obligatoria:** cada escritura (task, project, invitation, user, settings) va en batch/transacción con `auditLog/{tipo}_{id}_{rev}` (`before`/`after`); las reglas lo exigen y verifican. `auditLog` es solo-agregar.
 - Roles: admin / member / viewer. `can()` en `src/features/auth/permissions.ts` refleja `firestore.rules`.
 - Tareas: `status` todo/doing/done, `assigneeId`, `completedBy/At` (honestos por reglas), `projectId`, `number` (contador `counters/tasks`, transacción), `subtasks` (≤ 20).
 - Proyectos: color libre, fechas, `ownerId`, `archived`; solo admin elimina (desvincula tareas).
@@ -51,7 +52,7 @@ SPA de tareas para una pyme (React 19 + TS + Vite, Firebase Auth + Firestore, Ve
 
 ## Estado (actualizar al cerrar cada etapa)
 
-- ✅ Etapas 1 (roles, invitaciones, auditoría) · 2 (menú, paleta, login) · 3 (Mis tareas v2) · 4 (Equipo, Mi perfil) · 5 (proyectos, tabla, número, subtareas, panel editable) · 6 (calendario Mes y Gantt).
-- ⏭️ **Etapa 8: Ajustes** — logo propio (en Firestore), colores de la paleta configurables (reemplazar `--brand-*` en `:root`), prefijo de número (hoy "MC"), página de auditoría para el admin. `navItems` ya recibe el perfil para mostrar Ajustes solo al admin.
-- Pendiente de la usuaria: "Qué aprendí" de las etapas 4, 5 y 6 en el AI_LOG.
-- Al terminar la v2: integrar a `main` (migración de prod, reglas, admin inicial).
+- ✅ Etapas 1 (roles, invitaciones, auditoría) · 2 (menú, paleta, login) · 3 (Mis tareas v2) · 4 (Equipo, Mi perfil) · 5 (proyectos, tabla, número, subtareas, panel editable) · 6 (calendario Mes y Gantt) · 8 (Ajustes: identidad, paleta con control de contraste, prefijo, pie Imago Design, encabezados fijos `StickyHeader`; auditoría con filtros, de a 50, detalle y CSV).
+- ⏭️ **Próxima etapa (idea de Ana):** acceso por proyecto — poder agregar a alguien que solo vea ciertos proyectos (hoy todo integrante activo lee todo). Requiere brainstorming: cambia reglas, consultas y varias pantallas.
+- Pendiente de la usuaria: "Qué aprendí" de las etapas 4, 5, 6 y 8 en el AI_LOG; compartir su logo y el pie de Imago Design (link) para el interior.
+- Al terminar la v2: integrar a `main` (migración de prod, reglas, **índices de `firestore.indexes.json`**, `settings/workspace` se crea al primer guardado, admin inicial).
