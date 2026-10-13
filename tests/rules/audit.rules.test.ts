@@ -1,6 +1,6 @@
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch,
+  collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { createInvitation } from '@/services/audited/invitations';
@@ -80,5 +80,18 @@ describe('auditLog', () => {
     const invitationsLog = (uid: string) => query(collection(as(uid), 'auditLog'), where('entityType', '==', 'invitation'));
     await assertSucceeds(getDocs(invitationsLog('admin')));
     await assertFails(getDocs(invitationsLog('ana')));
+  });
+});
+
+describe('lectura de toda la auditoría', () => {
+  it('el admin la lee completa, ordenada por fecha y filtrada', async () => {
+    await createTask(as('ana'), 'ana', input);
+    const log = collection(as('admin'), 'auditLog');
+    await assertSucceeds(getDocs(query(log, orderBy('at', 'desc'), limit(50))));
+    await assertSucceeds(getDocs(query(log, where('actorId', '==', 'ana'), orderBy('at', 'desc'), limit(50))));
+  });
+
+  it('un miembro no puede leer la auditoría completa', async () => {
+    await assertFails(getDocs(query(collection(as('ana'), 'auditLog'), orderBy('at', 'desc'), limit(50))));
   });
 });
