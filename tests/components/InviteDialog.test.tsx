@@ -48,4 +48,10 @@ describe('InviteDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Invitar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Este email ya tiene una invitación pendiente.');
   });
+
+  it('ofrece el rol Invitado con su explicación', async () => {
+    render(<InviteDialog adminUid="admin" onClose={vi.fn()} />);
+    await userEvent.selectOptions(screen.getByLabelText('Rol'), 'Invitado');
+    expect(screen.getByText('Solo ve los proyectos a los que lo agregues.')).toBeInTheDocument();
+  });
 });

@@ -19,5 +19,7 @@ export function navItems(profile: UserProfile): NavItem[] {
     { key: 'team', label: 'Equipo', shortLabel: 'Equipo', icon: Users, to: '/team' },
     { key: 'settings', label: 'Ajustes', shortLabel: 'Ajustes', icon: Settings, to: '/settings' },
   ];
-  return items.filter((item) => item.key !== 'settings' || can(profile, 'team:manage'));
+  return items.filter(
+    (item) => (item.key !== 'settings' || can(profile, 'team:manage')) && (item.key !== 'team' || can(profile, 'team:view')),
+  );
 }

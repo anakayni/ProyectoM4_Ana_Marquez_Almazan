@@ -44,7 +44,7 @@ export function ProjectsPage() {
         <PageHeader
           title="Proyectos"
           subtitle={`${plural(active.length, 'activo', 'activos')} · ${plural(archived.length, 'archivado', 'archivados')}`}
-          actions={can(me, 'task:create') && <Button size="sm" onClick={() => setCreating(true)}>+ Nuevo proyecto</Button>}
+          actions={can(me, 'project:create') && <Button size="sm" onClick={() => setCreating(true)}>+ Nuevo proyecto</Button>}
         />
         <div className={styles.bars}>
           <SegmentedControl

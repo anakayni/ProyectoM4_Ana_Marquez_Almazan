@@ -1,6 +1,6 @@
-export type Role = 'admin' | 'member' | 'viewer';
+export type Role = 'admin' | 'member' | 'viewer' | 'guest';
 
-export const ROLE_LABEL: Record<Role, string> = { admin: 'Administrador', member: 'Miembro', viewer: 'Lector' };
+export const ROLE_LABEL: Record<Role, string> = { admin: 'Administrador', member: 'Miembro', viewer: 'Lector', guest: 'Invitado' };
 
 /** Usuario de Firebase Auth (la sesión). */
 export interface AuthUser {

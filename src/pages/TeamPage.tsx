@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Navigate } from 'react-router';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { InviteDialog } from '@/components/team/InviteDialog';
 import { MemberRow } from '@/components/team/MemberRow';
@@ -17,8 +18,10 @@ import styles from './TeamPage.module.css';
 
 export function TeamPage() {
   const { profile } = useAuth();
-  // RequireAccess garantiza un perfil activo.
-  return <TeamView me={profile as UserProfile} />;
+  // RequireAccess garantiza un perfil activo. El Invitado no ve el equipo (las reglas tampoco se lo dejan leer).
+  const me = profile as UserProfile;
+  if (!can(me, 'team:view')) return <Navigate to="/tasks" replace />;
+  return <TeamView me={me} />;
 }
 
 function TeamView({ me }: { me: UserProfile }) {

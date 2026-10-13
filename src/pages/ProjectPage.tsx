@@ -44,7 +44,7 @@ export function ProjectPage() {
     );
   }
 
-  const canEdit = can(me, 'task:edit');
+  const canEdit = can(me, 'project:edit');
   const isAdmin = can(me, 'team:manage');
   const progress = projectProgress(tasks.filter((t) => t.projectId === project.id), project.endDate, today);
   const owner = makeNameOf(members)(project.ownerId);

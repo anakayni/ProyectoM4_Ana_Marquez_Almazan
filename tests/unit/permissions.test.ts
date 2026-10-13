@@ -30,3 +30,30 @@ describe('can', () => {
     expect(can(null, 'task:create')).toBe(false);
   });
 });
+
+const guest = { uid: 'g', role: 'guest' as const };
+
+describe('can — Invitado', () => {
+  it('trabaja con tareas y borra solo lo que creó', () => {
+    expect(can(guest, 'task:create')).toBe(true);
+    expect(can(guest, 'task:edit')).toBe(true);
+    expect(can(guest, 'task:delete', { createdBy: 'g' })).toBe(true);
+    expect(can(guest, 'task:delete', { createdBy: 'otro' })).toBe(false);
+  });
+
+  it('no toca proyectos ni ve el equipo', () => {
+    expect(can(guest, 'project:create')).toBe(false);
+    expect(can(guest, 'project:edit')).toBe(false);
+    expect(can(guest, 'project:people')).toBe(false);
+    expect(can(guest, 'team:view')).toBe(false);
+  });
+
+  it('proyectos: admin y miembro los crean y editan; solo el admin maneja sus personas', () => {
+    expect(can(member, 'project:create')).toBe(true);
+    expect(can(member, 'project:edit')).toBe(true);
+    expect(can(member, 'project:people')).toBe(false);
+    expect(can(admin, 'project:people')).toBe(true);
+    expect(can(viewer, 'project:edit')).toBe(false);
+    expect(can(viewer, 'team:view')).toBe(true);
+  });
+});

@@ -5,7 +5,7 @@ import { deactivateMessage } from '@/features/team/members';
 import { ROLE_LABEL, type Role, type UserProfile } from '@/types/auth';
 import styles from './MemberRow.module.css';
 
-const ROLES: Role[] = ['admin', 'member', 'viewer'];
+const ROLES: Role[] = ['admin', 'member', 'viewer', 'guest'];
 
 type Props = {
   member: UserProfile;

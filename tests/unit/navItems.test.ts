@@ -42,4 +42,8 @@ describe('navItems', () => {
       expect(item.shortLabel.length).toBeGreaterThan(0);
     }
   });
+
+  it('el Invitado ve Mis tareas, Proyectos y Calendario', () => {
+    expect(navItems(profile('guest')).map((i) => i.key)).toEqual(['tasks', 'projects', 'calendar']);
+  });
 });

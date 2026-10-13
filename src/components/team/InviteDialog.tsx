@@ -9,7 +9,7 @@ import { ROLE_LABEL, type Role } from '@/types/auth';
 import { validateEmail } from '@/utils/validators';
 import styles from './InviteDialog.module.css';
 
-const ROLES: Role[] = ['member', 'viewer', 'admin'];
+const ROLES: Role[] = ['member', 'viewer', 'guest', 'admin'];
 
 /** Invitar por email: crea la invitación y muestra el link para compartir. */
 export function InviteDialog({ adminUid, onClose }: { adminUid: string; onClose: () => void }) {
@@ -83,6 +83,7 @@ export function InviteDialog({ adminUid, onClose }: { adminUid: string; onClose:
           <select id="invite-role" className={fieldInputClass} value={role} onChange={(e) => setRole(e.target.value as Role)}>
             {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
           </select>
+          {role === 'guest' && <p className={styles.hint}>Solo ve los proyectos a los que lo agregues.</p>}
         </Field>
         <div className={styles.actions}>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
