@@ -1,0 +1,16 @@
+.summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.faces { display: inline-flex; }
+.faces > * + * { margin-left: calc(-1 * var(--space-2)); }
+.help, .pending { font-size: var(--text-md); color: var(--color-text-secondary); }
+.list { list-style: none; margin: var(--space-3) 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.name { font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.tag {
+  padding: 1px var(--space-2); border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: var(--weight-medium);
+  background: var(--color-done-chip); color: var(--color-done-chip-text);
+}
+.row > button { margin-left: auto; }
+.confirm { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-status-warning-surface); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.add { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
+.add > :first-child { flex: 1 1 220px; }

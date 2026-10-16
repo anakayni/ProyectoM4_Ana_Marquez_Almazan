@@ -17,8 +17,9 @@ vi.mock('@/hooks/useProjects', () => ({ useProjects: () => ({ projects: state.pr
 vi.mock('@/hooks/useTasks', () => ({ useTasks: () => ({ tasks: [] }) }));
 vi.mock('@/hooks/useTeamMembers', () => ({ useTeamMembers: () => [] }));
 vi.mock('@/services/projects.service', () => ({
-  updateProject: state.updateProject, deleteProject: state.deleteProject, createProject: vi.fn(),
+  updateProject: state.updateProject, deleteProject: state.deleteProject, createProject: vi.fn(), setProjectMembers: vi.fn(),
 }));
+vi.mock('@/services/team.service', () => ({ subscribeToInvitations: () => () => {} }));
 vi.mock('@/components/tasks/TaskWorkspace', () => ({
   TaskWorkspace: ({ projectId, renderHeader }: { projectId: string; renderHeader: (b: ReactNode) => ReactNode }) => (
     <>{renderHeader(null)}<p>Tareas de {projectId}</p></>

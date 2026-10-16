@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { ProjectPeople } from '@/components/projects/ProjectPeople';
 import { TaskWorkspace } from '@/components/tasks/TaskWorkspace';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -74,6 +75,7 @@ export function ProjectPage() {
             {project.archived && ' · Archivado'}
           </p>
           {progress.late && <p className={styles.late}>Atrasado</p>}
+          <ProjectPeople project={project} members={members} tasks={tasks} actorId={me.uid} canManage={can(me, 'project:people')} />
         </div>
         <div className={styles.actions}>
           {canEdit && <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>Editar</Button>}
