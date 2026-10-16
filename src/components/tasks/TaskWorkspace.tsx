@@ -27,6 +27,7 @@ import type { UserProfile } from '@/types/auth';
 import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type TaskStatus, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
+import { NoProjectsYet } from '@/components/projects/NoProjectsYet';
 import styles from './TaskWorkspace.module.css';
 
 type TaskWorkspaceProps = {
@@ -45,7 +46,9 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const showDone = seesDoneTasks(profile.role);
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null);
   const members = useTeamMembers();
-  const { projects } = useProjects();
+  const { projects, loading: projectsLoading } = useProjects();
+  // El Invitado sin proyectos no tiene nada que ver ni dónde crear: se le explica qué pasa.
+  const withoutProjects = profile.role === 'guest' && !projectsLoading && projects.length === 0;
   const { taskPrefix } = useWorkspaceSettings();
   const [creating, setCreating] = useState<Partial<TaskInput> | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -93,7 +96,8 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   return (
     <>
       <StickyHeader>
-        {renderHeader(canCreate ? <Button size="sm" onClick={() => setCreating(projectId ? { projectId } : {})}>+ Nueva tarea</Button> : null)}
+        {renderHeader(canCreate && !withoutProjects ? <Button size="sm" onClick={() => setCreating(projectId ? { projectId } : {})}>+ Nueva tarea</Button> : null)}
+        {!withoutProjects && (
         <div className={styles.bars}>
           <div className={styles.filters}>
             <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
@@ -146,9 +150,12 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
             </label>
           </div>
         </div>
+        )}
       </StickyHeader>
 
       <main className={styles.main}>
+        {withoutProjects ? <NoProjectsYet /> : (
+        <>
         {!canCreate && (
           <Alert kind="info">Tienes acceso de solo lectura: puedes ver las tareas del equipo, pero no modificarlas.</Alert>
         )}
@@ -205,6 +212,8 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
             </>
           )}
         </section>
+        </>
+        )}
       </main>
 
       <TaskDialogs

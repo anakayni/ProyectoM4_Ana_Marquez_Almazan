@@ -16,6 +16,7 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
+import { NoProjectsYet } from '@/components/projects/NoProjectsYet';
 import styles from './ProjectsPage.module.css';
 
 type Filter = 'active' | 'archived';
@@ -56,7 +57,8 @@ export function ProjectsPage() {
       <main className={styles.page}>
         {loading && <Spinner label="Cargando proyectos…" />}
         {error && <Alert kind="error">{error}</Alert>}
-        {!loading && !error && shown.length === 0 && (
+        {!loading && !error && me.role === 'guest' && projects.length === 0 && <NoProjectsYet />}
+        {!loading && !error && shown.length === 0 && !(me.role === 'guest' && projects.length === 0) && (
           <p className={styles.empty}>{filter === 'active' ? 'Todavía no hay proyectos activos.' : 'No hay proyectos archivados.'}</p>
         )}
         <ul className={styles.grid}>

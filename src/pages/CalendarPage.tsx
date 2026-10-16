@@ -27,6 +27,7 @@ import type { UserProfile } from '@/types/auth';
 import { SCOPES, SCOPE_LABEL, type TaskInput, type TaskScope } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
+import { NoProjectsYet } from '@/components/projects/NoProjectsYet';
 import styles from './CalendarPage.module.css';
 
 export function CalendarPage() {
@@ -34,7 +35,9 @@ export function CalendarPage() {
   const me = profile as UserProfile; // RequireAccess garantiza un perfil activo
   const { tasks, loading, error, retry, create, update, remove } = useTasks(me.uid);
   const members = useTeamMembers();
-  const { projects } = useProjects();
+  const { projects, loading: projectsLoading } = useProjects();
+  // El Invitado sin proyectos no tiene calendario que mostrar.
+  const withoutProjects = me.role === 'guest' && !projectsLoading && projects.length === 0;
   // "Hoy" se fija al abrir la página; recargar actualiza la fecha.
   const [today] = useState(() => toDateInputValue(new Date()));
   const current = { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 };
@@ -135,6 +138,8 @@ export function CalendarPage() {
         </div>
       </StickyHeader>
       <main className={styles.page}>
+        {withoutProjects ? <NoProjectsYet /> : (
+        <>
 
         {loading && <Spinner label="Cargando tareas…" />}
         {error && <Alert kind="error">{error} <Button size="sm" variant="ghost" onClick={retry}>Reintentar</Button></Alert>}
@@ -155,6 +160,8 @@ export function CalendarPage() {
               onOpenTask={(t) => openTask(t.id)} onCreate={onCreate}
             />
           </>
+        )}
+        </>
         )}
       </main>
 
