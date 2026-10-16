@@ -7,8 +7,10 @@ import { PendingInvitations } from '@/components/team/PendingInvitations';
 import { Button } from '@/components/ui/Button';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
+import { ownedProjects, projectsOfGuest } from '@/features/projects/projectPeople';
 import { openTasksByMember } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
+import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { updateMember } from '@/services/team.service';
@@ -28,6 +30,7 @@ function TeamView({ me }: { me: UserProfile }) {
   const isAdmin = can(me, 'team:manage');
   const members = useTeamMembers();
   const { tasks } = useTasks(me.uid);
+  const { projects } = useProjects();
   const [inviting, setInviting] = useState(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
@@ -46,6 +49,23 @@ function TeamView({ me }: { me: UserProfile }) {
       console.error('Error al actualizar integrante:', err);
       setToast({ kind: 'error', message: 'No pudimos guardar el cambio. Inténtalo de nuevo.' });
     }
+  }
+
+  const projectsLabel = (member: UserProfile) => {
+    if (member.role !== 'guest') return undefined;
+    const names = projectsOfGuest(projects, member.uid).map((p) => p.name);
+    return names.length > 0 ? `Proyectos: ${names.join(', ')}` : 'Sin proyectos';
+  };
+
+  // Un Invitado no puede ser responsable de un proyecto: primero hay que cambiar el responsable.
+  function changeRole(member: UserProfile, role: Role) {
+    const owned = ownedProjects(projects, member.uid);
+    if (role === 'guest' && owned.length > 0) {
+      const list = owned.map((p) => `«${p.name}»`).join(', ');
+      setToast({ kind: 'error', message: `${member.displayName} es responsable de ${list}: cambia el responsable antes de pasarlo a Invitado.` });
+      return;
+    }
+    void change(member, { role }, `Rol de ${member.displayName} actualizado.`);
   }
 
   return (
@@ -68,7 +88,8 @@ function TeamView({ me }: { me: UserProfile }) {
                 isMe={member.uid === me.uid}
                 canManage={isAdmin && member.uid !== me.uid}
                 openTasks={openTasks.get(member.uid) ?? 0}
-                onRoleChange={(role) => void change(member, { role }, `Rol de ${member.displayName} actualizado.`)}
+                projectsLabel={projectsLabel(member)}
+                onRoleChange={(role) => changeRole(member, role)}
                 onActiveChange={(active) =>
                   void change(member, { active }, `Acceso ${active ? 'reactivado' : 'desactivado'} para ${member.displayName}.`)
                 }

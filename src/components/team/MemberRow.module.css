@@ -25,3 +25,4 @@
   .controls, .row > .role { grid-column: auto; }
   .confirm .controls { justify-content: flex-end; }
 }
+.projects { font-size: var(--text-sm); color: var(--color-text-secondary); }

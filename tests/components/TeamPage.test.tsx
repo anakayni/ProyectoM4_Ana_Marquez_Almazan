@@ -2,17 +2,20 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Role, UserProfile } from '@/types/auth';
+import type { Project } from '@/types/project';
 import type { Task } from '@/types/task';
 
 const state = vi.hoisted(() => ({
   me: null as UserProfile | null,
   members: [] as UserProfile[],
   tasks: [] as Task[],
+  projects: [] as Project[],
   updateMember: vi.fn(),
 }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ profile: state.me }) }));
 vi.mock('@/hooks/useTeamMembers', () => ({ useTeamMembers: () => state.members }));
 vi.mock('@/hooks/useTasks', () => ({ useTasks: () => ({ tasks: state.tasks }) }));
+vi.mock('@/hooks/useProjects', () => ({ useProjects: () => ({ projects: state.projects, loading: false, error: null }) }));
 vi.mock('@/services/team.service', () => ({
   updateMember: state.updateMember,
   subscribeToInvitations: () => () => {},
@@ -36,6 +39,7 @@ describe('TeamPage', () => {
   beforeEach(() => {
     state.members = [person('ana', 'Ana', 'admin'), person('luis', 'Luis', 'member'), person('mario', 'Mario', 'member', false)];
     state.tasks = [task('luis'), task('luis'), task('luis'), task('mario')];
+    state.projects = [];
     state.updateMember.mockReset();
     state.updateMember.mockResolvedValue(undefined);
   });
@@ -53,6 +57,22 @@ describe('TeamPage', () => {
       expect(within(row('Mario')).getByText('Inactiva')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '+ Invitar' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Invitaciones pendientes' })).toBeInTheDocument();
+    });
+
+    it('muestra los proyectos de cada Invitado', () => {
+      state.members = [...state.members, person('gus', 'Gus', 'guest'), person('tom', 'Tom', 'guest')];
+      state.projects = [{ id: 'p1', name: 'Portal', ownerId: 'ana', memberIds: ['gus'] } as unknown as Project];
+      render(<TeamPage />);
+      expect(row('Gus')).toHaveTextContent('Proyectos: Portal');
+      expect(row('Tom')).toHaveTextContent('Sin proyectos');
+    });
+
+    it('no pasa a Invitado a alguien que es responsable de un proyecto', async () => {
+      state.projects = [{ id: 'p1', name: 'Portal', ownerId: 'luis', memberIds: [] } as unknown as Project];
+      render(<TeamPage />);
+      await userEvent.selectOptions(screen.getByLabelText('Rol de Luis'), 'Invitado');
+      expect(state.updateMember).not.toHaveBeenCalled();
+      expect(screen.getByRole('alert')).toHaveTextContent('Luis es responsable de «Portal»: cambia el responsable antes de pasarlo a Invitado.');
     });
 
     it('no tiene controles sobre su propia fila', () => {

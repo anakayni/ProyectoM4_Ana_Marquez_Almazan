@@ -13,6 +13,8 @@ type Props = {
   /** Admin mirando a otra persona */
   canManage: boolean;
   openTasks: number;
+  /** Solo para Invitados: en qué proyectos está. */
+  projectsLabel?: string;
   onRoleChange: (role: Role) => void;
   onActiveChange: (active: boolean) => void;
 };
@@ -22,7 +24,7 @@ function openLabel(n: number): string {
   return n === 1 ? '1 tarea abierta' : `${n} tareas abiertas`;
 }
 
-export function MemberRow({ member, isMe, canManage, openTasks, onRoleChange, onActiveChange }: Props) {
+export function MemberRow({ member, isMe, canManage, openTasks, projectsLabel, onRoleChange, onActiveChange }: Props) {
   const [confirming, setConfirming] = useState(false);
   const name = member.displayName;
 
@@ -36,6 +38,7 @@ export function MemberRow({ member, isMe, canManage, openTasks, onRoleChange, on
           {!member.active && <span className={styles.tag}>Inactiva</span>}
         </p>
         <p className={styles.email}>{member.email}</p>
+        {projectsLabel && <p className={styles.projects}>{projectsLabel}</p>}
       </div>
       <span className={styles.count}>{openLabel(openTasks)}</span>
       {canManage && member.active ? (

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { addableMembers, peopleRows, projectPeople, removePersonMessage } from '@/features/projects/projectPeople';
+import { addableMembers, ownedProjects, peopleRows, projectPeople, projectsOfGuest, removePersonMessage } from '@/features/projects/projectPeople';
 import type { Role, UserProfile } from '@/types/auth';
+import type { Project } from '@/types/project';
 
 describe('projectPeople', () => {
   it('responsable + lista, sin repetidos', () => {
@@ -39,5 +40,17 @@ describe('removePersonMessage', () => {
 
   it('a alguien del equipo solo deja de mostrarlo en la lista', () => {
     expect(removePersonMessage('Ana', false, 3)).toBe('Ana dejará de aparecer en las personas de este proyecto.');
+  });
+});
+
+describe('proyectos de una persona', () => {
+  const projects = [
+    { id: 'p1', name: 'Portal', ownerId: 'ana', memberIds: ['gus'] },
+    { id: 'p2', name: 'Web', ownerId: 'leo', memberIds: [] },
+  ] as unknown as Project[];
+
+  it('en cuáles está un Invitado y de cuáles es responsable alguien', () => {
+    expect(projectsOfGuest(projects, 'gus').map((p) => p.name)).toEqual(['Portal']);
+    expect(ownedProjects(projects, 'leo').map((p) => p.name)).toEqual(['Web']);
   });
 });

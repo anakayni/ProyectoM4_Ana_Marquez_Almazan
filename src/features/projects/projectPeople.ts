@@ -37,3 +37,13 @@ export function removePersonMessage(name: string, isGuest: boolean, openAssigned
   const tasks = openAssigned === 1 ? '1 tarea asignada' : `${openAssigned} tareas asignadas`;
   return `${base} Tiene ${tasks} sin terminar aquí: quedan a su nombre, pero ya no podrá verlas.`;
 }
+
+/** Proyectos donde el admin agregó a esta persona. */
+export function projectsOfGuest(projects: readonly Project[], uid: string): Project[] {
+  return projects.filter((p) => (p.memberIds ?? []).includes(uid));
+}
+
+/** Proyectos de los que la persona es responsable (un Invitado no puede serlo). */
+export function ownedProjects(projects: readonly Project[], uid: string): Project[] {
+  return projects.filter((p) => p.ownerId === uid);
+}
