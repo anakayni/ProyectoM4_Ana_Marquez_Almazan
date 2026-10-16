@@ -60,3 +60,19 @@ describe('renderSummaryEmail', () => {
     expect(empty.html).toContain('No tienes tareas asignadas');
   });
 });
+
+describe('renderSummaryEmail sin hechas (Lector e Invitado)', () => {
+  it('no menciona las hechas en el asunto, el HTML ni el texto', () => {
+    const open = renderSummaryEmail({
+      name: 'Ana',
+      tasks: [{ title: 'Diseñar', description: '', status: 'todo' }, { title: 'Revisar', description: '', status: 'doing' }],
+      date: new Date('2026-09-28T18:00:00Z'),
+      appUrl: 'https://x.app',
+      showDone: false,
+    });
+    expect(open.subject).toBe('Tu resumen de tareas: 1 pendiente, 1 en curso');
+    expect(open.html).not.toMatch(/Hechas?/);
+    expect(open.text).toContain('Pendientes: 1 · En curso: 1');
+    expect(open.text).not.toMatch(/Hechas?/);
+  });
+});

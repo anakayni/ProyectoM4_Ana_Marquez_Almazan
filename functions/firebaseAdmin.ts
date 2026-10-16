@@ -3,7 +3,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { requireEnv } from './env.js';
 import type { SummaryTask } from './summaryEmail.js';
-import { visibleForRole } from './visibleTasks.js';
+import { hidesDone, visibleForRole } from './visibleTasks.js';
 
 /** Inicializa firebase-admin una sola vez (las funciones reutilizan instancias entre llamadas). */
 function getAdminApp(): App {
@@ -25,8 +25,11 @@ export async function verifyIdToken(token: string) {
   return { uid: decoded.uid, email: decoded.email, name: decoded.name as string | undefined };
 }
 
-/** firebase-admin ignora las Security Rules: el filtro por responsable (y por proyecto, para el Invitado) es obligatorio acá. */
-export async function getTasksForUser(uid: string): Promise<SummaryTask[]> {
+/**
+ * firebase-admin ignora las Security Rules: el filtro por responsable (y, según el rol, sin hechas
+ * y por proyecto) es obligatorio acá. `showDone` indica si el email puede hablar de tareas hechas.
+ */
+export async function getTasksForUser(uid: string): Promise<{ tasks: SummaryTask[]; showDone: boolean }> {
   const db = getFirestore(getAdminApp());
   const [snapshot, user] = await Promise.all([
     db.collection('tasks').where('assigneeId', '==', uid).get(),
@@ -45,5 +48,8 @@ export async function getTasksForUser(uid: string): Promise<SummaryTask[]> {
       projectId: (data.projectId ?? null) as string | null,
     };
   });
-  return visibleForRole(role, tasks, guestProjectIds).map(({ title, description, status }) => ({ title, description, status }));
+  return {
+    tasks: visibleForRole(role, tasks, guestProjectIds).map(({ title, description, status }) => ({ title, description, status })),
+    showDone: !hidesDone(role),
+  };
 }

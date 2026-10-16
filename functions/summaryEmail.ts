@@ -60,8 +60,10 @@ export function renderSummaryEmail(input: {
   tasks: SummaryTask[];
   date: Date;
   appUrl: string;
+  /** Lector e Invitado no ven tareas hechas: el email no las menciona. */
+  showDone?: boolean;
 }): { subject: string; html: string; text: string } {
-  const { name, tasks, date, appUrl } = input;
+  const { name, tasks, date, appUrl, showDone = true } = input;
   const summary = buildSummary(tasks);
   const groups = {
     todo: tasks.filter((t) => t.status === 'todo'),
@@ -72,7 +74,8 @@ export function renderSummaryEmail(input: {
   const tasksUrl = `${appUrl.replace(/\/$/, '')}/tasks`;
   const safeName = escapeHtml(name);
 
-  const subject = `Tu resumen de tareas: ${plural(summary.todo, 'pendiente', 'pendientes')}, ${summary.doing} en curso, ${plural(summary.done, 'hecha', 'hechas')}`;
+  const openPart = `${plural(summary.todo, 'pendiente', 'pendientes')}, ${summary.doing} en curso`;
+  const subject = `Tu resumen de tareas: ${openPart}${showDone ? `, ${plural(summary.done, 'hecha', 'hechas')}` : ''}`;
 
   const body =
     summary.total === 0
@@ -80,7 +83,7 @@ export function renderSummaryEmail(input: {
       : [
           groups.todo.length ? sectionTitle('Pendientes') + taskRows(groups.todo, false) : '',
           groups.doing.length ? sectionTitle('En curso') + taskRows(groups.doing, false) : '',
-          groups.done.length ? sectionTitle('Hechas') + taskRows(groups.done, true) : '',
+          showDone && groups.done.length ? sectionTitle('Hechas') + taskRows(groups.done, true) : '',
         ].join('');
 
   const html = `<!DOCTYPE html>
@@ -90,7 +93,7 @@ export function renderSummaryEmail(input: {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#FFFFFF;border:1px solid #E3E3DE;border-radius:12px;">
 <tr><td style="padding:28px 32px 8px;font-family:${FONT};font-size:14px;font-weight:600;color:#14151A;">MateCode <span style="font-weight:400;color:#55554E;">Tasks</span></td></tr>
 <tr><td style="padding:20px 32px 0;font-family:${FONT};"><h1 style="margin:0 0 6px;font-size:22px;line-height:1.3;font-weight:600;color:#14151A;">Hola ${safeName}, este es tu resumen</h1><p style="margin:0;font-size:14px;line-height:1.55;color:#55554E;">Estado de las tareas asignadas a ti al ${dateLabel}.</p></td></tr>
-<tr><td style="padding:24px 32px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E3E3DE;border-radius:8px;font-family:${FONT};"><tr>${statCell(summary.todo, 'Pendientes', '#14151A', true)}${statCell(summary.doing, 'En curso', '#4D7C8A')}${statCell(summary.done, 'Hechas', '#157F4A')}</tr></table></td></tr>
+<tr><td style="padding:24px 32px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E3E3DE;border-radius:8px;font-family:${FONT};"><tr>${statCell(summary.todo, 'Pendientes', '#14151A', true)}${statCell(summary.doing, 'En curso', '#4D7C8A')}${showDone ? statCell(summary.done, 'Hechas', '#157F4A') : ''}</tr></table></td></tr>
 ${body}
 <tr><td style="padding:28px 32px 32px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#14151A;border-radius:8px;"><a href="${escapeHtml(tasksUrl)}" style="display:inline-block;padding:12px 20px;font-family:${FONT};font-size:14px;font-weight:500;color:#F6F6F4;text-decoration:none;">Abrir mis tareas</a></td></tr></table></td></tr>
 </table>
@@ -101,12 +104,12 @@ ${body}
   const text = [
     `Hola ${name}, este es tu resumen de tareas al ${dateLabel}.`,
     '',
-    `Pendientes: ${summary.todo} · En curso: ${summary.doing} · Hechas: ${summary.done}`,
+    `Pendientes: ${summary.todo} · En curso: ${summary.doing}${showDone ? ` · Hechas: ${summary.done}` : ''}`,
     '',
     ...(summary.total === 0 ? ['No tienes tareas asignadas.', ''] : []),
     ...section('Pendientes', groups.todo),
     ...section('En curso', groups.doing),
-    ...section('Hechas', groups.done),
+    ...(showDone ? section('Hechas', groups.done) : []),
     `Abrir mis tareas: ${tasksUrl}`,
   ].join('\n');
 

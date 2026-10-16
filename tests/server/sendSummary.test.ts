@@ -6,7 +6,7 @@ import { processSendSummary, type SendSummaryDeps } from '../../functions/sendSu
 function makeDeps(overrides: Partial<SendSummaryDeps> = {}): SendSummaryDeps {
   return {
     verifyIdToken: vi.fn().mockResolvedValue({ uid: 'u1', email: 'ana@mail.com', name: 'Ana' }),
-    getTasksForUser: vi.fn().mockResolvedValue([{ title: 'Tarea', description: '', status: 'todo' }]),
+    getTasksForUser: vi.fn().mockResolvedValue({ tasks: [{ title: 'Tarea', description: '', status: 'todo' }], showDone: true }),
     sendEmail: vi.fn().mockResolvedValue('msg-123'),
     appUrl: 'https://app.test',
     now: () => new Date('2026-09-28T18:00:00Z'),
@@ -54,6 +54,13 @@ describe('processSendSummary', () => {
     const result = await processSendSummary(deps, post('ok'));
     expect(result.status).toBe(400);
     expect(result.body).toMatchObject({ code: 'missing_email' });
+  });
+
+  it('a Lector e Invitado no les muestra "Hechas"', async () => {
+    const deps = makeDeps({ getTasksForUser: vi.fn().mockResolvedValue({ tasks: [{ title: 'Tarea', description: '', status: 'todo' }], showDone: false }) });
+    await processSendSummary(deps, post('ok'));
+    const sent = vi.mocked(deps.sendEmail).mock.calls[0][0];
+    expect(`${sent.subject} ${sent.html} ${sent.text}`).not.toMatch(/hechas?/i);
   });
 
   it('lee las tareas del uid del token y envía el email a su dirección', async () => {

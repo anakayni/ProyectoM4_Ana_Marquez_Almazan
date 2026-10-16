@@ -12,7 +12,8 @@ type VerifiedUser = { uid: string; email?: string; name?: string };
  */
 export type SendSummaryDeps = {
   verifyIdToken: (token: string) => Promise<VerifiedUser>;
-  getTasksForUser: (uid: string) => Promise<SummaryTask[]>;
+  /** Tareas asignadas que la persona puede ver, y si puede ver las hechas (Lector e Invitado no). */
+  getTasksForUser: (uid: string) => Promise<{ tasks: SummaryTask[]; showDone: boolean }>;
   sendEmail: (message: EmailMessage) => Promise<string>;
   appUrl: string;
   now?: () => Date;
@@ -60,15 +61,16 @@ export async function processSendSummary(deps: SendSummaryDeps, input: SendSumma
   if (!user.email) return fail(400, 'missing_email', 'Tu cuenta no tiene un email asociado.');
 
   let tasks: SummaryTask[];
+  let showDone: boolean;
   try {
-    tasks = await deps.getTasksForUser(user.uid);
+    ({ tasks, showDone } = await deps.getTasksForUser(user.uid));
   } catch (error) {
     console.error('send-summary: error leyendo tareas', error);
     return fail(500, 'internal_error', 'No pudimos leer tus tareas. Inténtalo de nuevo.');
   }
 
   const now = deps.now ?? (() => new Date());
-  const email = renderSummaryEmail({ name: user.name || user.email, tasks, date: now(), appUrl: deps.appUrl });
+  const email = renderSummaryEmail({ name: user.name || user.email, tasks, date: now(), appUrl: deps.appUrl, showDone });
 
   try {
     const messageId = await deps.sendEmail({ to: user.email, ...email });
