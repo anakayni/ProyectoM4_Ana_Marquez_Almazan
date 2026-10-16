@@ -6,8 +6,8 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
-import { can } from '@/features/auth/permissions';
-import { projectProgress } from '@/features/projects/projectProgress';
+import { can, seesDoneTasks } from '@/features/auth/permissions';
+import { projectOpenSummary, projectProgress } from '@/features/projects/projectProgress';
 import { makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
@@ -65,6 +65,8 @@ export function ProjectsPage() {
               key={project.id}
               project={project}
               progress={projectProgress(tasks.filter((t) => t.projectId === project.id), project.endDate, today)}
+              showDone={seesDoneTasks(me.role)}
+              open={projectOpenSummary(tasks.filter((t) => t.projectId === project.id), project.endDate, today)}
               owner={personOf(project.ownerId)}
             />
           ))}

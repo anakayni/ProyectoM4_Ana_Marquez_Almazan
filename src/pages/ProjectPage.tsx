@@ -6,8 +6,8 @@ import { TaskWorkspace } from '@/components/tasks/TaskWorkspace';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import { can } from '@/features/auth/permissions';
-import { projectProgress } from '@/features/projects/projectProgress';
+import { can, seesDoneTasks } from '@/features/auth/permissions';
+import { openTasksLabel, projectOpenSummary, projectProgress } from '@/features/projects/projectProgress';
 import { makeNameOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
@@ -47,7 +47,12 @@ export function ProjectPage() {
 
   const canEdit = can(me, 'project:edit');
   const isAdmin = can(me, 'team:manage');
-  const progress = projectProgress(tasks.filter((t) => t.projectId === project.id), project.endDate, today);
+  const own = tasks.filter((t) => t.projectId === project.id);
+  const progress = projectProgress(own, project.endDate, today);
+  // Lector e Invitado no ven las hechas: en lugar del avance, cuánto falta.
+  const showDone = seesDoneTasks(me.role);
+  const openSummary = projectOpenSummary(own, project.endDate, today);
+  const late = showDone ? progress.late : openSummary.late;
   const owner = makeNameOf(members, unknownPersonFor(me.role))(project.ownerId);
 
   async function run(action: () => Promise<void>, onDone?: () => void) {
@@ -71,10 +76,10 @@ export function ProjectPage() {
           {project.description && <p className={styles.description}>{project.description}</p>}
           <p className={styles.meta}>
             {formatDateLabel(project.startDate)} → {formatDateLabel(project.endDate)}
-            {owner && ` · A cargo: ${owner}`} · {progress.percent}% ({progress.done} de {progress.total})
+            {owner && ` · A cargo: ${owner}`} · {showDone ? `${progress.percent}% (${progress.done} de ${progress.total})` : openTasksLabel(openSummary.open)}
             {project.archived && ' · Archivado'}
           </p>
-          {progress.late && <p className={styles.late}>Atrasado</p>}
+          {late && <p className={styles.late}>Atrasado</p>}
           <ProjectPeople project={project} members={members} tasks={tasks} actorId={me.uid} canManage={can(me, 'project:people')} />
         </div>
         <div className={styles.actions}>

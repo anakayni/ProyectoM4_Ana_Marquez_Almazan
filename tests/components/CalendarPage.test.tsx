@@ -35,7 +35,10 @@ describe('CalendarPage', () => {
       endDate: '2026-11-30', archived: false, createdBy: 'ana', createdAt: 1, rev: 1,
     }];
   });
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    me.role = 'member';
+  });
 
   it('muestra el mes actual con sus tareas', () => {
     renderPage();
@@ -49,6 +52,12 @@ describe('CalendarPage', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Noviembre 2026' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Hoy' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Octubre 2026' })).toBeInTheDocument();
+  });
+
+  it('el Lector no tiene la casilla "Ocultar hechas" (nunca las ve)', () => {
+    me.role = 'viewer';
+    renderPage();
+    expect(screen.queryByRole('checkbox', { name: 'Ocultar hechas' })).not.toBeInTheDocument();
   });
 
   it('oculta las hechas', async () => {

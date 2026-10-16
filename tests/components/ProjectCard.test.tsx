@@ -34,4 +34,18 @@ describe('ProjectCard', () => {
     );
     expect(screen.getByText(/Atrasado/)).toBeInTheDocument();
   });
+
+  it('sin hechas muestra las tareas abiertas en lugar del avance', () => {
+    render(
+      <MemoryRouter>
+        <ProjectCard
+          project={project} progress={{ total: 10, todo: 3, doing: 3, done: 4, percent: 40, late: false }}
+          open={{ open: 6, late: false }} showDone={false} owner={null}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('6 tareas abiertas')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(screen.queryByText(/hechas/)).not.toBeInTheDocument();
+  });
 });

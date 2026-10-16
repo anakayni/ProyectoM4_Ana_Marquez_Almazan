@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
-import { can } from '@/features/auth/permissions';
+import { can, seesDoneTasks } from '@/features/auth/permissions';
 import { addDays, ganttRange, rangeAround, rangeLabel, type GanttRange } from '@/features/calendar/gantt';
 import { addMonths, agendaDays, monthGrid, monthLabel, projectMarkers, tasksByDay } from '@/features/calendar/month';
 import { makeProjectOf } from '@/features/projects/projectOf';
@@ -118,10 +118,13 @@ export function CalendarPage() {
                 {projects.filter((p) => !p.archived).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
-            <label className={styles.check}>
-              <input type="checkbox" checked={hideDone === 'yes'} onChange={(e) => setHideDone(e.target.checked ? 'yes' : 'no')} />
-              Ocultar hechas
-            </label>
+            {/* Lector e Invitado nunca ven las hechas: la casilla no tendría efecto. */}
+            {seesDoneTasks(me.role) && (
+              <label className={styles.check}>
+                <input type="checkbox" checked={hideDone === 'yes'} onChange={(e) => setHideDone(e.target.checked ? 'yes' : 'no')} />
+                Ocultar hechas
+              </label>
+            )}
             {view === 'gantt' && (
               <label className={styles.check}>
                 <input type="checkbox" checked={withArchived} onChange={(e) => setWithArchived(e.target.checked)} />
@@ -137,7 +140,7 @@ export function CalendarPage() {
         {error && <Alert kind="error">{error} <Button size="sm" variant="ghost" onClick={retry}>Reintentar</Button></Alert>}
         {!loading && !error && view === 'gantt' && (
           <GanttView
-            projects={ganttProjects} tasks={visible} range={range} today={today} nameOf={nameOf}
+            projects={ganttProjects} tasks={visible} range={range} today={today} nameOf={nameOf} showDone={seesDoneTasks(me.role)}
             onOpenTask={(t) => openTask(t.id)}
           />
         )}
