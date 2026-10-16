@@ -145,3 +145,14 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
   - El pie del login se iba a convertir en una tercera columna; se envolvieron el formulario y el pie en una columna propia.
   - La cuenta de servicio no tiene permiso para crear índices (403), así que se crearon a mano en la consola de Firebase y después se comprobó con una consulta que los tres respondieran.
 
+## v2 — Etapa 9: Invitados por proyecto
+- **Qué pedí:** poder sumar a alguien externo que solo vea un proyecto ("yo soy admin y puedo ver todo, pero quiero agregar a alguien que solo vea un proyecto"). En el camino pedí también que las tareas terminadas se noten (tachadas, en gris y al final), que Lector e Invitado no vean las tareas hechas, y un README en inglés para postularme a empleos, con una demo pública y su cuenta de solo lectura, hecho con pull requests.
+- **Qué generó / propuso:** preguntas de a una con recomendación; un rol nuevo (Invitado) en lugar de volver privados todos los proyectos; una lista de personas por proyecto que solo maneja el admin; "tarjetas" con nombre y foto que las reglas comparan con el perfil real, para que el Invitado no lea emails ni roles sin necesitar funciones pagas; consultas distintas según el rol, porque Firestore rechaza una consulta entera si pide algo prohibido. La etapa se dividió en 9A (rol, datos y reglas), 9B (pantallas) y 9C (Lector e Invitado sin tareas hechas).
+- **Qué revisé o cambié yo:** elegí que el Invitado trabaje como un Miembro dentro de sus proyectos, que solo vea a las personas de esos proyectos y que solo el admin maneje la lista. Para las tareas hechas primero elegí ocultarlas solo en pantalla y después cambié de opinión: que nunca puedan verlas (privacidad), con "N tareas abiertas" en lugar del avance. Creé los índices en la consola de Firebase, abrí la preview al público, creé la cuenta demo y fusioné mi primer pull request.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - No encontraba la opción "campo único" para el índice de tarjetas en la consola nueva de Firebase: se hizo la consulta que lo necesitaba y Firebase devolvió el enlace directo para crearlo.
+  - El chequeo de tipos del servidor marcó que, al filtrar las tareas del email, la lista perdía sus campos; se corrigió armando cada tarea con su tipo.
+  - Un test de reglas de una etapa anterior ("todos leen todas las tareas") dejó de ser cierto con la decisión nueva y se actualizó a la regla nueva.
+  - Al probar como la cuenta demo (Lector) no aparecía cómo agregar personas: es solo para el admin, y el botón "Personas del proyecto" hay que hacerlo más visible (queda pendiente).
+

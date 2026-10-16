@@ -226,13 +226,17 @@ Todo funciona en planes gratuitos (Firebase Spark, Vercel Hobby, SES en sandbox)
 
 ### Roles y permisos
 
-| Acción | Administrador | Miembro | Lector |
-|---|---|---|---|
-| Ver todas las tareas del equipo y su historial | ✓ | ✓ | ✓ |
-| Crear y editar cualquier tarea | ✓ | ✓ | |
-| Eliminar tareas | todas | solo las que creó | |
-| Invitar personas, cambiar roles, desactivar | ✓ | | |
-| Ver el registro de auditoría completo | ✓ | | |
+| Acción | Administrador | Miembro | Lector | Invitado |
+|---|---|---|---|---|
+| Ver proyectos | todos | todos | todos | solo donde lo agregaron |
+| Ver tareas y su historial | todas | todas | solo abiertas | solo abiertas de sus proyectos |
+| Crear y editar tareas | ✓ | ✓ | | solo en sus proyectos |
+| Eliminar tareas | todas | solo las que creó | | solo las que creó |
+| Crear y editar proyectos | ✓ | ✓ | | |
+| Agregar o quitar personas de un proyecto | ✓ | | | |
+| Ver el equipo | ✓ | ✓ | ✓ | solo las personas de sus proyectos (nombre y foto) |
+| Invitar personas, cambiar roles, desactivar | ✓ | | | |
+| Ver el registro de auditoría completo | ✓ | | | |
 
 Un administrador no puede cambiar su propio rol ni desactivarse (así el espacio nunca queda sin admin).
 
@@ -313,6 +317,16 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Encabezados fijos:** en todas las secciones el título y los filtros quedan arriba al desplazar.
 - **Pie "Desarrollado por Imago Design"** en el login y dentro de la app.
 
+### Invitados por proyecto (etapa 9)
+
+- **Rol Invitado:** para alguien externo (un cliente, un proveedor). Trabaja como un Miembro, pero **solo dentro de los proyectos donde el admin lo agregó**: ve, crea, edita y asigna tareas ahí; no crea proyectos ni cambia sus datos; no ve Equipo, emails ni roles. Sin proyectos ve "Todavía no tienes proyectos asignados".
+- **Personas del proyecto:** en la página de cada proyecto, el admin agrega y quita personas (lista `memberIds`, auditada: "Admin agregó a Gus al proyecto «Portal»"). El responsable siempre cuenta como persona del proyecto. En Equipo, cada Invitado muestra sus proyectos, y no se puede pasar a Invitado a alguien que es responsable de un proyecto.
+- **Tarjetas en lugar del perfil:** el Invitado no lee `users`. Lee `projects/{id}/people/{uid}` (nombre, foto, activo, invitado o equipo), y las reglas solo aceptan una tarjeta si es copia exacta del perfil real. Se actualizan al cambiar nombre, foto, rol o activo; quien no está en la lista aparece como "Alguien del equipo".
+- **Cada rol pide solo lo que puede ver:** Firestore rechaza una consulta entera si pide algo prohibido, así que el Invitado pide sus proyectos (`memberIds array-contains`) y las tareas proyecto por proyecto (`subscribeFanOut`).
+- **Lector e Invitado no ven tareas hechas** (decisión de privacidad): las reglas solo les dejan leer tareas pendientes o en curso y su historial; en lugar del avance ven "N tareas abiertas"; el Invitado confirma antes de marcar una tarea como hecha. El email de resumen tampoco les cuenta las hechas.
+- **Tareas terminadas:** para quien sí las ve, tachadas, en gris (sin transparencias, contraste ≥ 4.5:1 vigilado por un test) y al final de la lista.
+- **Índice de tarjetas:** buscar las tarjetas de una persona (`collectionGroup('people')` por `uid`) necesita una exención de campo único, declarada en `firestore.indexes.json` (`fieldOverrides`).
+
 ### Comandos nuevos
 
 | Script | Qué hace |
@@ -321,7 +335,7 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
 | `npm run migrate-tasks` | Migra las tareas al formato actual (estado, proyecto, número, subtareas) con auditoría y crea el contador (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 386 de la app (`npm test`) y 61 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta) que deben ser rechazados.
+Tests en la rama `v2`: 437 de la app (`npm test`) y 89 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta, un Invitado sacando una tarea de su proyecto, tarjetas inventadas, leer tareas hechas) que deben ser rechazados.
 
 ## Mejoras futuras
 
