@@ -48,6 +48,8 @@ type Props = {
   projects: Project[];
   /** El Invitado siempre trabaja dentro de un proyecto. */
   projectRequired?: boolean;
+  /** El Invitado deja de ver la tarea al terminarla: confirma antes de guardarla como hecha. */
+  confirmDone?: boolean;
   canEdit: boolean;
   canDelete: boolean;
   onClose: () => void;
@@ -57,14 +59,14 @@ type Props = {
 
 /** Todo sobre una tarea, editable en el lugar: se guarda junto con "Guardar cambios". */
 export function TaskDetailPanel({
-  task, nameOf, projectOf, assignees = [], assigneesFor, projects, projectRequired = false, canEdit, canDelete, onClose, onSave, onDelete,
+  task, nameOf, projectOf, assignees = [], assigneesFor, projects, projectRequired = false, confirmDone = false, canEdit, canDelete, onClose, onSave, onDelete,
 }: Props) {
   const formatNumber = useTaskNumberFormat();
   const [draft, setDraft] = useState<Draft>(() => toDraft(task));
   const [newTitle, setNewTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState<'discard' | 'delete' | null>(null);
+  const [confirm, setConfirm] = useState<'discard' | 'delete' | 'done' | null>(null);
   const set = (change: Partial<Draft>) => setDraft((d) => ({ ...d, ...change }));
   const patch = changedFields(task, draft);
   const dirty = Object.keys(patch).length > 0;
@@ -94,6 +96,15 @@ export function TaskDetailPanel({
     const problem = errors.title ?? errors.description ?? null;
     setError(problem);
     if (problem || !dirty) return;
+    if (confirmDone && draft.status === 'done' && task.status !== 'done') {
+      setConfirm('done');
+      return;
+    }
+    await commit();
+  }
+
+  async function commit() {
+    setConfirm(null);
     setSaving(true);
     try {
       await onSave(patch);
@@ -216,6 +227,15 @@ export function TaskDetailPanel({
             <div className={styles.actions}>
               <Button size="sm" variant="ghost" onClick={() => setConfirm(null)}>Seguir editando</Button>
               <Button size="sm" variant="danger" onClick={onClose}>Descartar</Button>
+            </div>
+          </div>
+        )}
+        {confirm === 'done' && (
+          <div className={styles.confirm} role="group" aria-label="Confirmar tarea hecha">
+            <p>¿Marcar como hecha? Dejarás de verla: las tareas terminadas solo las ven el admin y los miembros.</p>
+            <div className={styles.actions}>
+              <Button size="sm" variant="ghost" onClick={() => setConfirm(null)}>Cancelar</Button>
+              <Button size="sm" onClick={() => void commit()}>Sí, marcar</Button>
             </div>
           </div>
         )}

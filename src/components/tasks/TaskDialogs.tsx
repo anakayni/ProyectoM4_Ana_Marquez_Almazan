@@ -54,6 +54,7 @@ export function TaskDialogs({
           assigneesFor={assigneesFor(openTask.assigneeId)}
           projects={projects.filter((p) => !p.archived || p.id === openTask.projectId)}
           projectRequired={isGuest}
+          confirmDone={isGuest}
           canEdit={can(profile, 'task:edit')}
           canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
           onClose={onCloseTask}

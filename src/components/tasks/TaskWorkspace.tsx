@@ -7,10 +7,11 @@ import { TaskTable } from './TaskTable';
 import { TodoList } from './TodoList';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
-import { can } from '@/features/auth/permissions';
+import { can, seesDoneTasks } from '@/features/auth/permissions';
 import { makeProjectOf } from '@/features/projects/projectOf';
 import { makeNameOf, makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
@@ -23,7 +24,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type TaskView } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type TaskStatus, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
 import styles from './TaskWorkspace.module.css';
@@ -41,6 +42,8 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const { tasks, loading, error, retry, create, update, remove, setStatus } = useTasks(profile.uid);
   const canCreate = can(profile, 'task:create');
   const canEdit = can(profile, 'task:edit');
+  const showDone = seesDoneTasks(profile.role);
+  const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null);
   const members = useTeamMembers();
   const { projects } = useProjects();
   const { taskPrefix } = useWorkspaceSettings();
@@ -79,6 +82,12 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
       console.error('Error al actualizar la tarea:', err);
       setToast({ kind: 'error', message: 'No pudimos guardar el cambio. Inténtalo de nuevo.' });
     }
+  }
+
+  // El Invitado deja de ver una tarea al terminarla: se le pide confirmación antes.
+  function changeStatus(id: string, status: TaskStatus) {
+    if (profile.role === 'guest' && status === 'done') setConfirmDoneId(id);
+    else void safely(() => setStatus(id, status));
   }
 
   return (
@@ -153,15 +162,16 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
           )}
           {!loading && !error && (
             <>
-              <TaskStats stats={stats} selected={card} onSelect={setCard} />
+              <TaskStats stats={stats} selected={card} onSelect={setCard} showDone={showDone} />
               {view === 'board' ? (
                 <TaskBoard
+                  showDone={showDone}
                   tasks={visibleTasks}
                   nameOf={nameOf}
                   personOf={personOf}
                   projectOf={projectOf}
                   canEdit={canEdit}
-                  onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                  onStatusChange={changeStatus}
                   onOpen={(task) => setOpenId(task.id)}
                 />
               ) : view === 'table' && visibleTasks.length > 0 ? (
@@ -171,7 +181,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                   personOf={personOf}
                   projectOf={projectOf}
                   canEdit={canEdit}
-                  onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                  onStatusChange={changeStatus}
                   onOpen={(task) => setOpenId(task.id)}
                 />
               ) : (
@@ -188,7 +198,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                       : scope === 'mine'
                         ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
                         : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}
-                  onStatusChange={(id, status) => void safely(() => setStatus(id, status))}
+                  onStatusChange={changeStatus}
                   onOpen={(task) => setOpenId(task.id)}
                 />
               )}
@@ -203,6 +213,24 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
         creating={creating} onCloseCreate={() => setCreating(null)}
         actions={{ create, update, remove }} onToast={setToast}
       />
+
+      {confirmDoneId && (
+        <Modal title="¿Marcar como hecha?" onClose={() => setConfirmDoneId(null)}>
+          <p>Dejarás de verla: las tareas terminadas solo las ven el admin y los miembros.</p>
+          <div className={styles.confirmActions}>
+            <Button variant="ghost" onClick={() => setConfirmDoneId(null)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const id = confirmDoneId;
+                setConfirmDoneId(null);
+                void safely(() => setStatus(id, 'done'));
+              }}
+            >
+              Sí, marcar
+            </Button>
+          </div>
+        </Modal>
+      )}
 
       {toast && <Toast toast={toast} onDismiss={dismissToast} />}
     </>

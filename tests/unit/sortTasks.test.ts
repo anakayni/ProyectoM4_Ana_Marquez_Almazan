@@ -17,6 +17,13 @@ describe('sortTasks', () => {
     expect(ids(sortTasks(list, 'recent'))).toEqual(['b', 'c', 'a']);
   });
 
+  it('"recent" deja las hechas al final, cada grupo de la más nueva a la más vieja', () => {
+    const list = [
+      task('a', { createdAt: 3, status: 'done' }), task('b', { createdAt: 1 }), task('c', { createdAt: 2 }), task('d', { createdAt: 4, status: 'done' }),
+    ];
+    expect(ids(sortTasks(list, 'recent'))).toEqual(['c', 'b', 'd', 'a']);
+  });
+
   it('"due" ordena por vencimiento y deja sin fecha al final', () => {
     const list = [
       task('sin-fecha'),

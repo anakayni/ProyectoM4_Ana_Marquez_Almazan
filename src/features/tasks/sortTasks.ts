@@ -18,13 +18,13 @@ const byDue: Comparator = (a, b) => {
 
 /**
  * Devuelve una copia ordenada (no modifica el array original).
- * - recent: la más nueva primero.
+ * - recent: pendientes primero (las hechas al final), la más nueva primero.
  * - due: pendientes primero, luego por vencimiento y prioridad.
  * - priority: pendientes primero, luego por prioridad y vencimiento.
  */
 export function sortTasks(tasks: readonly Task[], mode: SortMode): Task[] {
   const list = [...tasks];
-  if (mode === 'recent') return list.sort(byRecent);
+  if (mode === 'recent') return list.sort((a, b) => pendingFirst(a, b) || byRecent(a, b));
   const [primary, secondary] = mode === 'priority' ? [byPriority, byDue] : [byDue, byPriority];
   return list.sort((a, b) => pendingFirst(a, b) || primary(a, b) || secondary(a, b) || byRecent(a, b));
 }

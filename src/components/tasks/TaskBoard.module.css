@@ -19,6 +19,7 @@
 
 @media (min-width: 900px) {
   .board { grid-template-columns: repeat(3, 1fr); align-items: start; }
+  .two { grid-template-columns: repeat(2, 1fr); }
 }
 .number { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text-muted); }
 

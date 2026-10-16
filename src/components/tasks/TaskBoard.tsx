@@ -16,14 +16,16 @@ type Props = {
   canEdit: boolean;
   onStatusChange: (id: string, status: TaskStatus) => void;
   onOpen: (task: Task) => void;
+  /** Lector e Invitado: sin la columna "Hecha". */
+  showDone?: boolean;
 };
 
 /** Tablero de 3 columnas. Sin arrastrar: la tarea cambia de columna con su selector de estado. */
-export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: Props) {
+export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen, showDone = true }: Props) {
   const formatNumber = useTaskNumberFormat();
   return (
-    <div className={styles.board}>
-      {STATUSES.map((status) => {
+    <div className={`${styles.board} ${showDone ? '' : styles.two}`}>
+      {STATUSES.filter((s) => showDone || s !== 'done').map((status) => {
         const column = tasks.filter((t) => t.status === status);
         return (
           <section key={status} className={styles.column} aria-labelledby={`column-${status}`}>

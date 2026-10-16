@@ -8,13 +8,14 @@ const CARDS: { key: StatCard; label: string }[] = [
   { key: 'overdue', label: 'Vencidas' },
 ];
 
-type Props = { stats: Stats; selected: StatCard | null; onSelect: (card: StatCard | null) => void };
+/** `showDone: false` (Lector e Invitado): sin la tarjeta "Hechas". */
+type Props = { stats: Stats; selected: StatCard | null; onSelect: (card: StatCard | null) => void; showDone?: boolean };
 
 /** Números reales del alcance elegido. Cada tarjeta filtra la lista; otro clic quita el filtro. */
-export function TaskStats({ stats, selected, onSelect }: Props) {
+export function TaskStats({ stats, selected, onSelect, showDone = true }: Props) {
   return (
     <div className={styles.grid} role="group" aria-label="Resumen de tareas">
-      {CARDS.map(({ key, label }) => (
+      {CARDS.filter((c) => showDone || c.key !== 'done').map(({ key, label }) => (
         <button
           key={key} type="button" aria-pressed={selected === key}
           className={`${styles.card} ${key === 'overdue' && stats.overdue > 0 ? styles.alert : ''}`}
