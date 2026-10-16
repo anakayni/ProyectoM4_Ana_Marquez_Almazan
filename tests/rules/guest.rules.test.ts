@@ -45,8 +45,8 @@ describe('Invitado: lectura', () => {
     await createTask(as('ana'), 'ana', input('p1'));
     await createTask(as('ana'), 'ana', input('p2'));
     const db = as('gus');
-    await assertSucceeds(getDocs(query(collection(db, 'tasks'), where('projectId', '==', 'p1'))));
-    await assertFails(getDocs(query(collection(db, 'tasks'), where('projectId', '==', 'p2'))));
+    await assertSucceeds(getDocs(query(collection(db, 'tasks'), where('projectId', '==', 'p1'), where('status', 'in', ['todo', 'doing']))));
+    await assertFails(getDocs(query(collection(db, 'tasks'), where('projectId', '==', 'p2'), where('status', 'in', ['todo', 'doing']))));
     await assertFails(getDocs(collection(db, 'tasks')));
   });
 

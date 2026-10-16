@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTask, deleteTask, updateTask } from '@/services/audited/tasks';
 import { createEnv, dbAs, seedCounter, seedUser } from './helpers';
@@ -25,10 +25,11 @@ beforeEach(async () => {
 });
 
 describe('tareas', () => {
-  it('todos los usuarios activos leen todas las tareas', async () => {
+  it('los miembros leen todas las tareas; la lectora, solo las abiertas', async () => {
     await createTask(as('ana'), 'ana', input);
-    await assertSucceeds(getDocs(collection(as('vera'), 'tasks')));
     await assertSucceeds(getDocs(collection(as('luis'), 'tasks')));
+    await assertSucceeds(getDocs(query(collection(as('vera'), 'tasks'), where('status', 'in', ['todo', 'doing']))));
+    await assertFails(getDocs(collection(as('vera'), 'tasks')));
   });
 
   it('un usuario desactivado no lee', async () => {

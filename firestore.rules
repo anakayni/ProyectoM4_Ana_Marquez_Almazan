@@ -16,6 +16,8 @@ service cloud.firestore {
     function isGuest() { return hasRole(['guest']); }
     // Admin, miembro y lector ven todo el espacio; el Invitado, solo sus proyectos.
     function isTeam() { return hasRole(['admin', 'member', 'viewer']); }
+    // Solo admin y miembro ven las tareas hechas (Lector e Invitado, nunca).
+    function seesDone() { return hasRole(['admin', 'member']); }
     function myEmail() { return request.auth.token.email; }
     function emailVerified() { return request.auth.token.email_verified == true; }
 
@@ -55,9 +57,11 @@ service cloud.firestore {
 
     match /auditLog/{logId} {
       allow read: if isAdmin()
-        || (isTeam() && resource.data.entityType in ['task', 'project'])
+        || (hasRole(['member']) && resource.data.entityType in ['task', 'project'])
+        || (hasRole(['viewer']) && resource.data.entityType == 'project')
+        || (hasRole(['viewer']) && resource.data.entityType == 'task' && openTask(resource.data.entityId))
         || (isGuest() && resource.data.entityType == 'task'
-            && exists(taskPath(resource.data.entityId)) && guestIn(get(taskPath(resource.data.entityId)).data.projectId))
+            && openTask(resource.data.entityId) && guestIn(get(taskPath(resource.data.entityId)).data.projectId))
         || (isGuest() && resource.data.entityType == 'project' && guestIn(resource.data.entityId));
       allow create: if signedIn() && validAudit(logId);
       allow update, delete: if false;
@@ -85,6 +89,8 @@ service cloud.firestore {
 
     function projectPath(id) { return /databases/$(database)/documents/projects/$(id); }
     function taskPath(id) { return /databases/$(database)/documents/tasks/$(id); }
+    // Tarea que existe y no está hecha (lo único que Lector e Invitado pueden ver).
+    function openTask(id) { return exists(taskPath(id)) && get(taskPath(id)).data.status in ['todo', 'doing']; }
     function memberIdsOf(p) { return p.get('memberIds', []); }
 
     // El Invitado está en la lista de personas del proyecto.
@@ -136,7 +142,9 @@ service cloud.firestore {
     }
 
     match /tasks/{taskId} {
-      allow read: if isTeam() || (isGuest() && guestIn(resource.data.projectId));
+      allow read: if seesDone()
+        || (hasRole(['viewer']) && resource.data.status in ['todo', 'doing'])
+        || (isGuest() && resource.data.status in ['todo', 'doing'] && guestIn(resource.data.projectId));
       allow create: if canWork(request.resource.data.projectId)
         && validTask(request.resource.data)
         && request.resource.data.createdBy == request.auth.uid

@@ -32,3 +32,8 @@ export function can(actor: Actor, action: Action, ctx: { createdBy?: string } = 
       return role === 'admin';
   }
 }
+
+/** Invitado y Lector nunca ven tareas hechas (las reglas tampoco se las dejan leer). */
+export function seesDoneTasks(role: Role): boolean {
+  return role === 'admin' || role === 'member';
+}

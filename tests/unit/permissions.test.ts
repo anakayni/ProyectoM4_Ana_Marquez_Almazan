@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { can } from '@/features/auth/permissions';
+import { can, seesDoneTasks } from '@/features/auth/permissions';
 
 const admin = { uid: 'a', role: 'admin' as const };
 const member = { uid: 'm', role: 'member' as const };
@@ -55,5 +55,14 @@ describe('can — Invitado', () => {
     expect(can(admin, 'project:people')).toBe(true);
     expect(can(viewer, 'project:edit')).toBe(false);
     expect(can(viewer, 'team:view')).toBe(true);
+  });
+});
+
+describe('seesDoneTasks', () => {
+  it('solo admin y miembro ven las tareas hechas', () => {
+    expect(seesDoneTasks('admin')).toBe(true);
+    expect(seesDoneTasks('member')).toBe(true);
+    expect(seesDoneTasks('viewer')).toBe(false);
+    expect(seesDoneTasks('guest')).toBe(false);
   });
 });

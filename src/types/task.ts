@@ -59,6 +59,9 @@ export const PRIORITY_LABEL: Record<Priority, string> = { alta: 'Alta', media: '
 
 export const STATUSES: readonly TaskStatus[] = ['todo', 'doing', 'done'];
 
+/** Lo único que Lector e Invitado pueden leer (las reglas lo exigen). */
+export const OPEN_STATUSES = ['todo', 'doing'] as const;
+
 export const STATUS_LABEL: Record<TaskStatus, string> = { todo: 'Pendiente', doing: 'En curso', done: 'Hecha' };
 
 export const SCOPES: readonly TaskScope[] = ['mine', 'team', 'unassigned'];
