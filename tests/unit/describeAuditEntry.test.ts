@@ -46,6 +46,14 @@ describe('describeAuditEntry', () => {
       .toEqual(['Ana eliminó el proyecto «Portal»']);
   });
 
+  it('proyecto: agregar y quitar personas', () => {
+    const p = { name: 'Portal', ownerId: 'ana' };
+    expect(describeAuditEntry(entry({ entityType: 'project', actorId: 'admin', before: p, after: { ...p, memberIds: ['leo'] } }), ctx).sentences)
+      .toEqual(['Admin agregó a Leo al proyecto «Portal»']);
+    expect(describeAuditEntry(entry({ entityType: 'project', actorId: 'admin', before: { ...p, memberIds: ['leo', 'ana'] }, after: { ...p, memberIds: ['ana'] } }), ctx).sentences)
+      .toEqual(['Admin quitó a Leo del proyecto «Portal»']);
+  });
+
   it('persona: alta, rol, acceso y foto propia', () => {
     const u = { displayName: 'Leo', role: 'member', active: true, photo: null };
     expect(describeAuditEntry(entry({ entityType: 'user', entityId: 'leo', actorId: 'leo', action: 'create', rev: 1, after: u }), ctx))

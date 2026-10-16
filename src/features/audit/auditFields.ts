@@ -10,7 +10,7 @@ const FIELD_LABEL: Record<string, string> = {
   completedAt: 'Completada el', createdBy: 'Creado por', createdAt: 'Creación', name: 'Nombre', color: 'Color',
   ownerId: 'A cargo', startDate: 'Inicio', endDate: 'Fin', archived: 'Archivado', displayName: 'Nombre', email: 'Email',
   photo: 'Foto', role: 'Rol', active: 'Acceso activo', invitedBy: 'Invitada por', acceptedBy: 'Aceptada por',
-  acceptedAt: 'Aceptada el', logo: 'Logo', palette: 'Colores', taskPrefix: 'Prefijo',
+  acceptedAt: 'Aceptada el', logo: 'Logo', palette: 'Colores', taskPrefix: 'Prefijo', memberIds: 'Personas',
 };
 
 /** Campos que guardan el ID de una persona. */
@@ -39,6 +39,9 @@ export function formatAuditValue(field: string, value: unknown, ctx: AuditContex
   if (DATE_FIELDS.has(field)) return formatDateLabel(String(value));
   if (field === 'subtasks' && Array.isArray(value)) {
     return (value as Subtask[]).map((s) => `${s.done ? '✓' : '○'} ${s.title}`).join(' · ') || '—';
+  }
+  if (field === 'memberIds' && Array.isArray(value)) {
+    return value.map((uid) => ctx.nameOf(String(uid)) ?? 'Persona desconocida').join(', ') || '—';
   }
   if (Array.isArray(value)) return value.map(String).join(', ');
   if (typeof value === 'string') return value.startsWith('data:image/') ? '(imagen)' : value;

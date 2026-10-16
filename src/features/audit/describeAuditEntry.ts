@@ -42,6 +42,16 @@ function projectSentences(who: string, entry: AuditEntry, ctx: AuditContext, nam
         return [to ? `${who} cambió el fin del proyecto a ${formatDateLabel(String(to))}` : `${who} quitó el fin del proyecto`];
       case 'archived':
         return [to ? `${who} archivó el proyecto` : `${who} reactivó el proyecto`];
+      case 'memberIds': {
+        // Personas del proyecto: una frase por cada una que entra o sale.
+        const prev = (from ?? []) as string[];
+        const next = (to ?? []) as string[];
+        const person = (uid: string) => ctx.nameOf(uid) ?? 'alguien';
+        return [
+          ...next.filter((uid) => !prev.includes(uid)).map((uid) => `${who} agregó a ${person(uid)} al proyecto «${name}»`),
+          ...prev.filter((uid) => !next.includes(uid)).map((uid) => `${who} quitó a ${person(uid)} del proyecto «${name}»`),
+        ];
+      }
       default:
         return [];
     }

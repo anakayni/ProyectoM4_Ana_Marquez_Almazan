@@ -37,6 +37,12 @@ describe('formatAuditValue', () => {
     expect(formatAuditValue('number', 7, ctx)).toBe('MC-7');
   });
 
+  it('personas del proyecto con nombres', () => {
+    expect(fieldLabel('memberIds')).toBe('Personas');
+    expect(formatAuditValue('memberIds', ['leo', 'x'], ctx)).toBe('Leo, Persona desconocida');
+    expect(formatAuditValue('memberIds', [], ctx)).toBe('—');
+  });
+
   it('fechas, listas y subtareas', () => {
     const ms = new Date(2026, 9, 13, 18, 30).getTime();
     expect(formatAuditValue('createdAt', { toMillis: () => ms }, ctx)).toBe(formatDateTime(ms));
