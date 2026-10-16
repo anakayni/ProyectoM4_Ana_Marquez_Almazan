@@ -1,4 +1,7 @@
 import type { UserProfile } from '@/types/auth';
+import { normalizeEmail } from '@/utils/email';
+import { normalizeText } from '@/utils/text';
+import { validateEmail } from '@/utils/validators';
 import type { Project } from '@/types/project';
 
 /** Personas del proyecto: su responsable y quienes el admin agregó. */
@@ -46,4 +49,18 @@ export function projectsOfGuest(projects: readonly Project[], uid: string): Proj
 /** Proyectos de los que la persona es responsable (un Invitado no puede serlo). */
 export function ownedProjects(projects: readonly Project[], uid: string): Project[] {
   return projects.filter((p) => p.ownerId === uid);
+}
+
+/** Buscador de "Compartir proyecto": a quién se puede agregar, por nombre (sin tildes) o email. */
+export function searchPeople(project: Pick<Project, 'ownerId' | 'memberIds'>, members: readonly UserProfile[], query: string): UserProfile[] {
+  const q = normalizeText(query);
+  if (!q) return [];
+  return addableMembers(project, members).filter((m) => normalizeText(m.displayName).includes(q) || m.email.toLowerCase().includes(q));
+}
+
+/** Un email bien escrito que no es de nadie del espacio ni tiene una invitación pendiente: se puede invitar. */
+export function isNewEmail(query: string, members: readonly UserProfile[], pendingEmails: readonly string[]): boolean {
+  const email = normalizeEmail(query);
+  if (validateEmail(email)) return false;
+  return !members.some((m) => normalizeEmail(m.email) === email) && !pendingEmails.includes(email);
 }

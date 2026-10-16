@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { addableMembers, ownedProjects, peopleRows, projectPeople, projectsOfGuest, removePersonMessage } from '@/features/projects/projectPeople';
+import {
+  addableMembers, isNewEmail, ownedProjects, peopleRows, projectPeople, projectsOfGuest, removePersonMessage, searchPeople,
+} from '@/features/projects/projectPeople';
 import type { Role, UserProfile } from '@/types/auth';
 import type { Project } from '@/types/project';
 
@@ -52,5 +54,27 @@ describe('proyectos de una persona', () => {
   it('en cuáles está un Invitado y de cuáles es responsable alguien', () => {
     expect(projectsOfGuest(projects, 'gus').map((p) => p.name)).toEqual(['Portal']);
     expect(ownedProjects(projects, 'leo').map((p) => p.name)).toEqual(['Web']);
+  });
+});
+
+describe('buscador de "Compartir proyecto"', () => {
+  const people = [
+    { uid: 'leo', email: 'leo@x.com', displayName: 'León Díaz', role: 'guest', active: true, invitedBy: null, rev: 1 },
+    { uid: 'ana', email: 'ana@x.com', displayName: 'Ana', role: 'member', active: true, invitedBy: null, rev: 1 },
+  ] as UserProfile[];
+  const project = { ownerId: 'ana', memberIds: [] };
+
+  it('encuentra por nombre (sin tildes ni mayúsculas) o por email, solo a quien no está', () => {
+    expect(searchPeople(project, people, 'leon').map((p) => p.uid)).toEqual(['leo']);
+    expect(searchPeople(project, people, 'LEO@X').map((p) => p.uid)).toEqual(['leo']);
+    expect(searchPeople(project, people, 'ana')).toEqual([]);
+    expect(searchPeople(project, people, '')).toEqual([]);
+  });
+
+  it('reconoce un email nuevo para invitar', () => {
+    expect(isNewEmail('Nuevo@x.com', people, [])).toBe(true);
+    expect(isNewEmail('leo@x.com', people, [])).toBe(false);
+    expect(isNewEmail('pendiente@x.com', people, ['pendiente@x.com'])).toBe(false);
+    expect(isNewEmail('no es email', people, [])).toBe(false);
   });
 });
