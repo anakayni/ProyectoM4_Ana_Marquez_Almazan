@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { Avatar } from '@/components/layout/Avatar';
+import { AvatarGroup } from '@/components/layout/AvatarGroup';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field, fieldInputClass } from '@/components/ui/Field';
@@ -14,16 +16,23 @@ import styles from './ProjectPeople.module.css';
 
 type Props = { project: Project; members: UserProfile[]; tasks: Task[]; actorId: string; canManage: boolean };
 
-/** Caras de quienes trabajan en el proyecto y botón para ver (y, el admin, cambiar) la lista. */
+/** Caras de quienes trabajan en el proyecto; al tocarlas se ve la lista. El admin además tiene "+" para agregar. */
 export function ProjectPeople(props: Props) {
   const [open, setOpen] = useState(false);
   const rows = peopleRows(props.project, props.members);
   return (
     <div className={styles.summary}>
-      <span className={styles.faces} aria-hidden="true">
-        {rows.slice(0, 5).map((r) => <Avatar key={r.uid} name={r.name} photo={r.photo} inactive={!r.active} />)}
-      </span>
-      <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>Personas del proyecto ({rows.length})</Button>
+      <p className={styles.label}>Personas del proyecto</p>
+      <div className={styles.facesRow}>
+        <button type="button" className={styles.facesButton} aria-label="Ver personas del proyecto" onClick={() => setOpen(true)}>
+          <AvatarGroup people={rows.map(({ name, photo, active }) => ({ name, photo, active }))} max={5} />
+        </button>
+        {props.canManage && (
+          <button type="button" className={styles.addButton} aria-label="Agregar persona al proyecto" onClick={() => setOpen(true)}>
+            <Plus size={16} aria-hidden="true" />
+          </button>
+        )}
+      </div>
       {open && <PeopleDialog {...props} rows={rows} onClose={() => setOpen(false)} />}
     </div>
   );

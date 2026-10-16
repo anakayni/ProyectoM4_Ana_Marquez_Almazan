@@ -1,5 +1,7 @@
 import { Link } from 'react-router';
 import { Avatar } from '@/components/layout/Avatar';
+import { AvatarGroup } from '@/components/layout/AvatarGroup';
+import type { PersonRow } from '@/features/projects/projectPeople';
 import { openTasksLabel, type OpenSummary, type ProjectProgress } from '@/features/projects/projectProgress';
 import type { Person } from '@/features/team/members';
 import type { Project } from '@/types/project';
@@ -13,9 +15,11 @@ type Props = {
   /** Lector e Invitado no ven las hechas: se muestra cuánto falta en lugar del avance. */
   showDone?: boolean;
   open?: OpenSummary;
+  /** Personas del proyecto (responsable primero). */
+  people?: PersonRow[];
 };
 
-export function ProjectCard({ project, progress, owner, showDone = true, open }: Props) {
+export function ProjectCard({ project, progress, owner, showDone = true, open, people = [] }: Props) {
   const late = showDone ? progress.late : (open?.late ?? false);
   return (
     <li className={styles.card} style={{ borderTopColor: project.color }}>
@@ -44,6 +48,9 @@ export function ProjectCard({ project, progress, owner, showDone = true, open }:
           <Avatar name={owner.name} photo={owner.photo} inactive={!owner.active} />
           <span>A cargo: {owner.name}</span>
         </p>
+      )}
+      {people.length > 0 && (
+        <AvatarGroup people={people.map(({ name, photo, active }) => ({ name, photo, active }))} max={3} overlap />
       )}
     </li>
   );

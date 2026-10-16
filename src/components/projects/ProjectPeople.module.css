@@ -1,6 +1,12 @@
-.summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.faces { display: inline-flex; }
-.faces > * + * { margin-left: calc(-1 * var(--space-2)); }
+.summary { display: flex; flex-direction: column; gap: var(--space-1); }
+.label { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-text-secondary); }
+.facesRow { display: flex; align-items: center; gap: var(--space-2); }
+.facesButton { padding: 0; border: 0; background: none; border-radius: var(--radius-pill); cursor: pointer; }
+.addButton {
+  width: 32px; height: 32px; display: inline-grid; place-items: center; flex: none; border-radius: 50%;
+  border: 2px dashed var(--color-border-strong); background: none; color: var(--color-text-secondary); cursor: pointer;
+}
+.addButton:hover { color: var(--color-text-primary); border-color: var(--color-text-secondary); }
 .help, .pending { font-size: var(--text-md); color: var(--color-text-secondary); }
 .list { list-style: none; margin: var(--space-3) 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }

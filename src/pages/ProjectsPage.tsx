@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { can, seesDoneTasks } from '@/features/auth/permissions';
+import { peopleRows } from '@/features/projects/projectPeople';
 import { projectOpenSummary, projectProgress } from '@/features/projects/projectProgress';
 import { makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,6 +71,7 @@ export function ProjectsPage() {
               showDone={seesDoneTasks(me.role)}
               open={projectOpenSummary(tasks.filter((t) => t.projectId === project.id), project.endDate, today)}
               owner={personOf(project.ownerId)}
+              people={peopleRows(project, members)}
             />
           ))}
         </ul>

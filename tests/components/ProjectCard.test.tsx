@@ -48,4 +48,14 @@ describe('ProjectCard', () => {
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.queryByText(/hechas/)).not.toBeInTheDocument();
   });
+
+  it('muestra las caras de las personas del proyecto', () => {
+    const people = ['Ana', 'Gus', 'Leo', 'Mar'].map((name) => ({ uid: name, name, photo: null, active: true, isOwner: false, isGuest: false }));
+    render(
+      <MemoryRouter>
+        <ProjectCard project={project} progress={{ total: 0, todo: 0, doing: 0, done: 0, percent: 0, late: false }} owner={null} people={people} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('img', { name: 'Personas: Ana, Gus, Leo y 1 más' })).toHaveTextContent('1+');
+  });
 });

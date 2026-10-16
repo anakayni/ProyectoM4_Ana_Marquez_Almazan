@@ -25,13 +25,22 @@ const task = (assigneeId: string): Task => ({
 
 function open(canManage: boolean) {
   render(<ProjectPeople project={project} members={members} tasks={[task('gus')]} actorId="admin" canManage={canManage} />);
-  return userEvent.click(screen.getByRole('button', { name: 'Personas del proyecto (2)' }));
+  return userEvent.click(screen.getByRole('button', { name: 'Ver personas del proyecto' }));
 }
 
 describe('ProjectPeople', () => {
   beforeEach(() => {
     svc.setProjectMembers.mockReset();
     svc.setProjectMembers.mockResolvedValue(undefined);
+  });
+
+  it('el "+" para agregar lo ve solo el admin', () => {
+    const { unmount } = render(<ProjectPeople project={project} members={members} tasks={[]} actorId="admin" canManage />);
+    expect(screen.getByRole('button', { name: 'Agregar persona al proyecto' })).toBeInTheDocument();
+    unmount();
+    render(<ProjectPeople project={project} members={members} tasks={[]} actorId="ana" canManage={false} />);
+    expect(screen.queryByRole('button', { name: 'Agregar persona al proyecto' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Personas: Ana y Gus' })).toBeInTheDocument();
   });
 
   it('muestra a todos con sus etiquetas', async () => {
