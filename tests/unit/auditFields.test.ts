@@ -37,6 +37,12 @@ describe('formatAuditValue', () => {
     expect(formatAuditValue('number', 7, ctx)).toBe('MC-7');
   });
 
+  it('acceso de los Invitados', () => {
+    expect(fieldLabel('guestAccess')).toBe('Acceso de Invitados');
+    expect(formatAuditValue('guestAccess', { leo: 'view' }, ctx)).toBe('Leo: Solo ver');
+    expect(formatAuditValue('guestAccess', {}, ctx)).toBe('—');
+  });
+
   it('personas del proyecto con nombres', () => {
     expect(fieldLabel('memberIds')).toBe('Personas');
     expect(formatAuditValue('memberIds', ['leo', 'x'], ctx)).toBe('Leo, Persona desconocida');

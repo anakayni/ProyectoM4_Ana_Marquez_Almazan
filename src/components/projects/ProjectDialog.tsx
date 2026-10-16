@@ -10,10 +10,11 @@ import type { Project, ProjectInput } from '@/types/project';
 import { ColorPicker, PALETTE } from './ColorPicker';
 import styles from './ProjectDialog.module.css';
 
-type Props = { actorId: string; project?: Project; members: UserProfile[]; onClose: () => void };
+/** `onCreated`: recibe el id del proyecto nuevo (para abrir "Compartir proyecto"). */
+type Props = { actorId: string; project?: Project; members: UserProfile[]; onClose: () => void; onCreated?: (id: string) => void };
 
 /** Crear o editar un proyecto. */
-export function ProjectDialog({ actorId, project, members, onClose }: Props) {
+export function ProjectDialog({ actorId, project, members, onClose, onCreated }: Props) {
   const [values, setValues] = useState<ProjectInput>(
     project
       ? {
@@ -41,7 +42,11 @@ export function ProjectDialog({ actorId, project, members, onClose }: Props) {
     setSaving(true);
     try {
       if (project) await updateProject(actorId, project.id, values);
-      else await createProject(actorId, values);
+      else {
+        // Primero se crea (siempre) y después se avisa, si alguien quiere saber el id.
+        const id = await createProject(actorId, values);
+        onCreated?.(id);
+      }
       onClose();
     } catch (err) {
       console.error('Error al guardar el proyecto:', err);

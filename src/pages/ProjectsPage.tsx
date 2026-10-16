@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
+import { ShareProjectDialog } from '@/components/projects/ShareProjectDialog';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -32,6 +33,7 @@ export function ProjectsPage() {
   const members = useTeamMembers();
   const [filter, setFilter] = useState<Filter>('active');
   const [creating, setCreating] = useState(false);
+  const [sharingId, setSharingId] = useState<string | null>(null);
   // "Hoy" se fija al abrir la página (para saber qué proyecto está atrasado).
   const [today] = useState(() => toDateInputValue(new Date()));
 
@@ -39,6 +41,9 @@ export function ProjectsPage() {
   const active = projects.filter((p) => !p.archived);
   const archived = projects.filter((p) => p.archived);
   const shown = filter === 'active' ? active : archived;
+
+  // Aparece cuando la lista en tiempo real ya trae el proyecto recién creado.
+  const sharingProject = sharingId ? projects.find((p) => p.id === sharingId) ?? null : null;
 
   return (
     <>
@@ -76,7 +81,19 @@ export function ProjectsPage() {
           ))}
         </ul>
       </main>
-      {creating && <ProjectDialog actorId={me.uid} members={members} onClose={() => setCreating(false)} />}
+      {creating && (
+        <ProjectDialog
+          actorId={me.uid} members={members} onClose={() => setCreating(false)}
+          // El admin agrega a las personas apenas crea el proyecto.
+          onCreated={can(me, 'project:people') ? setSharingId : undefined}
+        />
+      )}
+      {sharingProject && (
+        <ShareProjectDialog
+          project={sharingProject} members={members} tasks={tasks} actorId={me.uid} canManage justCreated
+          onClose={() => setSharingId(null)}
+        />
+      )}
     </>
   );
 }

@@ -1,7 +1,9 @@
+import { ACCESS_LABEL } from '@/features/projects/projectAccess';
 import { DEFAULT_SETTINGS } from '@/features/settings/defaults';
 import type { NameOf } from '@/features/team/members';
 import { ROLE_LABEL, type Role } from '@/types/auth';
 import type { AuditEntry, EntityType, Snapshot } from '@/types/audit';
+import type { GuestAccess } from '@/types/project';
 import { formatDateLabel } from '@/utils/formatDate';
 import { actorName, describeChange, type ProjectNameOf } from './describeChange';
 import { diffSnapshots, type FieldChange } from './diffSnapshots';
@@ -42,6 +44,16 @@ function projectSentences(who: string, entry: AuditEntry, ctx: AuditContext, nam
         return [to ? `${who} cambió el fin del proyecto a ${formatDateLabel(String(to))}` : `${who} quitó el fin del proyecto`];
       case 'archived':
         return [to ? `${who} archivó el proyecto` : `${who} reactivó el proyecto`];
+      case 'guestAccess': {
+        // Solo quienes estaban y siguen: al agregar a alguien ya alcanza con "agregó a …".
+        const before = (from ?? {}) as Record<string, GuestAccess>;
+        const after = (to ?? {}) as Record<string, GuestAccess>;
+        const stayed = (uid: string) =>
+          ((entry.before?.memberIds ?? []) as string[]).includes(uid) && ((entry.after?.memberIds ?? []) as string[]).includes(uid);
+        return Object.keys(after)
+          .filter((uid) => after[uid] !== before[uid] && stayed(uid))
+          .map((uid) => `${who} cambió a ${ctx.nameOf(uid) ?? 'alguien'} a «${ACCESS_LABEL[after[uid]]}» en «${name}»`);
+      }
       case 'memberIds': {
         // Personas del proyecto: una frase por cada una que entra o sale.
         const prev = (from ?? []) as string[];

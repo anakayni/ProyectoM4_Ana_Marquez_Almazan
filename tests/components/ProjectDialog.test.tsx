@@ -32,6 +32,16 @@ describe('ProjectDialog', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('avisa el id del proyecto recién creado', async () => {
+    const onCreated = vi.fn();
+    render(<ProjectDialog actorId="ana" members={members} onClose={vi.fn()} onCreated={onCreated} />);
+    await userEvent.type(screen.getByLabelText('Nombre'), 'Portal');
+    await userEvent.type(screen.getByLabelText('Inicio'), '2026-10-01');
+    await userEvent.type(screen.getByLabelText('Fin'), '2026-11-30');
+    await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }));
+    expect(onCreated).toHaveBeenCalledWith('p1');
+  });
+
   it('no deja una fecha de fin anterior al inicio', async () => {
     render(<ProjectDialog actorId="ana" members={members} onClose={vi.fn()} />);
     await userEvent.type(screen.getByLabelText('Nombre'), 'Portal');

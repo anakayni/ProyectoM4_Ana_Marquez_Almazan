@@ -1,4 +1,6 @@
+import { ACCESS_LABEL } from '@/features/projects/projectAccess';
 import { ROLE_LABEL, type Role } from '@/types/auth';
+import type { GuestAccess } from '@/types/project';
 import { INVITATION_STATUS_LABEL, type InvitationStatus } from '@/types/invitation';
 import { PRIORITY_LABEL, STATUS_LABEL, type Priority, type Subtask, type TaskStatus } from '@/types/task';
 import { formatDateLabel, formatDateTime } from '@/utils/formatDate';
@@ -10,7 +12,7 @@ const FIELD_LABEL: Record<string, string> = {
   completedAt: 'Completada el', createdBy: 'Creado por', createdAt: 'Creación', name: 'Nombre', color: 'Color',
   ownerId: 'A cargo', startDate: 'Inicio', endDate: 'Fin', archived: 'Archivado', displayName: 'Nombre', email: 'Email',
   photo: 'Foto', role: 'Rol', active: 'Acceso activo', invitedBy: 'Invitada por', acceptedBy: 'Aceptada por',
-  acceptedAt: 'Aceptada el', logo: 'Logo', palette: 'Colores', taskPrefix: 'Prefijo', memberIds: 'Personas',
+  acceptedAt: 'Aceptada el', logo: 'Logo', palette: 'Colores', taskPrefix: 'Prefijo', memberIds: 'Personas', guestAccess: 'Acceso de Invitados',
 };
 
 /** Campos que guardan el ID de una persona. */
@@ -39,6 +41,10 @@ export function formatAuditValue(field: string, value: unknown, ctx: AuditContex
   if (DATE_FIELDS.has(field)) return formatDateLabel(String(value));
   if (field === 'subtasks' && Array.isArray(value)) {
     return (value as Subtask[]).map((s) => `${s.done ? '✓' : '○'} ${s.title}`).join(' · ') || '—';
+  }
+  if (field === 'guestAccess' && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, GuestAccess>);
+    return entries.map(([uid, access]) => `${ctx.nameOf(uid) ?? 'Persona desconocida'}: ${ACCESS_LABEL[access]}`).join(', ') || '—';
   }
   if (field === 'memberIds' && Array.isArray(value)) {
     return value.map((uid) => ctx.nameOf(String(uid)) ?? 'Persona desconocida').join(', ') || '—';
