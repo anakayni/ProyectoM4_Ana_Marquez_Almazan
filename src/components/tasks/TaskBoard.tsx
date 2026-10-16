@@ -14,6 +14,8 @@ type Props = {
   personOf: PersonOf;
   projectOf: ProjectOf;
   canEdit: boolean;
+  /** Si se pasa, decide tarea por tarea (el Invitado edita solo donde "Puede editar"). */
+  canEditTask?: (task: Task) => boolean;
   onStatusChange: (id: string, status: TaskStatus) => void;
   onOpen: (task: Task) => void;
   /** Lector e Invitado: sin la columna "Hecha". */
@@ -21,7 +23,7 @@ type Props = {
 };
 
 /** Tablero de 3 columnas. Sin arrastrar: la tarea cambia de columna con su selector de estado. */
-export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen, showDone = true }: Props) {
+export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, canEditTask, onStatusChange, onOpen, showDone = true }: Props) {
   const formatNumber = useTaskNumberFormat();
   return (
     <div className={`${styles.board} ${showDone ? '' : styles.two}`}>
@@ -58,7 +60,7 @@ export function TaskBoard({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
                           <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} muted={done} />
                           <span className="visually-hidden">{assignee ? `Responsable: ${assignee}` : 'Sin asignar'}</span>
                         </span>
-                        <StatusSelect status={task.status} taskTitle={task.title} canEdit={canEdit} onChange={(s) => onStatusChange(task.id, s)} />
+                        <StatusSelect status={task.status} taskTitle={task.title} canEdit={canEditTask ? canEditTask(task) : canEdit} onChange={(s) => onStatusChange(task.id, s)} />
                       </div>
                     </li>
                   );

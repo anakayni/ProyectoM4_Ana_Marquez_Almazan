@@ -17,6 +17,8 @@ type TodoListProps = TodoItemHandlers & {
   emptyHint?: string;
   /** Puede cambiar el estado (por defecto, sí) */
   canEdit?: boolean;
+  /** Si se pasa, decide tarea por tarea (el Invitado edita solo donde "Puede editar"). */
+  canEditTask?: (task: Task) => boolean;
 };
 
 export function TodoList({
@@ -27,6 +29,7 @@ export function TodoList({
   emptyTitle = 'Todavía no tienes tareas',
   emptyHint = 'Crea una con "+ Nueva tarea".',
   canEdit = true,
+  canEditTask,
   ...handlers
 }: TodoListProps) {
   if (tasks.length === 0) {
@@ -41,7 +44,7 @@ export function TodoList({
   return (
     <ul className={styles.list}>
       {tasks.map((task) => (
-        <TodoItem key={task.id} task={task} nameOf={nameOf} personOf={personOf} projectOf={projectOf} canEdit={canEdit} {...handlers} />
+        <TodoItem key={task.id} task={task} nameOf={nameOf} personOf={personOf} projectOf={projectOf} canEdit={canEditTask ? canEditTask(task) : canEdit} {...handlers} />
       ))}
     </ul>
   );

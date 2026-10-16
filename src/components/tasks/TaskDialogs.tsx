@@ -1,6 +1,7 @@
 import { Modal } from '@/components/ui/Modal';
 import type { ToastMessage } from '@/components/ui/Toast';
 import { can } from '@/features/auth/permissions';
+import { canEditInProject } from '@/features/projects/projectAccess';
 import { makeProjectOf } from '@/features/projects/projectOf';
 import { assigneeOptions, makeNameOf, unknownPersonFor } from '@/features/team/members';
 import type { useTasks } from '@/hooks/useTasks';
@@ -33,6 +34,8 @@ export function TaskDialogs({
   const nameOf = makeNameOf(members, unknownPersonFor(profile.role));
   const projectOf = makeProjectOf(projects);
   const isGuest = profile.role === 'guest';
+  /** El Invitado trabaja solo en sus proyectos donde "Puede editar"; el resto, según su rol. */
+  const editableHere = (project: Project | null) => canEditInProject(profile.role, profile.uid, project);
   /** Responsables posibles según el proyecto elegido en el formulario y quién asigna. */
   const assigneesFor = (currentId: string | null) => (projectId: string | null) =>
     assigneeOptions(members, currentId, { project: projects.find((p) => p.id === projectId) ?? null, actorRole: profile.role });
@@ -52,11 +55,11 @@ export function TaskDialogs({
           nameOf={nameOf}
           projectOf={projectOf}
           assigneesFor={assigneesFor(openTask.assigneeId)}
-          projects={projects.filter((p) => !p.archived || p.id === openTask.projectId)}
+          projects={projects.filter((p) => p.id === openTask.projectId || (!p.archived && editableHere(p)))}
           projectRequired={isGuest}
           confirmDone={isGuest}
-          canEdit={can(profile, 'task:edit')}
-          canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy })}
+          canEdit={editableHere(projectOf(openTask.projectId))}
+          canDelete={can(profile, 'task:delete', { createdBy: openTask.createdBy }) && editableHere(projectOf(openTask.projectId))}
           onClose={onCloseTask}
           onSave={async (patch) => {
             await actions.update(openTask.id, patch); // si falla, el panel muestra el error
@@ -82,7 +85,7 @@ export function TaskDialogs({
             initialValues={{ title: '', description: '', priority: 'media', dueDate: null, assigneeId: profile.uid, projectId: isGuest && projects.length === 1 ? projects[0].id : null, ...creating }}
             submitLabel="Crear tarea"
             assigneesFor={assigneesFor(profile.uid)}
-            projects={projects.filter((p) => !p.archived)}
+            projects={projects.filter((p) => !p.archived && editableHere(p))}
             projectRequired={isGuest}
             onSubmit={handleCreate}
             onCancel={onCloseCreate}

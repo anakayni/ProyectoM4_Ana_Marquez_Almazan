@@ -15,12 +15,14 @@ type Props = {
   personOf: PersonOf;
   projectOf: ProjectOf;
   canEdit: boolean;
+  /** Si se pasa, decide tarea por tarea (el Invitado edita solo donde "Puede editar"). */
+  canEditTask?: (task: Task) => boolean;
   onStatusChange: (id: string, status: TaskStatus) => void;
   onOpen: (task: Task) => void;
 };
 
 /** Vista Tabla. En pantallas angostas cada fila se muestra como tarjeta (ver CSS). */
-export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: Props) {
+export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, canEditTask, onStatusChange, onOpen }: Props) {
   const formatNumber = useTaskNumberFormat();
   return (
     <div className={styles.wrap}>
@@ -70,7 +72,7 @@ export function TaskTable({ tasks, nameOf, personOf, projectOf, canEdit, onStatu
                   </span>
                 </td>
                 <td data-label="Estado">
-                  <StatusSelect status={task.status} taskTitle={task.title} canEdit={canEdit} onChange={(s) => onStatusChange(task.id, s)} />
+                  <StatusSelect status={task.status} taskTitle={task.title} canEdit={canEditTask ? canEditTask(task) : canEdit} onChange={(s) => onStatusChange(task.id, s)} />
                 </td>
               </tr>
             );

@@ -12,6 +12,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can, seesDoneTasks } from '@/features/auth/permissions';
+import { canEditInProject } from '@/features/projects/projectAccess';
 import { makeProjectOf } from '@/features/projects/projectOf';
 import { makeNameOf, makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { scopeTasks } from '@/features/tasks/scopeTasks';
@@ -24,7 +25,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type TaskStatus, type TaskView } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type TaskInput, type TaskScope, type Task, type TaskStatus, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
 import { NoProjectsYet } from '@/components/projects/NoProjectsYet';
@@ -41,12 +42,14 @@ type TaskWorkspaceProps = {
 /** Tareas con alcance, tarjetas, vistas, panel y creación. La usan Mis tareas y la página de cada proyecto. */
 export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspaceProps) {
   const { tasks, loading, error, retry, create, update, remove, setStatus } = useTasks(profile.uid);
-  const canCreate = can(profile, 'task:create');
   const canEdit = can(profile, 'task:edit');
   const showDone = seesDoneTasks(profile.role);
   const [confirmDoneId, setConfirmDoneId] = useState<string | null>(null);
   const members = useTeamMembers();
   const { projects, loading: projectsLoading } = useProjects();
+  // El Invitado crea y edita solo en sus proyectos donde "Puede editar".
+  const editableProjects = projects.filter((p) => !p.archived && canEditInProject(profile.role, profile.uid, p));
+  const canCreate = can(profile, 'task:create') && (profile.role !== 'guest' || editableProjects.length > 0);
   // El Invitado sin proyectos no tiene nada que ver ni dónde crear: se le explica qué pasa.
   const withoutProjects = profile.role === 'guest' && !projectsLoading && projects.length === 0;
   const { taskPrefix } = useWorkspaceSettings();
@@ -70,6 +73,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const nameOf = makeNameOf(members, unknownPersonFor(profile.role));
   const personOf = makePersonOf(members, unknownPersonFor(profile.role));
   const projectOf = makeProjectOf(projects);
+  const canEditTask = (task: Task) => canEditInProject(profile.role, profile.uid, projectOf(task.projectId));
   const inProject = projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
   const scoped = scopeTasks(inProject, scope, profile.uid);
   // Las tarjetas cuentan lo que queda tras buscar y filtrar, así coinciden con lo que se ve.
@@ -178,6 +182,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                   personOf={personOf}
                   projectOf={projectOf}
                   canEdit={canEdit}
+                  canEditTask={canEditTask}
                   onStatusChange={changeStatus}
                   onOpen={(task) => setOpenId(task.id)}
                 />
@@ -188,6 +193,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                   personOf={personOf}
                   projectOf={projectOf}
                   canEdit={canEdit}
+                  canEditTask={canEditTask}
                   onStatusChange={changeStatus}
                   onOpen={(task) => setOpenId(task.id)}
                 />
@@ -198,6 +204,7 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                   personOf={personOf}
                   projectOf={projectOf}
                   canEdit={canEdit}
+                  canEditTask={canEditTask}
                   {...(query.trim()
                     ? { emptyTitle: 'No encontramos tareas', emptyHint: 'Prueba con otras palabras o con el número (MC-…).' }
                     : card !== null
