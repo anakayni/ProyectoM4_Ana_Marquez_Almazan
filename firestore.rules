@@ -102,8 +102,12 @@ service cloud.firestore {
       return pid != null && exists(projectPath(pid))
         && (uid == get(projectPath(pid)).data.ownerId || uid in memberIdsOf(get(projectPath(pid)).data));
     }
-    // Admin y miembro trabajan en cualquier tarea; el Invitado solo en las de sus proyectos.
-    function canWork(pid) { return canEdit() || (isGuest() && guestIn(pid)); }
+    // El Invitado puede trabajar en el proyecto: está en la lista y su acceso es "Puede editar" (sin entrada = editar).
+    function guestEdits(pid) {
+      return guestIn(pid) && get(projectPath(pid)).data.get('guestAccess', {}).get(request.auth.uid, 'edit') == 'edit';
+    }
+    // Admin y miembro trabajan en cualquier tarea; el Invitado solo en sus proyectos donde "Puede editar".
+    function canWork(pid) { return canEdit() || (isGuest() && guestEdits(pid)); }
 
     // Proyecto de una tarea: debe existir y no estar archivado (solo se revisa cuando cambia).
     function validProjectRef(id) {
@@ -159,7 +163,7 @@ service cloud.firestore {
         && audited('task', taskId, 1);
       allow update: if canWork(request.resource.data.projectId)
         // El Invitado tampoco puede traer una tarea de un proyecto ajeno.
-        && (canEdit() || guestIn(resource.data.projectId))
+        && (canEdit() || guestEdits(resource.data.projectId))
         && validTask(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
@@ -176,7 +180,7 @@ service cloud.firestore {
         && audited('task', taskId, request.resource.data.rev);
       allow delete: if (isAdmin()
           || (hasRole(['member']) && resource.data.createdBy == request.auth.uid)
-          || (isGuest() && resource.data.createdBy == request.auth.uid && guestIn(resource.data.projectId)))
+          || (isGuest() && resource.data.createdBy == request.auth.uid && guestEdits(resource.data.projectId)))
         && audited('task', taskId, resource.data.rev + 1);
     }
 
@@ -191,8 +195,9 @@ service cloud.firestore {
     // ─── Proyectos ────────────────────────────────────────────────
     function validProject(d) {
       return d.keys().hasOnly(['name', 'description', 'color', 'ownerId', 'startDate', 'endDate', 'archived',
-                               'memberIds', 'createdBy', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
+                               'memberIds', 'guestAccess', 'createdBy', 'createdAt', 'updatedAt', 'updatedBy', 'rev'])
         && (!('memberIds' in d) || (d.memberIds is list && d.memberIds.size() <= 50))
+        && (!('guestAccess' in d) || (d.guestAccess is map && d.guestAccess.size() <= 50))
         && d.name is string && d.name.size() > 0 && d.name.size() <= 80
         && d.description is string && d.description.size() <= 500
         && d.color is string && d.color.matches('^#[0-9A-Fa-f]{6}$')
@@ -232,13 +237,14 @@ service cloud.firestore {
         && request.resource.data.archived == false
         && validOwner(request.resource.data.ownerId)
         && (!('memberIds' in request.resource.data) || isAdmin())
+        && (!('guestAccess' in request.resource.data) || isAdmin())
         && audited('project', projectId, 1);
       allow update: if canEdit()
         && validProject(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
         && (!changed().hasAny(['ownerId']) || validOwner(request.resource.data.ownerId))
-        && (!changed().hasAny(['memberIds']) || isAdmin())
+        && (!changed().hasAny(['memberIds', 'guestAccess']) || isAdmin())
         && nextRev()
         && audited('project', projectId, request.resource.data.rev);
       allow delete: if isAdmin() && audited('project', projectId, resource.data.rev + 1);

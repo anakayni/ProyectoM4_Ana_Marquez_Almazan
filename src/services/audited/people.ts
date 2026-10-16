@@ -2,6 +2,7 @@ import {
   collectionGroup, doc, getDoc, getDocs, query, runTransaction, serverTimestamp, where, writeBatch,
   type DocumentData, type DocumentReference, type Firestore,
 } from 'firebase/firestore';
+import type { GuestAccess } from '@/types/project';
 import { auditEntry, auditRef } from './audit';
 
 /** Lo que el Invitado ve de una persona: sin email ni rol interno. */
@@ -24,8 +25,17 @@ export function cardRef(db: Firestore, projectId: string, uid: string): Document
   return doc(db, 'projects', projectId, 'people', uid);
 }
 
-/** El admin define quiénes están en el proyecto: lista auditada + tarjetas de quienes entran y salen. */
-export async function setProjectMembers(db: Firestore, actorId: string, projectId: string, memberIds: string[]): Promise<void> {
+/**
+ * El admin define quiénes están en el proyecto y el acceso de cada Invitado: cambio auditado + tarjetas de quienes entran y salen.
+ * Un Invitado nuevo empieza en "Solo ver"; `access` cambia el acceso de alguien que ya está.
+ */
+export async function setProjectMembers(
+  db: Firestore,
+  actorId: string,
+  projectId: string,
+  memberIds: string[],
+  access?: Record<string, GuestAccess>,
+): Promise<void> {
   const ref = doc(db, 'projects', projectId);
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
@@ -36,9 +46,17 @@ export async function setProjectMembers(db: Firestore, actorId: string, projectI
     const added = next.filter((uid) => !previous.includes(uid));
     const removed = previous.filter((uid) => !next.includes(uid) && uid !== before.ownerId);
     const users = await Promise.all(added.map((uid) => tx.get(doc(db, 'users', uid))));
+    // Acceso de los Invitados: se conserva el de quienes siguen, los nuevos empiezan en "Solo ver", quien sale se borra.
+    const previousAccess: Record<string, GuestAccess> = before.guestAccess ?? {};
+    const guestAccess: Record<string, GuestAccess> = {};
+    for (const uid of next) {
+      const isNewGuest = added.includes(uid) && users[added.indexOf(uid)]?.data()?.role === 'guest';
+      const value = access?.[uid] ?? previousAccess[uid] ?? (isNewGuest ? 'view' : undefined);
+      if (value) guestAccess[uid] = value;
+    }
 
     const rev = before.rev + 1;
-    const after = { ...before, memberIds: next, rev, updatedBy: actorId, updatedAt: serverTimestamp() };
+    const after = { ...before, memberIds: next, guestAccess, rev, updatedBy: actorId, updatedAt: serverTimestamp() };
     tx.set(ref, after);
     tx.set(auditRef(db, 'project', projectId, rev), auditEntry({ type: 'project', id: projectId, rev, action: 'update', actorId, before, after }));
     users.forEach((user, i) => {

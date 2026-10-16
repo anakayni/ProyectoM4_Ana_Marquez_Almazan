@@ -2,7 +2,7 @@ import { collection, onSnapshot, query, where, type QueryDocumentSnapshot, type 
 import { setProjectMembers as setMembers } from '@/services/audited/people';
 import * as audited from '@/services/audited/projects';
 import type { Viewer } from '@/types/auth';
-import type { Project, ProjectInput, ProjectPatch } from '@/types/project';
+import type { GuestAccess, Project, ProjectInput, ProjectPatch } from '@/types/project';
 import { db } from './firebase';
 
 function toProject(snap: QueryDocumentSnapshot): Project {
@@ -17,6 +17,7 @@ function toProject(snap: QueryDocumentSnapshot): Project {
     endDate: d.endDate,
     archived: Boolean(d.archived),
     memberIds: d.memberIds ?? [],
+    guestAccess: d.guestAccess ?? {},
     createdBy: d.createdBy,
     createdAt: (d.createdAt as Timestamp | null)?.toMillis() ?? Date.now(),
     rev: d.rev,
@@ -53,5 +54,5 @@ export const createProject = (actorId: string, input: ProjectInput) => audited.c
 export const updateProject = (actorId: string, id: string, patch: ProjectPatch) => audited.updateProject(db, actorId, id, patch);
 export const deleteProject = (actorId: string, id: string) => audited.deleteProject(db, actorId, id);
 /** Solo el admin: quiénes están en el proyecto (auditado, con sus tarjetas). */
-export const setProjectMembers = (actorId: string, projectId: string, memberIds: string[]) =>
-  setMembers(db, actorId, projectId, memberIds);
+export const setProjectMembers = (actorId: string, projectId: string, memberIds: string[], access?: Record<string, GuestAccess>) =>
+  setMembers(db, actorId, projectId, memberIds, access);
