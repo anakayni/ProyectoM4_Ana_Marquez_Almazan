@@ -2,219 +2,84 @@
 
 🇬🇧 [English version](README.md)
 
-SPA de gestión de tareas para los empleados de una pyme. Cada persona se registra (email y contraseña o Google), gestiona sus propias tareas guardadas en la nube y puede enviarse por email un resumen del estado de sus tareas.
+App de tareas y proyectos para equipos chicos: acceso solo con invitación y roles, proyectos con sus propias personas, vistas de lista / tabla / tablero, calendario de mes y Gantt, y un **registro de auditoría de cada cambio que la propia base de datos exige**.
 
-**Producción:** https://matecode-tasks-sandy.vercel.app
+Empezó como mi proyecto final del **Módulo 4 de Soy Henry** y creció como proyecto de portafolio, construido con un asistente de IA (Claude Code) con un proceso de diseño → plan → tests primero.
 
-**Repositorio:** https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan
+## Demo en vivo
 
-## Funcionalidades
+**https://matecode-tasks-dev.vercel.app**
 
-- Registro e inicio de sesión con email/contraseña y con Google; cierre de sesión.
-- Rutas protegidas: `/tasks` solo es accesible con sesión; `/login` y `/register` redirigen si ya hay sesión.
-- Errores de autenticación traducidos a mensajes claros en español.
-- CRUD de tareas (título + descripción): crear, listar, editar (modal), eliminar (con confirmación) y marcar como completada.
-- Cada usuario solo ve y modifica sus propias tareas (filtro por `userId` + Security Rules).
-- Actualización en tiempo real de la lista tras cualquier cambio (`onSnapshot`), estados de carga, error con reintento y lista vacía.
-- Botón **Enviar resumen por email**: una Vercel Function envía, vía AWS SES, un email con el total de tareas pendientes y completadas.
-- **Extras:** filtros (todas / pendientes / completadas) con contador, prioridad (alta / media / baja), fecha de vencimiento con aviso de "Vencida" / "Vence hoy", y orden por más recientes, vencimiento o prioridad.
-- Diseño responsive mobile first con CSS propio.
+| Cuenta demo (solo lectura) | |
+|---|---|
+| Email | `anakayni+demo@gmail.com` |
+| Contraseña | `MateDemo-2026` |
 
-## Stack
+La cuenta demo tiene el rol **Lector**: puede recorrer todo pero no cambiar nada. Usa una base de datos de desarrollo aparte, con datos de prueba.
+
+## Qué hace
+
+- **Acceso solo con invitación y roles.** Un admin invita por email como Administrador, Miembro, Lector o **Invitado**. El Invitado (un cliente, un proveedor) solo ve y trabaja en los proyectos donde lo agregaron; nunca ve al resto del equipo.
+- **Tareas:** estado (pendiente / en curso / hecha), responsable, prioridad, vencimiento, número (`MC-12`), subtareas con avance, búsqueda y filtros, y tres vistas: lista, tabla y tablero. Las terminadas se ven tachadas y en gris.
+- **Proyectos:** color, fechas, responsable, avance real y aviso de "atrasado", archivar, y una lista de personas que maneja el admin.
+- **Calendario:** vista de mes (agenda en el celular) y vista Gantt con proyectos y vencimientos.
+- **Equipo y perfil:** integrantes con foto o inicial, tareas abiertas por persona, desactivar sin perder sus tareas.
+- **Ajustes (admin):** nombre, logo y paleta de colores del espacio con vista previa en vivo y un **control de contraste que impide guardar** colores ilegibles; prefijo de las tareas.
+- **Auditoría (admin):** cada cambio contado en una frase ("Ana cambió el estado de Pendiente a Hecha"), filtros por tipo, persona y fechas, detalle antes → después, de a 50, y **exportación a CSV** protegida contra fórmulas en planillas.
+- **Resumen de tus tareas por email** con AWS SES.
+
+## Lo técnico que destaco
+
+- **La base de datos manda en la seguridad.** Las Security Rules de Firestore exigen los roles, el alcance por proyecto del Invitado, responsables válidos, un "completada por / cuándo" honesto y números de tarea que no cambian. Se prueban contra el emulador de Firestore, incluidos intentos de hacer trampa (auditoría falsa, sacar una tarea del proyecto de un Invitado, tarjetas de perfil inventadas).
+- **Auditoría obligatoria.** Cada escritura va en un lote o transacción junto con su entrada en `auditLog` (`before` / `after`); las reglas rechazan cualquier cambio sin su entrada, y las entradas no se pueden editar ni borrar.
+- **Privacidad sin backend propio.** El Invitado lee "tarjetas" de las personas (solo nombre y foto) que las reglas verifican que sean copia exacta del perfil real; nunca lee emails ni roles.
+- **Accesibilidad:** todo el texto cumple contraste 4.5:1 (lo vigila un test que recalcula las fórmulas `color-mix()` del CSS), controles con etiqueta, uso con teclado, nada que dependa de arrastrar.
+- **Costo cero:** Firebase Spark, Vercel Hobby, sin Cloud Functions ni Storage (las fotos y el logo se achican en el navegador y se guardan en Firestore).
+- **Con tests:** más de 400 tests de la app (Vitest + React Testing Library) y más de 80 de las reglas de Firestore.
+
+## Tecnologías
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | React 19 + TypeScript + Vite |
-| Navegación | React Router (`react-router`) |
-| Estilos | CSS Modules + variables de diseño (`src/styles/tokens.css`) |
-| Autenticación | Firebase Authentication (email/password + Google) |
-| Base de datos | Cloud Firestore |
-| Backend | Vercel Functions (`/api/send-summary`) |
-| Email | AWS SES v2 (`@aws-sdk/client-sesv2`) |
-| Verificación en el servidor | `firebase-admin` |
-| Testing | Vitest + React Testing Library + jsdom |
-| Lint | oxlint |
-| Deploy | Vercel |
+| Frontend | React 19, TypeScript, Vite, React Router |
+| Estilos | CSS Modules + tokens de diseño (`tokens.css`) |
+| Auth y datos | Firebase Authentication, Cloud Firestore + Security Rules |
+| Backend | Vercel Functions (`firebase-admin`, AWS SES v2) |
+| Testing | Vitest, React Testing Library, emulador de Firestore |
+| Lint y deploy | oxlint, Vercel |
 
-## Decisiones arquitectónicas
+## Ramas
 
-1. **BaaS para auth y datos.** Firebase Auth y Firestore evitan mantener un backend propio. La config web de Firebase no es secreta; la seguridad real está en las **Security Rules** (`firestore.rules`), que solo permiten leer/escribir una tarea si `userId == request.auth.uid` y validan campos, tipos y largos.
-2. **Colección `tasks` con campo `userId`.** Se eligió una colección raíz filtrada con `where('userId', '==', uid)` (en vez de subcolecciones por usuario) porque el enunciado pide explícitamente filtrar por `userId`. El orden por fecha se hace en el cliente para no requerir un índice compuesto.
-3. **Capas `component → hook → service`.** Los componentes nunca importan Firebase: usan hooks (`useAuth`, `useTasks`) que llaman a `services/`. Así los tests mockean los servicios sin tocar Firebase.
-4. **Tiempo real.** `onSnapshot` mantiene la lista sincronizada: tras crear/editar/eliminar no hay que volver a pedir datos.
-5. **El servidor decide el contenido del email.** El frontend solo envía su ID token de Firebase. La función lo verifica con `firebase-admin`, lee las tareas de ese `uid` y envía el email **al email del token**. Nadie puede usar el endpoint para mandar contenido arbitrario ni a otros destinatarios.
-6. **Lógica del servidor testeable.** `api/send-summary.ts` sigue el estilo `handler(request: VercelRequest, response: VercelResponse)` y delega en `processSendSummary(deps, { method, authorization })`, que recibe sus dependencias (verificar token, leer tareas, enviar email). Los tests le pasan funciones falsas en vez de Firebase y AWS reales.
-7. **Errores útiles para usuario y desarrollador.** La UI muestra mensajes amigables; el error real queda en la consola (cliente) o en los logs de Vercel (servidor). Un token inválido responde 401, pero un error de configuración responde 500 para no confundirlo con "sesión expirada".
-8. **Componentes UI propios y accesibles.** `Button`, `Field`, `Alert`, `Spinner`, `Toast` y `Modal` (con `<dialog>` nativo). Labels asociados, `aria-invalid`, `role="alert"`, foco visible.
+| Rama | Qué contiene |
+|---|---|
+| [`v2`](https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan/tree/v2) | La versión de portafolio que se ve en la demo (en desarrollo). |
+| `main` | La entrega original del Módulo 4: [documentación](docs/m4/README.es.md) · [in English](docs/m4/README.md) · producción en https://matecode-tasks-sandy.vercel.app |
 
-## Estructura
+## Cómo trabajé con la IA
 
-```
-├─ api/send-summary.ts          # Vercel Function (VercelRequest/VercelResponse)
-├─ functions/
-│  ├─ sendSummary.ts            # processSendSummary: método → token → tareas → SES
-│  ├─ summaryEmail.ts           # buildSummary, renderSummaryEmail, escapeHtml (puras)
-│  ├─ firebaseAdmin.ts          # verifyIdToken, getTasksForUser
-│  ├─ ses.ts                    # sendEmail con SES v2
-│  └─ env.ts                    # requireEnv
-├─ src/
-│  ├─ pages/                    # LoginPage, RegisterPage, TasksPage
-│  ├─ components/
-│  │  ├─ ui/                    # Button, Field, Alert, Spinner, Toast, Modal
-│  │  ├─ auth/                  # AuthLayout, GoogleButton
-│  │  └─ tasks/                 # TodoForm, TodoList, TodoItem, SendSummaryButton
-│  ├─ features/auth/            # mapAuthError
-│  ├─ services/                 # firebase.ts, auth.service.ts, tasks.service.ts
-│  ├─ api/                      # summary.api.ts → POST /api/send-summary
-│  ├─ routes/                   # AppRouter, ProtectedRoute, PublicOnlyRoute
-│  ├─ hooks/                    # useAuth, useAuthAction, useTasks
-│  ├─ types/                    # auth.ts, task.ts, api.ts
-│  ├─ utils/                    # validators.ts
-│  └─ styles/                   # tokens.css, global.css
-├─ tests/
-│  ├─ unit/                     # validadores, mapAuthError, hooks, cliente de la API
-│  ├─ components/               # TodoForm, TodoList, LoginPage, rutas, UI, Toast
-│  └─ server/                   # plantilla del email y lógica de send-summary
-├─ docs/                        # documento de diseño y plan de implementación
-├─ firestore.rules
-├─ vercel.json
-├─ .env.example
-└─ AI_LOG.md                    # registro detallado del uso de IA por fase
-```
+Construí el proyecto con **Claude Code** como compañero de programación, con un proceso que repetí en cada etapa:
 
-## Instalación
+1. **Preguntas antes del código.** En cada etapa el asistente me hizo preguntas de a una, cada una con su recomendación, y me mostró maquetas cuando la pregunta era visual. Las decisiones de producto las tomé yo (por ejemplo: el Invitado como rol limitado a proyectos, conservar las tareas completadas para tener registro, el contraste accesible como regla).
+2. **Diseño y plan por escrito.** Cada etapa tiene un documento de diseño (`docs/specs/`) y un plan de tareas chicas con los tests y el código exactos (`docs/plans/`), los dos en la rama `v2`.
+3. **Primero el test.** En cada tarea se escribía el test, se veía fallar por el motivo correcto, se implementaba y se hacía commit: un commit por tarea.
+4. **Pruebo cada etapa** en una preview antes de seguir, y manejé yo todas las consolas y credenciales (Firebase, AWS, Vercel): los secretos nunca pasaron por el chat.
+5. **Primero la causa, después el arreglo.** Cuando algo falló (reglas equivocadas publicadas, permisos de IAM, incompatibilidades ESM, contraste por debajo de 4.5:1 encontrado al medir) buscamos la causa antes de cambiar código.
 
-Requisitos: Node.js 22+ y la CLI de Vercel (`npm i -g vercel`) para correr la función de email en local.
+El registro completo de qué pedí, qué propuso la IA, qué cambié y qué salió mal está en [`AI_LOG.md`](https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan/blob/v2/AI_LOG.md).
+
+## Correrlo en local
 
 ```bash
 git clone https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan.git
 cd ProyectoM4_Ana_Marquez_Almazan
+git checkout v2
 npm install
-cp .env.example .env      # completar valores (ver tabla abajo)
+cp .env.example .env   # config web de Firebase + cuenta de servicio, AWS SES (ver docs)
+npm test               # tests de la app
+npm run test:rules     # reglas de Firestore contra el emulador (requiere Java 21)
+vercel dev             # app + funciones en http://localhost:3000
 ```
 
-| Script | Qué hace |
-|---|---|
-| `npm run dev` | Solo el frontend (Vite) en http://localhost:5173 |
-| `vercel dev` | Frontend + Vercel Functions (`/api`) en http://localhost:3000 |
-| `npm test` | Ejecuta todos los tests con Vitest |
-| `npm run test:watch` | Tests en modo observación |
-| `npm run build` | Chequeo de tipos (cliente y servidor) + build de producción |
-| `npm run lint` | oxlint |
+---
 
-**Configuración de Firebase:** crear proyecto, habilitar Authentication (Email/Password y Google), crear Firestore en modo producción, publicar `firestore.rules` y agregar el dominio de Vercel en *Authentication → Settings → Authorized domains*.
-
-**Configuración de AWS SES:** verificar el email remitente en SES (región `us-east-1`) y crear un usuario IAM con una política que solo permita `ses:SendEmail`.
-
-## Variables de entorno
-
-| Variable | Dónde | Uso |
-|---|---|---|
-| `VITE_FIREBASE_API_KEY` | Cliente | Config web de Firebase |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Cliente | |
-| `VITE_FIREBASE_PROJECT_ID` | Cliente | |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Cliente | |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Cliente | |
-| `VITE_FIREBASE_APP_ID` | Cliente | |
-| `FIREBASE_ADMIN_PROJECT_ID` | Servidor | Cuenta de servicio de Firebase |
-| `FIREBASE_ADMIN_CLIENT_EMAIL` | Servidor | |
-| `FIREBASE_ADMIN_PRIVATE_KEY` | Servidor | Entre comillas dobles, con saltos de línea como `\n` |
-| `SES_AWS_REGION` | Servidor | Ej. `us-east-1` |
-| `SES_AWS_ACCESS_KEY_ID` | Servidor | Usuario IAM con permiso `ses:SendEmail` |
-| `SES_AWS_SECRET_ACCESS_KEY` | Servidor | |
-| `SES_FROM_EMAIL` | Servidor | Remitente verificado en SES |
-| `APP_URL` | Servidor | URL pública (botón "Abrir mis tareas" del email) |
-
-- Solo las variables con prefijo `VITE_` llegan al navegador. **Ningún secreto lleva ese prefijo.**
-- Se usa el prefijo `SES_` porque Vercel reserva nombres como `AWS_REGION` y `AWS_ACCESS_KEY_ID`.
-- `.env` está en `.gitignore`; `.env.example` se versiona con las mismas claves y sin valores.
-- En Vercel las variables se cargan en *Settings → Environment Variables* (las secretas como *sensitive*).
-
-## Flujo de envío de emails
-
-```
-[TasksPage] botón "Enviar resumen por email"
-   │
-   ▼
-src/api/summary.api.ts
-   token = await auth.currentUser.getIdToken()
-   POST /api/send-summary   Authorization: Bearer <token>   (sin body)
-   │
-   ▼
-api/send-summary.ts  →  functions/sendSummary.ts (processSendSummary)
-   1. Método distinto de POST            → 405 (header Allow: POST)
-   2. Sin token                          → 401
-   3. verifyIdToken (firebase-admin)     → uid + email   (token inválido → 401)
-   4. Firestore: tasks where userId == uid               (error → 500)
-   5. renderSummaryEmail → asunto + HTML + texto plano   (títulos escapados)
-   6. SES v2 SendEmailCommand → al email del token       (error → 502)
-   7. 200 { ok: true, messageId, to }
-   │
-   ▼
-[UI] Toast "Resumen enviado a …" o mensaje de error con "Reintentar"
-```
-
-**SES en sandbox:** mientras la cuenta de AWS esté en sandbox, SES solo envía a direcciones verificadas. Para producción real se debe solicitar la salida del sandbox en la consola de AWS.
-
-## Seguridad
-
-- Security Rules: cada usuario solo lee, crea, edita y borra sus tareas; se valida que no cambie el `userId` y que los campos tengan el tipo y largo correctos.
-- Usuario IAM con mínimo privilegio (solo `ses:SendEmail`).
-- Secretos solo en `.env` (ignorado por git) y en las variables de Vercel; nunca en el código ni en el bundle.
-- El HTML del email escapa el texto escrito por el usuario (evita inyección de HTML).
-- La función ignora cualquier dato del cliente salvo el token: el destinatario sale del token verificado.
-
-## Testing
-
-82 tests con Vitest + React Testing Library (`npm test`):
-
-- **Unitarios:** validadores de formularios, `mapAuthError`, `useAuth`, `useTasks`, `filterTasks`, `sortTasks`, fechas de vencimiento (`formatDate`) y cliente de la API (`fetch` mockeado).
-- **Componentes:** `TodoForm` (validación, envío, prioridad y fecha, edición, error), `TodoList` (render, prioridad y vencimiento, completar, editar, eliminar con confirmación, estado vacío), `TaskFilters`, `LoginPage` (validación, error traducido, Google), `ProtectedRoute`/`PublicOnlyRoute`, `Toast` y componentes UI.
-- **Servidor:** plantilla del email (conteos, escape de HTML, texto plano) y `processSendSummary` (405, 401, 400, 500, 502 y 200) con dependencias falsas.
-- **Mocks:** `vi.mock` de `services/*` y `hooks/useAuth`; ningún test llama a Firebase ni a AWS reales.
-
-## Problemas encontrados y cómo se resolvieron
-
-| Problema | Causa | Solución |
-|---|---|---|
-| "No pudimos guardar la tarea" | Se habían publicado reglas de Firestore de otro proyecto | Registrar el error real en consola, aislarlo con una prueba mínima y publicar `firestore.rules` |
-| La app no cargaba con `vercel dev` | El rewrite de SPA mandaba `/src/main.tsx` a `index.html` | Reescribir solo rutas sin extensión y excluir `/api`, `/@*`, `/src`, `/node_modules` |
-| `not authorized to perform ses:SendEmail` | La política IAM no estaba asignada al usuario | Asignar la política con `ses:SendEmail` |
-| La función fallaba en Vercel (`ERR_REQUIRE_ESM`) | `firebase-admin` 14 depende de `jose` 6 (solo ESM) | Usar `firebase-admin` 13 |
-
-## Uso de IA en el proceso
-
-Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fase está en [`AI_LOG.md`](AI_LOG.md).
-
-**Cómo la integré:**
-- **Antes de programar:** le pedí que analizara el enunciado y me hiciera preguntas. Así definimos el alcance (auth con Google, CSS propio, extras al final) y un documento de diseño con alternativas y sus trade-offs (`docs/specs/`).
-- **Plan por fases:** con el diseño aprobado se armó un plan con tareas pequeñas, cada una con sus tests y su commit (`docs/plans/`).
-- **Implementación con TDD:** en cada tarea primero se escribió el test, se verificó que fallara y después se implementó el código.
-- **Depuración:** ante cada error se buscó primero la causa real (consola, logs de Vercel, pruebas mínimas contra la API) antes de cambiar código.
-
-**Dónde fue más efectiva:**
-- Generar tests a partir de un comportamiento definido y detectar casos borde (token inválido vs. error de configuración, escape de HTML).
-- Diagnosticar errores de configuración: reglas de Firestore equivocadas, permisos IAM, incompatibilidades ESM/CommonJS en Vercel.
-- Explicar conceptos a medida que aparecían: Context, `onSnapshot`, Security Rules, inyección de dependencias, `.gitignore`.
-
-**Dónde tuve que intervenir:**
-- Toda la configuración de Firebase, AWS y Vercel (consolas y credenciales) la hice yo; nunca compartí secretos en el chat.
-- Las pruebas manuales en navegador y celular.
-- Decisiones como adaptar la función al estilo de clase (`VercelRequest`/`VercelResponse`).
-
-**Patrones y buenas prácticas que descubrí:**
-- Pedir primero preguntas y un diseño, y recién después código.
-- Una tarea chica por vez, con test y commit: el historial documenta el proceso.
-- No "tragarse" errores: mensaje amigable para el usuario y error real en consola o logs.
-- Aislar la causa con una prueba mínima antes de tocar código.
-- Revisar y entender cada cambio antes de aceptarlo, y verificar siempre con tests, build y prueba manual.
-- Nunca pegar secretos en el prompt; cargarlos directo en `.env` o en Vercel.
-
-## Mejoras futuras
-
-- Reordenar tareas con drag & drop (dnd-kit), guardando el orden manual en Firestore.
-- Mostrar prioridad, vencimiento y cantidad de tareas vencidas en el email de resumen.
-- Mejorar el diseño visual.
-- Límite de envíos de email por usuario (rate limit).
-- Salida del sandbox de SES.
-- Recuperación de contraseña y verificación de email.
+Hecho por **Ana Márquez** · [GitHub](https://github.com/anakayni)
