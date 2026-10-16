@@ -131,3 +131,37 @@ Que el admin pueda sumar personas externas (un cliente, un proveedor) que **solo
 - **Lógica pura:** `seesDoneTasks(role)` (admin y miembro: sí). `openTasksLabel(n)` y `projectOpenSummary(tasks, endDate, today)` para el avance sin hechas.
 - **Tests de reglas:** Lector e Invitado no leen una tarea hecha (por `getDoc` ni por consulta sin filtro de estado), ni su historial; el Invitado puede pasar una tarea a "Hecha" y después no leerla; Admin y Miembro siguen leyendo todo.
 - **Entrega:** plan **9C**, antes de seguir con la 9B.
+
+## 10. Anexo (2026-10-16): Compartir proyecto y acceso del Invitado por proyecto
+
+**Decisiones de la usuaria:** rol dentro del proyecto solo para Invitados ("Solo ver" / "Puede editar"); los nuevos empiezan en "Solo ver"; buscador de personas existentes + "Invitar a … como Invitado" para alguien nuevo; al crear un proyecto (admin) se abre "Compartir proyecto". Referencias visuales: caras superpuestas con "+N" en tarjetas, caras + círculo punteado "+" en la página, diálogo tipo "Share your project".
+
+### Datos y reglas
+
+| Campo | Regla |
+|---|---|
+| `projects/{id}.guestAccess` | **opcional**; mapa `{ uid: 'view' \| 'edit' }` (≤ 50). Sin entrada = `'edit'` (los Invitados ya agregados no pierden permisos). Solo `isAdmin()` lo cambia. |
+
+- `guestEdits(pid)` = `guestIn(pid)` y `guestAccess[uid]` (por defecto `'edit'`) es `'edit'`. `canWork(pid)` usa `guestEdits` en lugar de `guestIn`; eliminar las propias tareas también lo exige.
+- La lectura no cambia (`guestIn`): "Solo ver" ve el proyecto y sus tareas abiertas.
+- `setProjectMembers` pasa a `setProjectAccess(…, memberIds, guestAccess)`; agregar un Invitado lo deja en `'view'`; quitarlo borra su entrada.
+
+### Interfaz
+
+| Lugar | Qué cambia |
+|---|---|
+| `AvatarGroup` (nuevo) | Caras superpuestas o separadas, máximo configurable, "+N", nombre accesible "Personas: Ana, Gus y 3 más". |
+| Tarjetas de Proyectos | Caras superpuestas (3 + "+N") de las personas del proyecto. |
+| Página del proyecto | "Personas del proyecto": caras separadas (5 + "+N") y, para el admin, círculo punteado "+" ("Agregar persona al proyecto"). Ambos abren "Compartir proyecto". |
+| `ShareProjectDialog` (reemplaza la lista actual) | Enlace del proyecto + "Copiar"; buscador (admin) con personas sin agregar y "Invitar a … como Invitado" si el texto es un email nuevo; invitaciones pendientes con rol Invitado; "En este proyecto": Invitado → "Solo ver" / "Puede editar" + "Quitar"; Responsable → etiqueta; admin/miembro → rol general + "Hacer responsable" (con confirmación). Cada cambio se guarda al momento; pie "Listo". |
+| Al crear un proyecto (admin) | Se abre el diálogo con "¡Proyecto creado!" y "Ahora no". |
+| Tareas del Invitado | Editar/cambiar estado/eliminar según el acceso en el proyecto de cada tarea; "Nueva tarea" solo con proyectos "Puede editar" (sin ninguno, sin botón). |
+| Auditoría | "Admin cambió a Gus a «Puede editar» en «Portal»". |
+
+### Tests
+
+- Reglas: Invitado "Solo ver" no crea, no edita, no cambia estado ni elimina; "Puede editar" sí; sin entrada = puede editar; un miembro no cambia `guestAccess`.
+- Unitarios: acceso efectivo, opciones del buscador, frases de auditoría.
+- Componentes: `AvatarGroup`, tarjeta, "+" solo para el admin, diálogo (agregar en "Solo ver", cambiar acceso, quitar, invitar email nuevo, hacer responsable), tareas de solo lectura para el Invitado "Solo ver".
+
+**Entrega:** plan **9D**.
