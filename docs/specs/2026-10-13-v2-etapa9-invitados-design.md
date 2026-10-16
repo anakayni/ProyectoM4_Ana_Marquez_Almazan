@@ -113,3 +113,21 @@ Que el admin pueda sumar personas externas (un cliente, un proveedor) que **solo
 - **9A — Rol, datos y reglas:** rol `guest`, `memberIds` y tarjetas, reglas y sus tests, escrituras auditadas que mantienen las tarjetas, lectura según el rol, `can`, email de resumen. Un Invitado ya entra y ve solo lo suyo con las pantallas adaptadas (menú, Nueva tarea, Proyectos sin acciones). Preview.
 - **9B — Pantallas:** "Personas del proyecto" (agregar/quitar), Equipo con el rol nuevo y sus proyectos, mensaje sin proyectos, frases de auditoría. Preview, README, AI_LOG y `CLAUDE.md`.
 - **Al integrar a `main`:** las reglas nuevas y los índices (si hiciera falta alguno para `collectionGroup('people')` por `uid`).
+
+## 9. Anexo (2026-10-16): Invitado y Lector no ven tareas hechas
+
+**Decisión de la usuaria:** Invitado y Lector **nunca** pueden ver tareas con estado `done` (privacidad, no solo estética). Admin y Miembro, sin cambios.
+
+| Tema | Decisión |
+|---|---|
+| Alcance | Solo roles `guest` y `viewer`. |
+| Garantía | Reglas: lectura de `tasks` solo si `status in ['todo', 'doing']`; historial de tareas solo si la tarea existe y no está hecha. |
+| Avance de proyectos | En lugar de "40% · 4 de 10": **"N tareas abiertas"** + "Atrasado" si pasó `endDate` con tareas abiertas. |
+| Vistas | Lista/tabla sin hechas; tablero sin columna "Hecha"; tarjetas sin "Hechas"; buscador sin hechas; calendario (Mes y Gantt) sin hechas y sin el botón "Ocultar hechas". |
+| Invitado marca "Hecha" | Permitido, con confirmación: "¿Marcar como hecha? Dejarás de verla: las tareas terminadas solo las ven el admin y los miembros." |
+| Email de resumen | Para `guest`/`viewer`, solo cuenta pendientes y en curso (sin "Hechas"). |
+
+- **Consultas:** `guest`/`viewer` piden `where('status', 'in', ['todo', 'doing'])` (el Invitado, además, `where('projectId', '==', id)` por proyecto). Es la única consulta que las reglas les aceptan.
+- **Lógica pura:** `seesDoneTasks(role)` (admin y miembro: sí). `openTasksLabel(n)` y `projectOpenSummary(tasks, endDate, today)` para el avance sin hechas.
+- **Tests de reglas:** Lector e Invitado no leen una tarea hecha (por `getDoc` ni por consulta sin filtro de estado), ni su historial; el Invitado puede pasar una tarea a "Hecha" y después no leerla; Admin y Miembro siguen leyendo todo.
+- **Entrega:** plan **9C**, antes de seguir con la 9B.
