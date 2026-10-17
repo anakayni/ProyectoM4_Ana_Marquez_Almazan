@@ -40,6 +40,9 @@ export interface Task {
 /** Campos que el usuario completa en el formulario */
 export type TaskInput = Pick<Task, 'title' | 'description' | 'priority' | 'dueDate' | 'assigneeId' | 'projectId'>;
 
+/** Lo que se pide para crear: desde una columna del tablero puede nacer "en curso". */
+export type NewTask = TaskInput & { status?: Exclude<TaskStatus, 'done'> };
+
 export type TaskPatch = Partial<TaskInput & Pick<Task, 'status' | 'subtasks'>>;
 
 export type SortMode = 'recent' | 'due' | 'priority';

@@ -24,7 +24,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { SCOPES, SCOPE_LABEL, type TaskInput, type TaskScope } from '@/types/task';
+import { SCOPES, SCOPE_LABEL, type NewTask, type TaskScope } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
 import { NoProjectsYet } from '@/components/projects/NoProjectsYet';
@@ -49,7 +49,7 @@ export function CalendarPage() {
   const [range, setRange] = useState<GanttRange>(() => rangeAround(today));
   const [withArchived, setWithArchived] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [creating, setCreating] = useState<Partial<TaskInput> | null>(null);
+  const [creating, setCreating] = useState<Partial<NewTask> | null>(null);
   const [openDay, setOpenDay] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);

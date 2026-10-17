@@ -32,6 +32,11 @@ describe('tareas', () => {
     await assertFails(getDocs(collection(as('vera'), 'tasks')));
   });
 
+  it('se puede crear una tarea ya "en curso" (desde la columna del tablero)', async () => {
+    const id = await assertSucceeds(createTask(as('ana'), 'ana', { ...input, status: 'doing' }));
+    expect((await getDoc(doc(as('ana'), 'tasks', id))).data()?.status).toBe('doing');
+  });
+
   it('un usuario desactivado no lee', async () => {
     await assertFails(getDocs(collection(as('ex'), 'tasks')));
   });

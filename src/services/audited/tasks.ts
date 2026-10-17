@@ -1,5 +1,5 @@
 import { collection, doc, runTransaction, serverTimestamp, type DocumentData, type Firestore } from 'firebase/firestore';
-import type { TaskInput, TaskPatch } from '@/types/task';
+import type { NewTask, TaskPatch } from '@/types/task';
 import { auditEntry, auditRef } from './audit';
 
 function cleanPatch(patch: TaskPatch): TaskPatch {
@@ -18,7 +18,7 @@ function completion(before: DocumentData, patch: TaskPatch, actorId: string) {
     : { completedBy: null, completedAt: null };
 }
 
-export async function createTask(db: Firestore, actorId: string, input: TaskInput): Promise<string> {
+export async function createTask(db: Firestore, actorId: string, input: NewTask): Promise<string> {
   const ref = doc(collection(db, 'tasks'));
   const counter = doc(db, 'counters', 'tasks');
   await runTransaction(db, async (tx) => {
@@ -29,7 +29,7 @@ export async function createTask(db: Firestore, actorId: string, input: TaskInpu
       createdBy: actorId,
       title: input.title.trim(),
       description: input.description.trim(),
-      status: 'todo',
+      status: input.status ?? 'todo',
       assigneeId: input.assigneeId,
       projectId: input.projectId,
       completedBy: null,

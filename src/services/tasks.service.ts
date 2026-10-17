@@ -2,7 +2,7 @@ import { collection, onSnapshot, query, where, type QueryDocumentSnapshot, type 
 import * as audited from '@/services/audited/tasks';
 import type { Viewer } from '@/types/auth';
 import { seesDoneTasks } from '@/features/auth/permissions';
-import { OPEN_STATUSES, type Task, type TaskInput, type TaskPatch } from '@/types/task';
+import { OPEN_STATUSES, type NewTask, type Task, type TaskPatch } from '@/types/task';
 import { subscribeFanOut } from '@/utils/fanOut';
 import { db } from './firebase';
 import { subscribeToGuestProjectIds } from './projects.service';
@@ -57,6 +57,6 @@ export function subscribeToTasks(viewer: Viewer, onData: (tasks: Task[]) => void
 }
 
 // Cada escritura deja su entrada de auditoría (ver services/audited/tasks.ts).
-export const createTask = (actorId: string, input: TaskInput) => audited.createTask(db, actorId, input);
+export const createTask = (actorId: string, input: NewTask) => audited.createTask(db, actorId, input);
 export const updateTask = (actorId: string, id: string, patch: TaskPatch) => audited.updateTask(db, actorId, id, patch);
 export const deleteTask = (actorId: string, id: string) => audited.deleteTask(db, actorId, id);

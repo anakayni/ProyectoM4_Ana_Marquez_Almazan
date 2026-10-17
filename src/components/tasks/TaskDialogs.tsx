@@ -7,7 +7,7 @@ import { assigneeOptions, makeNameOf, unknownPersonFor } from '@/features/team/m
 import type { useTasks } from '@/hooks/useTasks';
 import type { UserProfile } from '@/types/auth';
 import type { Project } from '@/types/project';
-import type { Task, TaskInput } from '@/types/task';
+import type { NewTask, Task, TaskInput } from '@/types/task';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { TodoForm } from './TodoForm';
 
@@ -20,7 +20,8 @@ type TaskDialogsProps = {
   openId: string | null;
   onCloseTask: () => void;
   /** Valores iniciales de "Nueva tarea" (p. ej. proyecto o vencimiento); null = ventana cerrada */
-  creating: Partial<TaskInput> | null;
+  /** Valores iniciales de "Nueva tarea" (con `status` si se abrió desde una columna del tablero). */
+  creating: Partial<NewTask> | null;
   onCloseCreate: () => void;
   actions: Pick<ReturnType<typeof useTasks>, 'create' | 'update' | 'remove'>;
   onToast: (toast: ToastMessage) => void;
@@ -41,7 +42,7 @@ export function TaskDialogs({
     assigneeOptions(members, currentId, { project: projects.find((p) => p.id === projectId) ?? null, actorRole: profile.role });
 
   async function handleCreate(values: TaskInput) {
-    await actions.create(values); // si falla, TodoForm muestra el error
+    await actions.create({ ...values, ...(creating?.status && { status: creating.status }) }); // si falla, TodoForm muestra el error
     onCloseCreate();
     onToast({ kind: 'success', message: 'Tarea creada.' });
   }
