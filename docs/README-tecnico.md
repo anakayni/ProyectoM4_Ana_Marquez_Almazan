@@ -1,0 +1,360 @@
+# MateCode Tasks — documentación técnica
+
+> Las primeras secciones documentan la entrega original del Módulo 4. Desde **"v2"** en adelante se describe la app actual (la de producción): roles, auditoría y cada etapa del desarrollo. Resumen para portafolio: [README](../README.md).
+
+SPA de gestión de tareas para los empleados de una pyme. Cada persona se registra (email y contraseña o Google), gestiona sus propias tareas guardadas en la nube y puede enviarse por email un resumen del estado de sus tareas.
+
+**Producción:** https://matecode-tasks-sandy.vercel.app
+
+**Repositorio:** https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan
+
+## Funcionalidades
+
+- Registro e inicio de sesión con email/contraseña y con Google; cierre de sesión.
+- Rutas protegidas: `/tasks` solo es accesible con sesión; `/login` y `/register` redirigen si ya hay sesión.
+- Errores de autenticación traducidos a mensajes claros en español.
+- CRUD de tareas (título + descripción): crear, listar, editar (modal), eliminar (con confirmación) y marcar como completada.
+- Cada usuario solo ve y modifica sus propias tareas (filtro por `userId` + Security Rules).
+- Actualización en tiempo real de la lista tras cualquier cambio (`onSnapshot`), estados de carga, error con reintento y lista vacía.
+- Botón **Enviar resumen por email**: una Vercel Function envía, vía AWS SES, un email con el total de tareas pendientes y completadas.
+- **Extras:** filtros (todas / pendientes / completadas) con contador, prioridad (alta / media / baja), fecha de vencimiento con aviso de "Vencida" / "Vence hoy", y orden por más recientes, vencimiento o prioridad.
+- Diseño responsive mobile first con CSS propio.
+
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | React 19 + TypeScript + Vite |
+| Navegación | React Router (`react-router`) |
+| Estilos | CSS Modules + variables de diseño (`src/styles/tokens.css`) |
+| Íconos (v2) | lucide-react |
+| Autenticación | Firebase Authentication (email/password + Google) |
+| Base de datos | Cloud Firestore |
+| Backend | Vercel Functions (`/api/send-summary`) |
+| Email | AWS SES v2 (`@aws-sdk/client-sesv2`) |
+| Verificación en el servidor | `firebase-admin` |
+| Testing | Vitest + React Testing Library + jsdom |
+| Lint | oxlint |
+| Deploy | Vercel |
+
+## Decisiones arquitectónicas
+
+1. **BaaS para auth y datos.** Firebase Auth y Firestore evitan mantener un backend propio. La config web de Firebase no es secreta; la seguridad real está en las **Security Rules** (`firestore.rules`), que solo permiten leer/escribir una tarea si `userId == request.auth.uid` y validan campos, tipos y largos.
+2. **Colección `tasks` con campo `userId`.** Se eligió una colección raíz filtrada con `where('userId', '==', uid)` (en vez de subcolecciones por usuario) porque el enunciado pide explícitamente filtrar por `userId`. El orden por fecha se hace en el cliente para no requerir un índice compuesto.
+3. **Capas `component → hook → service`.** Los componentes nunca importan Firebase: usan hooks (`useAuth`, `useTasks`) que llaman a `services/`. Así los tests mockean los servicios sin tocar Firebase.
+4. **Tiempo real.** `onSnapshot` mantiene la lista sincronizada: tras crear/editar/eliminar no hay que volver a pedir datos.
+5. **El servidor decide el contenido del email.** El frontend solo envía su ID token de Firebase. La función lo verifica con `firebase-admin`, lee las tareas de ese `uid` y envía el email **al email del token**. Nadie puede usar el endpoint para mandar contenido arbitrario ni a otros destinatarios.
+6. **Lógica del servidor testeable.** `api/send-summary.ts` sigue el estilo `handler(request: VercelRequest, response: VercelResponse)` y delega en `processSendSummary(deps, { method, authorization })`, que recibe sus dependencias (verificar token, leer tareas, enviar email). Los tests le pasan funciones falsas en vez de Firebase y AWS reales.
+7. **Errores útiles para usuario y desarrollador.** La UI muestra mensajes amigables; el error real queda en la consola (cliente) o en los logs de Vercel (servidor). Un token inválido responde 401, pero un error de configuración responde 500 para no confundirlo con "sesión expirada".
+8. **Componentes UI propios y accesibles.** `Button`, `Field`, `Alert`, `Spinner`, `Toast` y `Modal` (con `<dialog>` nativo). Labels asociados, `aria-invalid`, `role="alert"`, foco visible.
+
+## Estructura
+
+```
+├─ api/send-summary.ts          # Vercel Function (VercelRequest/VercelResponse)
+├─ functions/
+│  ├─ sendSummary.ts            # processSendSummary: método → token → tareas → SES
+│  ├─ summaryEmail.ts           # buildSummary, renderSummaryEmail, escapeHtml (puras)
+│  ├─ firebaseAdmin.ts          # verifyIdToken, getTasksForUser
+│  ├─ ses.ts                    # sendEmail con SES v2
+│  └─ env.ts                    # requireEnv
+├─ src/
+│  ├─ pages/                    # LoginPage, RegisterPage, TasksPage
+│  ├─ components/
+│  │  ├─ ui/                    # Button, Field, Alert, Spinner, Toast, Modal
+│  │  ├─ auth/                  # AuthLayout, GoogleButton
+│  │  └─ tasks/                 # TodoForm, TodoList, TodoItem, SendSummaryButton
+│  ├─ features/auth/            # mapAuthError
+│  ├─ services/                 # firebase.ts, auth.service.ts, tasks.service.ts
+│  ├─ api/                      # summary.api.ts → POST /api/send-summary
+│  ├─ routes/                   # AppRouter, ProtectedRoute, PublicOnlyRoute
+│  ├─ hooks/                    # useAuth, useAuthAction, useTasks
+│  ├─ types/                    # auth.ts, task.ts, api.ts
+│  ├─ utils/                    # validators.ts
+│  └─ styles/                   # tokens.css, global.css
+├─ tests/
+│  ├─ unit/                     # validadores, mapAuthError, hooks, cliente de la API
+│  ├─ components/               # TodoForm, TodoList, LoginPage, rutas, UI, Toast
+│  └─ server/                   # plantilla del email y lógica de send-summary
+├─ docs/                        # documento de diseño y plan de implementación
+├─ firestore.rules
+├─ vercel.json
+├─ .env.example
+└─ AI_LOG.md                    # registro detallado del uso de IA por fase
+```
+
+## Instalación
+
+Requisitos: Node.js 22+ y la CLI de Vercel (`npm i -g vercel`) para correr la función de email en local.
+
+```bash
+git clone https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan.git
+cd ProyectoM4_Ana_Marquez_Almazan
+npm install
+cp .env.example .env      # completar valores (ver tabla abajo)
+```
+
+| Script | Qué hace |
+|---|---|
+| `npm run dev` | Solo el frontend (Vite) en http://localhost:5173 |
+| `vercel dev` | Frontend + Vercel Functions (`/api`) en http://localhost:3000 |
+| `npm test` | Ejecuta todos los tests con Vitest |
+| `npm run test:watch` | Tests en modo observación |
+| `npm run build` | Chequeo de tipos (cliente y servidor) + build de producción |
+| `npm run lint` | oxlint |
+
+**Configuración de Firebase:** crear proyecto, habilitar Authentication (Email/Password y Google), crear Firestore en modo producción, publicar `firestore.rules` y agregar el dominio de Vercel en *Authentication → Settings → Authorized domains*.
+
+**Configuración de AWS SES:** verificar el email remitente en SES (región `us-east-1`) y crear un usuario IAM con una política que solo permita `ses:SendEmail`.
+
+## Variables de entorno
+
+| Variable | Dónde | Uso |
+|---|---|---|
+| `VITE_FIREBASE_API_KEY` | Cliente | Config web de Firebase |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Cliente | |
+| `VITE_FIREBASE_PROJECT_ID` | Cliente | |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Cliente | |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Cliente | |
+| `VITE_FIREBASE_APP_ID` | Cliente | |
+| `FIREBASE_ADMIN_PROJECT_ID` | Servidor | Cuenta de servicio de Firebase |
+| `FIREBASE_ADMIN_CLIENT_EMAIL` | Servidor | |
+| `FIREBASE_ADMIN_PRIVATE_KEY` | Servidor | Entre comillas dobles, con saltos de línea como `\n` |
+| `SES_AWS_REGION` | Servidor | Ej. `us-east-1` |
+| `SES_AWS_ACCESS_KEY_ID` | Servidor | Usuario IAM con permiso `ses:SendEmail` |
+| `SES_AWS_SECRET_ACCESS_KEY` | Servidor | |
+| `SES_FROM_EMAIL` | Servidor | Remitente verificado en SES |
+| `APP_URL` | Servidor | URL pública (botón "Abrir mis tareas" del email) |
+
+- Solo las variables con prefijo `VITE_` llegan al navegador. **Ningún secreto lleva ese prefijo.**
+- Se usa el prefijo `SES_` porque Vercel reserva nombres como `AWS_REGION` y `AWS_ACCESS_KEY_ID`.
+- `.env` está en `.gitignore`; `.env.example` se versiona con las mismas claves y sin valores.
+- En Vercel las variables se cargan en *Settings → Environment Variables* (las secretas como *sensitive*).
+
+## Flujo de envío de emails
+
+```
+[TasksPage] botón "Enviar resumen por email"
+   │
+   ▼
+src/api/summary.api.ts
+   token = await auth.currentUser.getIdToken()
+   POST /api/send-summary   Authorization: Bearer <token>   (sin body)
+   │
+   ▼
+api/send-summary.ts  →  functions/sendSummary.ts (processSendSummary)
+   1. Método distinto de POST            → 405 (header Allow: POST)
+   2. Sin token                          → 401
+   3. verifyIdToken (firebase-admin)     → uid + email   (token inválido → 401)
+   4. Firestore: tasks where userId == uid               (error → 500)
+   5. renderSummaryEmail → asunto + HTML + texto plano   (títulos escapados)
+   6. SES v2 SendEmailCommand → al email del token       (error → 502)
+   7. 200 { ok: true, messageId, to }
+   │
+   ▼
+[UI] Toast "Resumen enviado a …" o mensaje de error con "Reintentar"
+```
+
+**SES en sandbox:** mientras la cuenta de AWS esté en sandbox, SES solo envía a direcciones verificadas. Para producción real se debe solicitar la salida del sandbox en la consola de AWS.
+
+## Seguridad
+
+- Security Rules: cada usuario solo lee, crea, edita y borra sus tareas; se valida que no cambie el `userId` y que los campos tengan el tipo y largo correctos.
+- Usuario IAM con mínimo privilegio (solo `ses:SendEmail`).
+- Secretos solo en `.env` (ignorado por git) y en las variables de Vercel; nunca en el código ni en el bundle.
+- El HTML del email escapa el texto escrito por el usuario (evita inyección de HTML).
+- La función ignora cualquier dato del cliente salvo el token: el destinatario sale del token verificado.
+
+## Testing
+
+82 tests con Vitest + React Testing Library (`npm test`):
+
+- **Unitarios:** validadores de formularios, `mapAuthError`, `useAuth`, `useTasks`, `filterTasks`, `sortTasks`, fechas de vencimiento (`formatDate`) y cliente de la API (`fetch` mockeado).
+- **Componentes:** `TodoForm` (validación, envío, prioridad y fecha, edición, error), `TodoList` (render, prioridad y vencimiento, completar, editar, eliminar con confirmación, estado vacío), `TaskFilters`, `LoginPage` (validación, error traducido, Google), `ProtectedRoute`/`PublicOnlyRoute`, `Toast` y componentes UI.
+- **Servidor:** plantilla del email (conteos, escape de HTML, texto plano) y `processSendSummary` (405, 401, 400, 500, 502 y 200) con dependencias falsas.
+- **Mocks:** `vi.mock` de `services/*` y `hooks/useAuth`; ningún test llama a Firebase ni a AWS reales.
+
+## Problemas encontrados y cómo se resolvieron
+
+| Problema | Causa | Solución |
+|---|---|---|
+| "No pudimos guardar la tarea" | Se habían publicado reglas de Firestore de otro proyecto | Registrar el error real en consola, aislarlo con una prueba mínima y publicar `firestore.rules` |
+| La app no cargaba con `vercel dev` | El rewrite de SPA mandaba `/src/main.tsx` a `index.html` | Reescribir solo rutas sin extensión y excluir `/api`, `/@*`, `/src`, `/node_modules` |
+| `not authorized to perform ses:SendEmail` | La política IAM no estaba asignada al usuario | Asignar la política con `ses:SendEmail` |
+| La función fallaba en Vercel (`ERR_REQUIRE_ESM`) | `firebase-admin` 14 depende de `jose` 6 (solo ESM) | Usar `firebase-admin` 13 |
+
+## Uso de IA en el proceso
+
+Usé **Claude Code** como asistente durante todo el proyecto. El detalle por fase está en [`AI_LOG.md`](../AI_LOG.md).
+
+**Cómo la integré:**
+- **Antes de programar:** le pedí que analizara el enunciado y me hiciera preguntas. Así definimos el alcance (auth con Google, CSS propio, extras al final) y un documento de diseño con alternativas y sus trade-offs (`docs/specs/`).
+- **Plan por fases:** con el diseño aprobado se armó un plan con tareas pequeñas, cada una con sus tests y su commit (`docs/plans/`).
+- **Implementación con TDD:** en cada tarea primero se escribió el test, se verificó que fallara y después se implementó el código.
+- **Depuración:** ante cada error se buscó primero la causa real (consola, logs de Vercel, pruebas mínimas contra la API) antes de cambiar código.
+
+**Dónde fue más efectiva:**
+- Generar tests a partir de un comportamiento definido y detectar casos borde (token inválido vs. error de configuración, escape de HTML).
+- Diagnosticar errores de configuración: reglas de Firestore equivocadas, permisos IAM, incompatibilidades ESM/CommonJS en Vercel.
+- Explicar conceptos a medida que aparecían: Context, `onSnapshot`, Security Rules, inyección de dependencias, `.gitignore`.
+
+**Dónde tuve que intervenir:**
+- Toda la configuración de Firebase, AWS y Vercel (consolas y credenciales) la hice yo; nunca compartí secretos en el chat.
+- Las pruebas manuales en navegador y celular.
+- Decisiones como adaptar la función al estilo de clase (`VercelRequest`/`VercelResponse`).
+
+**Patrones y buenas prácticas que descubrí:**
+- Pedir primero preguntas y un diseño, y recién después código.
+- Una tarea chica por vez, con test y commit: el historial documenta el proceso.
+- No "tragarse" errores: mensaje amigable para el usuario y error real en consola o logs.
+- Aislar la causa con una prueba mínima antes de tocar código.
+- Revisar y entender cada cambio antes de aceptarlo, y verificar siempre con tests, build y prueba manual.
+- Nunca pegar secretos en el prompt; cargarlos directo en `.env` o en Vercel.
+
+## v2 (la app actual de producción)
+
+Después de la entrega sigo el proyecto como portafolio: un espacio de equipo con administrador, invitaciones, menú lateral (Mis tareas, Proyectos, Calendario, Equipo, Ajustes) y paleta y logo configurables. Se construye por etapas, cada una con su diseño y plan en `docs/specs/` y `docs/plans/`. **Etapa 1 (lista):** roles, invitaciones y auditoría obligatoria. **Etapa 2 (lista):** menú lateral, paleta y login en pantalla dividida. **Etapa 3 (lista):** Mis tareas v2 con estados, responsable, tablero e historial. **Etapa 4 (lista):** Equipo y Mi perfil con foto. **Etapa 5 (lista):** Proyectos y tareas en tabla. **Etapa 6 (lista):** Calendario con vistas Mes y Gantt.
+
+### Entornos
+
+| | Producción | Desarrollo |
+|---|---|---|
+| Rama | `main` | `v2` |
+| Firebase | `matecode-tasks-dc1e1` | `matecode-tasks-dev` |
+| URL | https://matecode-tasks-sandy.vercel.app | https://matecode-tasks-dev.vercel.app (preview protegida por Vercel) |
+| Variables en Vercel | *Production* | *Preview* |
+
+Todo funciona en planes gratuitos (Firebase Spark, Vercel Hobby, SES en sandbox) y no se usa Firebase Storage.
+
+### Roles y permisos
+
+| Acción | Administrador | Miembro | Lector | Invitado |
+|---|---|---|---|---|
+| Ver proyectos | todos | todos | todos | solo donde lo agregaron |
+| Ver tareas y su historial | todas | todas | solo abiertas | solo abiertas de sus proyectos |
+| Crear y editar tareas | ✓ | ✓ | | solo en sus proyectos |
+| Eliminar tareas | todas | solo las que creó | | solo las que creó |
+| Crear y editar proyectos | ✓ | ✓ | | |
+| Agregar o quitar personas de un proyecto | ✓ | | | |
+| Ver el equipo | ✓ | ✓ | ✓ | solo las personas de sus proyectos (nombre y foto) |
+| Invitar personas, cambiar roles, desactivar | ✓ | | | |
+| Ver el registro de auditoría completo | ✓ | | | |
+
+Un administrador no puede cambiar su propio rol ni desactivarse (así el espacio nunca queda sin admin).
+
+### Flujo de invitación
+
+1. El admin invita un email con un rol → se crea `invitations/{email}` y la app muestra un link `/register?email=…` para compartir.
+2. La persona se registra **con ese mismo email**. Si usa contraseña, primero debe confirmar su email.
+3. Al entrar, la app "reclama" la invitación: crea `users/{uid}` con el rol invitado y marca la invitación como aceptada.
+4. Quien no tiene invitación ve "No tienes invitación a este espacio"; quien fue desactivado tampoco entra.
+
+El primer administrador se crea una sola vez por entorno con `npm run bootstrap-admin -- email@ejemplo.com` (usa la cuenta de servicio del `.env`).
+
+### Auditoría obligatoria
+
+Cada cambio a una tarea, proyecto, invitación, usuario o a los ajustes del espacio se guarda en la misma escritura (batch o transacción) que una entrada en `auditLog`:
+
+```js
+// auditLog/task_abc123_3
+{
+  entityType: 'task', entityId: 'abc123', rev: 3,
+  action: 'update', actorId: '<uid de quien cambió>', at: <hora del servidor>,
+  before: { title: 'Revisar factura', completed: false, … },
+  after:  { title: 'Revisar factura', completed: true,  … },
+}
+```
+
+No depende de que la app "se acuerde" de auditar: las **Security Rules** rechazan cualquier cambio que no venga acompañado de su entrada, y verifican que `before` y `after` coincidan con el documento real, que `actorId` sea quien hace el cambio y que `at` sea la hora del servidor. Las entradas no se pueden editar ni borrar.
+
+### Estructura y paleta (etapa 2)
+
+- **Marco común (`AppShell`):** las páginas internas comparten un menú lateral en la computadora y, en el celular, una barra superior (logo y menú de cuenta) con 5 pestañas abajo. Es una *layout route* de React Router: el menú se dibuja una vez y solo cambia el contenido (`<Outlet />`).
+- **Secciones:** salen de la función `navItems(perfil)`. Mis tareas y Equipo (solo admin) funcionan; Proyectos, Calendario y Ajustes se ven como "Próximamente" hasta su etapa.
+- **Paleta:** 5 variables en `tokens.css` (`--brand-1` … `--brand-5`: `#1B4079`, `#4D7C8A`, `#7F9C96`, `#8FAD88`, `#CBDF90`). Los componentes usan nombres por función (botón principal, fondo, menú) que apuntan a esas variables, y los tonos claros se calculan con `color-mix()`. Desde la etapa 8 el admin las cambia en Ajustes sin tocar componentes.
+- **Login:** pantalla dividida con panel de marca y el aviso "Acceso solo con invitación del administrador".
+
+### Mis tareas v2 (etapa 3)
+
+- **Estados:** Pendiente, En curso y Hecha (reemplazan a "completada"). Al pasar a Hecha se guardan **quién la completó y cuándo** (`completedBy`, `completedAt`); las reglas exigen que sean el usuario real y la hora del servidor, y nadie puede cambiarlos después.
+- **Responsable:** una persona opcional (admin o miembro activo). Las reglas lo verifican solo cuando cambia, así una tarea asignada a alguien desactivado se sigue pudiendo editar.
+- **Alcance:** Mías / Todo el equipo / Sin asignar, recordado en el navegador. Las tareas nuevas empiezan asignadas a quien las crea.
+- **Tarjetas:** Pendientes, En curso, Hechas y Vencidas (no hechas con fecha anterior a hoy), calculadas sobre el alcance elegido. Un clic filtra la lista; otro clic quita el filtro.
+- **Vistas:** Lista o Tablero de 3 columnas (íconos de lista y cuadrícula). En el tablero, la tarea cambia de columna con su selector de estado.
+- **Panel de detalle:** al hacer clic en el título se abre un panel con los datos, Editar / Eliminar y el **historial** en frases ("Ana cambió el estado de Pendiente a En curso · hace 2 h"), armado a partir del `auditLog` de esa tarea y actualizado en tiempo real.
+- **Email de resumen:** cuenta Pendientes, En curso y Hechas de las tareas **asignadas** a quien lo pide.
+- **Migración:** `npm run migrate-tasks` convierte las tareas de formatos anteriores (incluido el de producción, con `userId`) dejando una entrada de auditoría por tarea con actor "system". Se niega a correr fuera de `matecode-tasks-dev` salvo con `--confirmar-produccion`.
+
+### Equipo y Mi perfil (etapa 4)
+
+- **Equipo para todos:** cada integrante con su foto o inicial, email, rol y cantidad de tareas abiertas. El admin además invita ("+ Invitar"), cambia roles, desactiva y reactiva, y ve las invitaciones pendientes. Nadie cambia su propio rol ni se desactiva.
+- **Desactivar no borra:** la persona ya no entra, sus tareas quedan a su nombre y el aviso previo dice cuántas tiene sin terminar. En toda la app se ve en gris, con "Inactiva" en Equipo y "(inactiva)" junto a su nombre en las tareas.
+- **Foto de perfil sin Firebase Storage** (que exige el plan pago): el navegador recorta la imagen en cuadrado y la reduce a 128×128 JPEG (~10 KB) con un `<canvas>`, y se guarda dentro del perfil en Firestore. Las reglas solo aceptan un JPEG de hasta 50 KB, y cada persona cambia solo su propia foto y su nombre (ni el admin puede cambiar los de otra persona).
+- **Mi perfil:** se abre desde el nombre al pie del menú lateral o desde el menú de la inicial en el celular.
+
+### Proyectos y tareas en tabla (etapa 5)
+
+- **Proyectos:** nombre, descripción, fechas de inicio y fin, persona a cargo y **color propio** (atajos con la paleta + selector libre). El progreso es real (tareas hechas / total) y se marca **"Atrasado"** si pasó la fecha de fin sin llegar al 100%. Admin y miembros crean, editan y archivan (con confirmación); **solo el admin elimina**, y las tareas del proyecto quedan "Sin proyecto" con su historial. No se pueden agregar tareas a un proyecto archivado. Cada proyecto tiene su página con sus tareas y las mismas vistas que Mis tareas.
+- **Número de tarea `MC-n`:** un contador (`counters/tasks`) que la creación incrementa en la misma transacción; las reglas exigen que el número sea el del contador y que nunca cambie.
+- **Subtareas:** hasta 20 por tarea, con su avance ("2 de 3 · 66%") y sus cambios en el historial.
+- **Vistas Lista, Tabla y Tablero**, buscador (título, descripción o número, sin distinguir tildes) y filtros de prioridad y proyecto. En el celular la tabla se ve como tarjetas.
+- **Panel editable:** todos los campos y las subtareas se guardan juntos con "Guardar cambios" (una escritura y una entrada de historial); si cierras con cambios, pregunta antes de descartar.
+- **Accesibilidad:** el texto atenuado y los placeholders tienen contraste ≥ 4.5:1, verificado por un test. La letra de las etiquetas de proyecto es blanca o negra según el color, porque solo esas dos garantizan 4.5:1 sobre cualquier color.
+- Del mockup de referencia no se construyó lo que no tiene datos reales (latencia, almacenamiento, SLA, "PRO").
+
+### Calendario (etapa 6)
+
+- **Mes:** las tareas aparecen en su día de vencimiento (con el color de su proyecto, tachadas si están hechas, en rojo si están vencidas) junto al inicio y fin de cada proyecto. "+" en cada día crea una tarea con esa fecha; "+N más" abre el día completo; clic abre el mismo panel editable. En el celular se ve como agenda.
+- **Gantt:** una fila por proyecto con su barra de inicio a fin (color, % real, "Atrasado") y las tareas como ◆ en su vencimiento; línea de "Hoy", ventanas de 5 semanas, filtro de archivados. Las barras y ◆ tienen etiquetas completas para lectores de pantalla.
+- Filtros comunes: Mías / Todo el equipo / Sin asignar, Proyecto y "Ocultar hechas" (recordado).
+- Usa solo datos existentes (vencimiento de tareas y fechas de proyectos). Del mockup de referencia no se construyó lo que no tiene datos reales (sprints, despliegues, guardias, hitos propios) ni arrastrar para cambiar fechas.
+
+### Ajustes y auditoría (etapa 8)
+
+- **Solo el admin** ve Ajustes; para el resto la sección no aparece en el menú y `/settings` lleva a Mis tareas.
+- **General:** nombre y logo del espacio (en el menú y en el login; el logo se reduce en el navegador a un PNG de hasta 240×64 y se guarda en Firestore), los **5 colores de la paleta** con vista previa en vivo y prefijo del número de tarea (`MC` → por ejemplo `FL`, 1 a 5 letras o números; solo cambia cómo se muestra). La configuración vive en `settings/workspace`, se lee sin sesión (para el login) y se aplica en vivo reemplazando `--brand-1…5` en `:root`.
+- **Contraste garantizado:** antes de guardar se miden todas las combinaciones de texto que dependen de la paleta (las mismas fórmulas `color-mix()` de `tokens.css`). Si alguna no llega a 4.5:1, se explica cuál y "Guardar cambios" queda desactivado; "Restaurar paleta original" vuelve a los colores de siempre. Al medir aparecieron dos contrastes de la paleta original por debajo de 4.5:1 (texto informativo 3.97 y la inicial del avatar 4.13), que se corrigieron.
+- **Auditoría:** todos los cambios del espacio en frases ("Admin desactivó el acceso de Leo"), filtros por tipo, persona y fechas, de a 50 con "Cargar más", detalle con cada campo **antes → después** (con nombres en vez de IDs) y **Exportar CSV** de todo lo filtrado (hasta 5000 cambios; `;` y BOM para Excel en español; las celdas que empiezan con `=`, `+`, `-` o `@` llevan `'` delante para que la planilla no las ejecute como fórmula).
+- **Índices:** filtrar por tipo o persona y ordenar por fecha necesita índices compuestos, declarados en `firestore.indexes.json`.
+- **Encabezados fijos:** en todas las secciones el título y los filtros quedan arriba al desplazar.
+- **Pie "Desarrollado por Imago Design"** en el login y dentro de la app.
+
+### Invitados por proyecto (etapa 9)
+
+- **Rol Invitado:** para alguien externo (un cliente, un proveedor). Trabaja como un Miembro, pero **solo dentro de los proyectos donde el admin lo agregó**: ve, crea, edita y asigna tareas ahí; no crea proyectos ni cambia sus datos; no ve Equipo, emails ni roles. Sin proyectos ve "Todavía no tienes proyectos asignados".
+- **Personas del proyecto:** en la página de cada proyecto, el admin agrega y quita personas (lista `memberIds`, auditada: "Admin agregó a Gus al proyecto «Portal»"). El responsable siempre cuenta como persona del proyecto. En Equipo, cada Invitado muestra sus proyectos, y no se puede pasar a Invitado a alguien que es responsable de un proyecto.
+- **Tarjetas en lugar del perfil:** el Invitado no lee `users`. Lee `projects/{id}/people/{uid}` (nombre, foto, activo, invitado o equipo), y las reglas solo aceptan una tarjeta si es copia exacta del perfil real. Se actualizan al cambiar nombre, foto, rol o activo; quien no está en la lista aparece como "Alguien del equipo".
+- **Cada rol pide solo lo que puede ver:** Firestore rechaza una consulta entera si pide algo prohibido, así que el Invitado pide sus proyectos (`memberIds array-contains`) y las tareas proyecto por proyecto (`subscribeFanOut`).
+- **Lector e Invitado no ven tareas hechas** (decisión de privacidad): las reglas solo les dejan leer tareas pendientes o en curso y su historial; en lugar del avance ven "N tareas abiertas"; el Invitado confirma antes de marcar una tarea como hecha. El email de resumen tampoco les cuenta las hechas.
+- **Tareas terminadas:** para quien sí las ve, tachadas, en gris (sin transparencias, contraste ≥ 4.5:1 vigilado por un test) y al final de la lista.
+- **Compartir proyecto:** las tarjetas de Proyectos y la página de cada proyecto muestran las caras de sus personas; el admin toca el "+" (o las caras) y abre "Compartir proyecto": enlace para copiar, buscador para agregar a alguien del espacio o invitar un email nuevo como Invitado, y la lista "En este proyecto" con "Hacer responsable" y "Quitar". Al crear un proyecto, el admin ve este diálogo directamente ("¡Proyecto creado!").
+- **Acceso del Invitado por proyecto:** cada Invitado es "Solo ver" o "Puede editar" en cada proyecto (`guestAccess`, solo lo cambia el admin y queda auditado). Los nuevos empiezan en "Solo ver"; las reglas no le dejan crear, editar, cambiar estados ni borrar donde solo ve.
+- **Índice de tarjetas:** buscar las tarjetas de una persona (`collectionGroup('people')` por `uid`) necesita una exención de campo único, declarada en `firestore.indexes.json` (`fieldOverrides`).
+
+### Rediseño visual (etapa 10)
+
+Para que la app se vea como un producto hecho a mano: se rediseña por partes a partir de referencias visuales de la usuaria y maquetas aprobadas.
+
+- **10A — Tareas:** el **tablero es la vista principal**; las vistas son pestañas con ícono (Tablero · Lista · Tabla); se quitaron las tarjetas de números; buscador y un botón **"Filtros · N"** con un panel (Mostrar, Prioridad, Proyecto, Solo vencidas, Ordenar por). Cada tarjeta muestra número, prioridad, título, descripción, avance de subtareas, responsable, fecha (roja si venció) y proyecto; "+ Agregar tarea" al pie de cada columna crea la tarea en ese estado.
+- **10B — Proyectos:** tarjetas sin "A cargo", con descripción, avance del color del proyecto, caras de las personas y una fila al pie con datos reales (fecha de fin —en rojo y "Atrasado" si pasó—, tareas hechas/total y cantidad de personas); pestañas "Activos · Archivados" con su conteo y un buscador. La página de cada proyecto tiene su nombre con el color, la descripción y una fila de datos (Fechas, Avance, Personas del proyecto).
+- **10C — Calendario, Equipo y Ajustes:** Calendario con pestañas Mes · Gantt, el período y "Filtros"; Equipo como tabla (Persona, Rol, Tareas, Proyectos y acción) con buscador, y las invitaciones en su propia pestaña; Ajustes con pestañas General · Auditoría y sus secciones en bloques.
+- Piezas reutilizables: `PageHeader` (título, frase y acciones), `ViewTabs` (pestañas accesibles como grupo de opciones) y `FiltersPopover` (botón "Filtros · N" con panel que se cierra con "Listo", Escape o clic afuera).
+
+### Comandos nuevos
+
+| Script | Qué hace |
+|---|---|
+| `npm run test:rules` | Tests de las Security Rules contra el emulador de Firestore (requiere **Java 21**) |
+| `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
+| `npm run migrate-tasks` | Migra las tareas al formato actual (estado, proyecto, número, subtareas) con auditoría y crea el contador (solo dev; `--confirmar-produccion` al integrar) |
+
+Tests en la rama `v2`: 467 de la app (`npm test`) y 94 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta, un Invitado sacando una tarea de su proyecto, tarjetas inventadas, leer tareas hechas) que deben ser rechazados.
+
+## Mejoras futuras
+
+- Reordenar tareas con drag & drop (dnd-kit), guardando el orden manual en Firestore.
+- Mostrar prioridad, vencimiento y cantidad de tareas vencidas en el email de resumen.
+- Mejorar el diseño visual.
+- Límite de envíos de email por usuario (rate limit).
+- Salida del sandbox de SES.
+- Recuperación de contraseña y verificación de email.
