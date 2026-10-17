@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { ProjectPeople } from '@/components/projects/ProjectPeople';
@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { can, seesDoneTasks } from '@/features/auth/permissions';
 import { openTasksLabel, projectOpenSummary, projectProgress } from '@/features/projects/projectProgress';
-import { makeNameOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -53,7 +52,6 @@ export function ProjectPage() {
   const showDone = seesDoneTasks(me.role);
   const openSummary = projectOpenSummary(own, project.endDate, today);
   const late = showDone ? progress.late : openSummary.late;
-  const owner = makeNameOf(members, unknownPersonFor(me.role))(project.ownerId);
 
   async function run(action: () => Promise<void>, onDone?: () => void) {
     setError(null);
@@ -68,20 +66,10 @@ export function ProjectPage() {
   }
 
   const header = (newTaskButton: ReactNode) => (
-    <header className={styles.header} style={{ borderTopColor: project.color }}>
+    <header className={styles.header} style={{ '--project-color': project.color } as CSSProperties}>
       <Link to="/projects" className={styles.back}>← Proyectos</Link>
       <div className={styles.top}>
-        <div>
-          <h1 className={styles.title}>{project.name}</h1>
-          {project.description && <p className={styles.description}>{project.description}</p>}
-          <p className={styles.meta}>
-            {formatDateLabel(project.startDate)} → {formatDateLabel(project.endDate)}
-            {owner && ` · A cargo: ${owner}`} · {showDone ? `${progress.percent}% (${progress.done} de ${progress.total})` : openTasksLabel(openSummary.open)}
-            {project.archived && ' · Archivado'}
-          </p>
-          {late && <p className={styles.late}>Atrasado</p>}
-          <ProjectPeople project={project} members={members} tasks={tasks} actorId={me.uid} canManage={can(me, 'project:people')} />
-        </div>
+        <h1 className={styles.title}><span className={styles.dot} aria-hidden="true" />{project.name}</h1>
         <div className={styles.actions}>
           {canEdit && <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>Editar</Button>}
           {canEdit &&
@@ -96,6 +84,27 @@ export function ProjectPage() {
           {!project.archived && newTaskButton}
         </div>
       </div>
+      {project.description && <p className={styles.description}>{project.description}</p>}
+      <ul className={styles.facts} aria-label="Datos del proyecto">
+        <li>
+          <span className={styles.factLabel}>Fechas</span>
+          <span className={styles.factValue}>
+            {formatDateLabel(project.startDate)} → <span className={late ? styles.late : undefined}>{formatDateLabel(project.endDate)}</span>
+            {late && <span className={styles.chip}>Atrasado</span>}
+            {project.archived && <span className={styles.archived}>Archivado</span>}
+          </span>
+        </li>
+        <li>
+          <span className={styles.factLabel}>Avance</span>
+          <span className={styles.factValue}>
+            {showDone ? `${progress.percent}% · ${progress.done} de ${progress.total} hechas` : openTasksLabel(openSummary.open)}
+          </span>
+        </li>
+        <li>
+          <span className={styles.factLabel}>Personas del proyecto</span>
+          <ProjectPeople project={project} members={members} tasks={tasks} actorId={me.uid} canManage={can(me, 'project:people')} bare />
+        </li>
+      </ul>
       {error && <Alert kind="error">{error}</Alert>}
       {confirm && (
         <div className={styles.confirm}>

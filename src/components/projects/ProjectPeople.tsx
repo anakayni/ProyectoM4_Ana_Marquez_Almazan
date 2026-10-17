@@ -8,7 +8,8 @@ import type { Task } from '@/types/task';
 import { ShareProjectDialog } from './ShareProjectDialog';
 import styles from './ProjectPeople.module.css';
 
-type Props = { project: Project; members: UserProfile[]; tasks: Task[]; actorId: string; canManage: boolean };
+/** `bare`: sin el título propio (cuando quien lo usa ya lo pone, como la fila de datos del proyecto). */
+type Props = { project: Project; members: UserProfile[]; tasks: Task[]; actorId: string; canManage: boolean; bare?: boolean };
 
 /** Caras de quienes trabajan en el proyecto; al tocarlas se ve la lista. El admin además tiene "+" para agregar. */
 export function ProjectPeople(props: Props) {
@@ -16,7 +17,7 @@ export function ProjectPeople(props: Props) {
   const rows = peopleRows(props.project, props.members);
   return (
     <div className={styles.summary}>
-      <p className={styles.label}>Personas del proyecto</p>
+      {!props.bare && <p className={styles.label}>Personas del proyecto</p>}
       <div className={styles.facesRow}>
         <button type="button" className={styles.facesButton} aria-label="Ver personas del proyecto" onClick={() => setOpen(true)}>
           <AvatarGroup people={rows.map(({ name, photo, active }) => ({ name, photo, active }))} max={5} />

@@ -60,6 +60,17 @@ describe('ProjectPage', () => {
     expect(screen.getByText('Tareas de p1')).toBeInTheDocument();
   });
 
+  it('el encabezado muestra descripción y la fila de datos (sin "A cargo")', () => {
+    as('member');
+    renderAt('/projects/p1');
+    expect(screen.getByText('Clientes')).toBeInTheDocument();
+    const facts = screen.getByRole('list', { name: 'Datos del proyecto' });
+    expect(facts).toHaveTextContent('Fechas');
+    expect(facts).toHaveTextContent('Avance');
+    expect(facts).toHaveTextContent('Personas del proyecto');
+    expect(screen.queryByText(/A cargo/)).not.toBeInTheDocument();
+  });
+
   it('archivar pide confirmación', async () => {
     as('member');
     renderAt('/projects/p1');
