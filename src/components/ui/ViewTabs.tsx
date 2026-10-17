@@ -14,7 +14,7 @@ export function ViewTabs<T extends string>({ label, name, options, value, onChan
           <input type="radio" className="visually-hidden" name={name} value={v} checked={v === value} onChange={() => onChange(v)} />
           {Icon && <Icon size={16} aria-hidden="true" />}
           {text}
-          {count !== undefined && <span className={styles.count}>{count}</span>}
+          {count !== undefined && <>{' '}<span className={styles.count}>{count}</span></>}
         </label>
       ))}
     </fieldset>

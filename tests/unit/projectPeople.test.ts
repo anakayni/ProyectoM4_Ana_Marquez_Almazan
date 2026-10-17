@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addableMembers, isNewEmail, ownedProjects, peopleRows, projectPeople, projectsOfGuest, removePersonMessage, searchPeople,
+  addableMembers, isNewEmail, ownedProjects, peopleRows, projectPeople, projectsOfGuest, removePersonMessage, searchPeople, searchProjects,
 } from '@/features/projects/projectPeople';
 import type { Role, UserProfile } from '@/types/auth';
 import type { Project } from '@/types/project';
@@ -76,5 +76,18 @@ describe('buscador de "Compartir proyecto"', () => {
     expect(isNewEmail('leo@x.com', people, [])).toBe(false);
     expect(isNewEmail('pendiente@x.com', people, ['pendiente@x.com'])).toBe(false);
     expect(isNewEmail('no es email', people, [])).toBe(false);
+  });
+});
+
+describe('searchProjects', () => {
+  const projects = [
+    { id: '1', name: 'Portál', description: 'Clientes' },
+    { id: '2', name: 'Web', description: 'Sitio institucional' },
+  ] as unknown as Project[];
+
+  it('busca por nombre o descripción, sin tildes; vacío devuelve todos', () => {
+    expect(searchProjects(projects, 'porta').map((p) => p.id)).toEqual(['1']);
+    expect(searchProjects(projects, 'INSTITUCIONAL').map((p) => p.id)).toEqual(['2']);
+    expect(searchProjects(projects, '  ')).toHaveLength(2);
   });
 });

@@ -30,10 +30,11 @@ describe('ProjectsPage', () => {
   it('muestra los activos y cambia a archivados', async () => {
     as('member');
     render(<MemoryRouter><ProjectsPage /></MemoryRouter>);
-    expect(screen.getByText('1 activo · 1 archivado')).toBeInTheDocument();
+    expect(screen.getByText('Fechas, avance y quiénes trabajan en cada uno.')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Activos 1' })).toBeChecked();
     expect(screen.getByText('Portal')).toBeInTheDocument();
     expect(screen.queryByText('Viejo')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('radio', { name: 'Archivados' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Archivados 1' }));
     expect(screen.getByText('Viejo')).toBeInTheDocument();
   });
 
@@ -45,5 +46,14 @@ describe('ProjectsPage', () => {
     as('viewer');
     render(<MemoryRouter><ProjectsPage /></MemoryRouter>);
     expect(screen.queryByRole('button', { name: '+ Nuevo proyecto' })).not.toBeInTheDocument();
+  });
+
+  it('el buscador filtra por nombre', async () => {
+    as('member');
+    state.projects = [project('1', 'Portal'), project('3', 'Web institucional')];
+    render(<MemoryRouter><ProjectsPage /></MemoryRouter>);
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar proyecto' }), 'port');
+    expect(screen.getByText('Portal')).toBeInTheDocument();
+    expect(screen.queryByText('Web institucional')).not.toBeInTheDocument();
   });
 });

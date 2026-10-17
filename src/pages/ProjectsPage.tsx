@@ -5,12 +5,11 @@ import { ProjectDialog } from '@/components/projects/ProjectDialog';
 import { ShareProjectDialog } from '@/components/projects/ShareProjectDialog';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import { Spinner } from '@/components/ui/Spinner';
 import { can, seesDoneTasks } from '@/features/auth/permissions';
-import { peopleRows } from '@/features/projects/projectPeople';
+import { peopleRows, searchProjects } from '@/features/projects/projectPeople';
 import { projectOpenSummary, projectProgress } from '@/features/projects/projectProgress';
-import { makePersonOf, unknownPersonFor } from '@/features/team/members';
 import { useAuth } from '@/hooks/useAuth';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
@@ -23,8 +22,6 @@ import styles from './ProjectsPage.module.css';
 
 type Filter = 'active' | 'archived';
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 export function ProjectsPage() {
   const { profile } = useAuth();
   const me = profile as UserProfile; // RequireAccess garantiza un perfil activo
@@ -32,15 +29,15 @@ export function ProjectsPage() {
   const { tasks } = useTasks(me.uid);
   const members = useTeamMembers();
   const [filter, setFilter] = useState<Filter>('active');
+  const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
   const [sharingId, setSharingId] = useState<string | null>(null);
   // "Hoy" se fija al abrir la página (para saber qué proyecto está atrasado).
   const [today] = useState(() => toDateInputValue(new Date()));
 
-  const personOf = makePersonOf(members, unknownPersonFor(me.role));
   const active = projects.filter((p) => !p.archived);
   const archived = projects.filter((p) => p.archived);
-  const shown = filter === 'active' ? active : archived;
+  const shown = searchProjects(filter === 'active' ? active : archived, query);
 
   // Aparece cuando la lista en tiempo real ya trae el proyecto recién creado.
   const sharingProject = sharingId ? projects.find((p) => p.id === sharingId) ?? null : null;
@@ -50,14 +47,21 @@ export function ProjectsPage() {
       <StickyHeader>
         <PageHeader
           title="Proyectos"
-          subtitle={`${plural(active.length, 'activo', 'activos')} · ${plural(archived.length, 'archivado', 'archivados')}`}
+          description="Fechas, avance y quiénes trabajan en cada uno."
           actions={can(me, 'project:create') && <Button size="sm" onClick={() => setCreating(true)}>+ Nuevo proyecto</Button>}
         />
-        <div className={styles.bars}>
-          <SegmentedControl
+        <div className={styles.bar}>
+          <ViewTabs
             label="Mostrar" name="project-filter" value={filter} onChange={setFilter}
-            options={[{ value: 'active', label: 'Activos' }, { value: 'archived', label: 'Archivados' }]}
+            options={[{ value: 'active', label: 'Activos', count: active.length }, { value: 'archived', label: 'Archivados', count: archived.length }]}
           />
+          <div className={styles.tools}>
+            <label className="visually-hidden" htmlFor="project-search">Buscar proyecto</label>
+            <input
+              id="project-search" type="search" className={styles.search} placeholder="Buscar proyecto…"
+              value={query} onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
       </StickyHeader>
       <main className={styles.page}>
@@ -65,7 +69,9 @@ export function ProjectsPage() {
         {error && <Alert kind="error">{error}</Alert>}
         {!loading && !error && me.role === 'guest' && projects.length === 0 && <NoProjectsYet />}
         {!loading && !error && shown.length === 0 && !(me.role === 'guest' && projects.length === 0) && (
-          <p className={styles.empty}>{filter === 'active' ? 'Todavía no hay proyectos activos.' : 'No hay proyectos archivados.'}</p>
+          <p className={styles.empty}>
+            {query.trim() ? 'No encontramos proyectos con ese nombre.' : filter === 'active' ? 'Todavía no hay proyectos activos.' : 'No hay proyectos archivados.'}
+          </p>
         )}
         <ul className={styles.grid}>
           {shown.map((project) => (
@@ -75,7 +81,6 @@ export function ProjectsPage() {
               progress={projectProgress(tasks.filter((t) => t.projectId === project.id), project.endDate, today)}
               showDone={seesDoneTasks(me.role)}
               open={projectOpenSummary(tasks.filter((t) => t.projectId === project.id), project.endDate, today)}
-              owner={personOf(project.ownerId)}
               people={peopleRows(project, members)}
             />
           ))}

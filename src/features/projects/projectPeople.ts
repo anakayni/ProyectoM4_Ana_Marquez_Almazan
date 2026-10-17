@@ -64,3 +64,10 @@ export function isNewEmail(query: string, members: readonly UserProfile[], pendi
   if (validateEmail(email)) return false;
   return !members.some((m) => normalizeEmail(m.email) === email) && !pendingEmails.includes(email);
 }
+
+/** Buscador de Proyectos: por nombre o descripción, sin tildes ni mayúsculas. Vacío = todos. */
+export function searchProjects(projects: readonly Project[], query: string): Project[] {
+  const q = normalizeText(query);
+  if (!q) return [...projects];
+  return projects.filter((p) => normalizeText(p.name).includes(q) || normalizeText(p.description).includes(q));
+}
