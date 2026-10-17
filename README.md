@@ -329,13 +329,14 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Acceso del Invitado por proyecto:** cada Invitado es "Solo ver" o "Puede editar" en cada proyecto (`guestAccess`, solo lo cambia el admin y queda auditado). Los nuevos empiezan en "Solo ver"; las reglas no le dejan crear, editar, cambiar estados ni borrar donde solo ve.
 - **Índice de tarjetas:** buscar las tarjetas de una persona (`collectionGroup('people')` por `uid`) necesita una exención de campo único, declarada en `firestore.indexes.json` (`fieldOverrides`).
 
-### Rediseño visual (etapa 10, en curso)
+### Rediseño visual (etapa 10)
 
 Para que la app se vea como un producto hecho a mano: se rediseña por partes a partir de referencias visuales de la usuaria y maquetas aprobadas.
 
 - **10A — Tareas:** el **tablero es la vista principal**; las vistas son pestañas con ícono (Tablero · Lista · Tabla); se quitaron las tarjetas de números; buscador y un botón **"Filtros · N"** con un panel (Mostrar, Prioridad, Proyecto, Solo vencidas, Ordenar por). Cada tarjeta muestra número, prioridad, título, descripción, avance de subtareas, responsable, fecha (roja si venció) y proyecto; "+ Agregar tarea" al pie de cada columna crea la tarea en ese estado.
 - **10B — Proyectos:** tarjetas sin "A cargo", con descripción, avance del color del proyecto, caras de las personas y una fila al pie con datos reales (fecha de fin —en rojo y "Atrasado" si pasó—, tareas hechas/total y cantidad de personas); pestañas "Activos · Archivados" con su conteo y un buscador. La página de cada proyecto tiene su nombre con el color, la descripción y una fila de datos (Fechas, Avance, Personas del proyecto).
-- Sigue: 10C (Calendario, Equipo y Ajustes).
+- **10C — Calendario, Equipo y Ajustes:** Calendario con pestañas Mes · Gantt, el período y "Filtros"; Equipo como tabla (Persona, Rol, Tareas, Proyectos y acción) con buscador, y las invitaciones en su propia pestaña; Ajustes con pestañas General · Auditoría y sus secciones en bloques.
+- Piezas reutilizables: `PageHeader` (título, frase y acciones), `ViewTabs` (pestañas accesibles como grupo de opciones) y `FiltersPopover` (botón "Filtros · N" con panel que se cierra con "Listo", Escape o clic afuera).
 
 ### Comandos nuevos
 
@@ -345,7 +346,7 @@ Para que la app se vea como un producto hecho a mano: se rediseña por partes a 
 | `npm run bootstrap-admin -- email` | Crea la invitación del primer administrador en el Firebase del `.env` |
 | `npm run migrate-tasks` | Migra las tareas al formato actual (estado, proyecto, número, subtareas) con auditoría y crea el contador (solo dev; `--confirmar-produccion` al integrar) |
 
-Tests en la rama `v2`: 437 de la app (`npm test`) y 89 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta, un Invitado sacando una tarea de su proyecto, tarjetas inventadas, leer tareas hechas) que deben ser rechazados.
+Tests en la rama `v2`: 467 de la app (`npm test`) y 94 de reglas (`npm run test:rules`). Los tests de reglas usan las mismas funciones de escritura que la app e incluyen intentos de "hacer trampa" (auditoría falsa, actor ajeno, entrada suelta, un Invitado sacando una tarea de su proyecto, tarjetas inventadas, leer tareas hechas) que deben ser rechazados.
 
 ## Mejoras futuras
 
