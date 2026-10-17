@@ -45,4 +45,8 @@ describe('contraste de los textos', () => {
     expect(contrastRatio(hex('color-gray-550'), hex('color-gray-50'))).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(hex('color-gray-600'), hex('color-gray-100'))).toBeGreaterThanOrEqual(4.5);
   });
+
+  it('los tableros y grillas usan un fondo gris neutro', () => {
+    expect(tokens).toMatch(/--color-surface-canvas:\s*var\(--color-gray-50\);/);
+  });
 });

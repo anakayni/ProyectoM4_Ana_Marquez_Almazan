@@ -9,4 +9,9 @@ describe('PageHeader', () => {
     expect(screen.getByText('2 pendientes · 1 completadas')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enviar' })).toBeInTheDocument();
   });
+
+  it('muestra la frase corta debajo del título', () => {
+    render(<PageHeader title="Mis tareas" description="Una frase" />);
+    expect(screen.getByText('Una frase')).toBeInTheDocument();
+  });
 });

@@ -65,6 +65,8 @@
   --color-surface-subtle: color-mix(in srgb, var(--brand-5) 14%, white);
   /* Tareas terminadas: todo en gris, sin transparencias (≥ 4.5:1, vigilado por un test) */
   --color-done-surface: var(--color-gray-50);
+  /* Fondo de tableros y grillas (etapa 10): gris neutro, sin el tinte verde del resto */
+  --color-surface-canvas: var(--color-gray-50);
   --color-done-text: var(--color-gray-550);
   --color-done-chip: var(--color-gray-100);
   --color-done-chip-text: var(--color-gray-600);
