@@ -1,7 +1,8 @@
-.bars { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
-.page { padding: var(--space-5) var(--space-4) var(--space-12); }
+.bar { padding: 0 var(--space-4); background: var(--color-surface-default); border-bottom: 1px solid var(--color-border-default); }
+.filters { padding: var(--space-3) var(--space-4); background: var(--color-surface-default); border-bottom: 1px solid var(--color-border-default); }
+.page { padding: var(--space-5) var(--space-4) var(--space-12); background: var(--color-surface-canvas); min-height: 100%; }
 
-@media (min-width: 640px) {
-  .bars { max-width: 880px; margin: 0 auto; padding: var(--space-3) var(--space-8); }
-  .page { max-width: 880px; margin: 0 auto; padding: var(--space-8); }
+@media (min-width: 768px) {
+  .bar, .filters { padding-left: var(--space-8); padding-right: var(--space-8); }
+  .page { padding: var(--space-6) var(--space-8) var(--space-12); }
 }

@@ -33,4 +33,12 @@ describe('GeneralSettings', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Restaurar paleta original' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('cada bloque explica para qué sirve', () => {
+    render(<GeneralSettings actorId="admin" />);
+    expect(screen.getByRole('heading', { name: 'Identidad' })).toBeInTheDocument();
+    expect(screen.getByText('Se ve en el menú y en el login.')).toBeInTheDocument();
+    expect(screen.getByText('Se controla el contraste antes de guardar.')).toBeInTheDocument();
+    expect(screen.getByText('Cómo se numeran las tareas.')).toBeInTheDocument();
+  });
 });

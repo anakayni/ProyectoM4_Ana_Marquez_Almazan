@@ -5,7 +5,7 @@ import { StickyHeader } from '@/components/layout/StickyHeader';
 import { AuditFilters } from '@/components/settings/AuditFilters';
 import { AuditLog } from '@/components/settings/AuditLog';
 import { GeneralSettings } from '@/components/settings/GeneralSettings';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import { EMPTY_AUDIT_FILTERS, type AuditFilters as Filters } from '@/features/audit/auditFilters';
 import { can } from '@/features/auth/permissions';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,14 +29,14 @@ export function SettingsPage() {
   return (
     <>
       <StickyHeader>
-        <PageHeader title="Ajustes" subtitle={SUBTITLE[tab]} />
-        <div className={styles.bars}>
-          <SegmentedControl
+        <PageHeader title="Ajustes" description={SUBTITLE[tab]} />
+        <div className={styles.bar}>
+          <ViewTabs
             label="Sección" name="settings-tab" value={tab} onChange={setTab}
             options={[{ value: 'general', label: 'General' }, { value: 'audit', label: 'Auditoría' }]}
           />
-          {tab === 'audit' && <AuditFilters value={filters} onChange={setFilters} />}
         </div>
+        {tab === 'audit' && <div className={styles.filters}><AuditFilters value={filters} onChange={setFilters} /></div>}
       </StickyHeader>
       <main className={styles.page}>
         {tab === 'general' ? <GeneralSettings actorId={me.uid} /> : <AuditLog key={JSON.stringify(filters)} filters={filters} />}

@@ -62,7 +62,11 @@ export function GeneralSettings({ actorId }: { actorId: string }) {
       {saved && <Alert kind="success">Ajustes guardados. Toda la app ya los usa.</Alert>}
 
       <section aria-labelledby="identity-title" className={styles.section}>
-        <h2 id="identity-title" className={styles.title}>Identidad</h2>
+        <div className={styles.intro}>
+          <h2 id="identity-title" className={styles.title}>Identidad</h2>
+          <p className={styles.explain}>Se ve en el menú y en el login.</p>
+        </div>
+        <div className={styles.fields}>
         <Field id="settings-name" label="Nombre del espacio" error={nameOk ? undefined : 'Ingresa un nombre.'}>
           <input id="settings-name" className={fieldInputClass} maxLength={60} value={draft.name} onChange={(e) => set({ name: e.target.value })} />
         </Field>
@@ -76,10 +80,15 @@ export function GeneralSettings({ actorId }: { actorId: string }) {
           </label>
           {draft.logo && <Button size="sm" variant="ghost" onClick={() => set({ logo: null })}>Quitar logo</Button>}
         </div>
+        </div>
       </section>
 
       <section aria-labelledby="colors-title" className={styles.section}>
-        <h2 id="colors-title" className={styles.title}>Colores</h2>
+        <div className={styles.intro}>
+          <h2 id="colors-title" className={styles.title}>Colores</h2>
+          <p className={styles.explain}>Se controla el contraste antes de guardar.</p>
+        </div>
+        <div className={styles.fields}>
         <div className={styles.swatches}>
           {draft.palette.map((color, i) => (
             <label key={i} className={styles.swatch}>
@@ -99,10 +108,15 @@ export function GeneralSettings({ actorId }: { actorId: string }) {
             {problems.map((p) => `${p.label} (${p.ratio.toFixed(1)}:1)`).join('; ')}.
           </Alert>
         )}
+        </div>
       </section>
 
       <section aria-labelledby="numbers-title" className={styles.section}>
-        <h2 id="numbers-title" className={styles.title}>Numeración</h2>
+        <div className={styles.intro}>
+          <h2 id="numbers-title" className={styles.title}>Numeración</h2>
+          <p className={styles.explain}>Cómo se numeran las tareas.</p>
+        </div>
+        <div className={styles.fields}>
         <Field id="settings-prefix" label="Prefijo de las tareas" error={prefixOk ? undefined : 'De 1 a 5 letras o números.'}>
           <input
             id="settings-prefix" className={fieldInputClass} maxLength={5} value={draft.taskPrefix}
@@ -110,6 +124,7 @@ export function GeneralSettings({ actorId }: { actorId: string }) {
           />
         </Field>
         {prefixOk && <p className={styles.hint}>Ejemplo: {formatTaskNumber(12, draft.taskPrefix)}</p>}
+        </div>
       </section>
 
       <div className={styles.actions}>
