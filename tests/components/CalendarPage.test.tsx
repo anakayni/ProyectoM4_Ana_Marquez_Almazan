@@ -54,15 +54,17 @@ describe('CalendarPage', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Octubre 2026' })).toBeInTheDocument();
   });
 
-  it('el Lector no tiene la casilla "Ocultar hechas" (nunca las ve)', () => {
+  it('el Lector no tiene la casilla "Ocultar hechas" (nunca las ve)', async () => {
     me.role = 'viewer';
     renderPage();
+    await userEvent.click(screen.getByRole('button', { name: 'Filtros' }));
     expect(screen.queryByRole('checkbox', { name: 'Ocultar hechas' })).not.toBeInTheDocument();
   });
 
   it('oculta las hechas', async () => {
     renderPage();
     expect(within(screen.getByTestId('day-2026-10-21')).getByRole('button', { name: /MC-2/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Filtros' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Ocultar hechas' }));
     expect(within(screen.getByTestId('day-2026-10-21')).queryByRole('button', { name: /MC-2/ })).not.toBeInTheDocument();
   });
@@ -90,7 +92,17 @@ describe('CalendarPage', () => {
     renderPage();
     await userEvent.click(screen.getByRole('radio', { name: 'Gantt' }));
     expect(screen.queryByRole('link', { name: /Archivado/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Filtros' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Incluir archivados' }));
     expect(screen.getByRole('link', { name: /Archivado/ })).toBeInTheDocument();
+  });
+
+  it('encabezado con frase, pestañas Mes · Gantt y "Filtros"', () => {
+    renderPage();
+    expect(screen.getByText('Vencimientos de tareas y fechas de proyectos.')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Vista del calendario' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Mes' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Filtros' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '+ Nueva tarea' })).toBeInTheDocument();
   });
 });

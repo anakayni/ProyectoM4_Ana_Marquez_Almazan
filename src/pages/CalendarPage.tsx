@@ -8,10 +8,13 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { TaskDialogs } from '@/components/tasks/TaskDialogs';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { FiltersPopover } from '@/components/ui/FiltersPopover';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
 import { can, seesDoneTasks } from '@/features/auth/permissions';
+import { canEditInProject } from '@/features/projects/projectAccess';
 import { addDays, ganttRange, rangeAround, rangeLabel, type GanttRange } from '@/features/calendar/gantt';
 import { addMonths, agendaDays, monthGrid, monthLabel, projectMarkers, tasksByDay } from '@/features/calendar/month';
 import { makeProjectOf } from '@/features/projects/projectOf';
@@ -69,21 +72,30 @@ export function CalendarPage() {
   const markers = projectMarkers(markedProjects);
   const onCreate = can(me, 'task:create') ? (date: string) => { setOpenDay(null); setCreating({ dueDate: date }); } : null;
   const openTask = (id: string) => { setOpenDay(null); setOpenId(id); };
+  // El Invitado crea solo en sus proyectos donde "Puede editar".
+  const canCreate = can(me, 'task:create')
+    && (me.role !== 'guest' || projects.some((p) => !p.archived && canEditInProject(me.role, me.uid, p)));
+  const activeFilters = Number(projectFilter !== 'all') + Number(seesDoneTasks(me.role) && hideDone === 'yes') + Number(view === 'gantt' && withArchived);
+  function clearFilters() {
+    setProjectFilter('all');
+    setHideDone('no');
+    setWithArchived(false);
+  }
 
   return (
     <>
       <StickyHeader>
         <PageHeader
           title="Calendario"
-          actions={
-            <SegmentedControl
-              label="Vista del calendario" name="calendar-view" value={view} onChange={setView}
-              options={[{ value: 'month', label: 'Mes' }, { value: 'gantt', label: 'Gantt' }]}
-            />
-          }
+          description="Vencimientos de tareas y fechas de proyectos."
+          actions={canCreate && <Button size="sm" onClick={() => setCreating({})}>+ Nueva tarea</Button>}
         />
-        <div className={`${styles.toolbar} ${styles.bars}`}>
-          <div className={styles.month}>
+        <div className={styles.bar}>
+          <ViewTabs
+            label="Vista del calendario" name="calendar-view" value={view} onChange={setView}
+            options={[{ value: 'month', label: 'Mes' }, { value: 'gantt', label: 'Gantt' }]}
+          />
+          <div className={styles.tools}>
             {view === 'month' ? (
               <>
                 <Button size="sm" variant="secondary" aria-label="Mes anterior" onClick={() => setCursor(addMonths(cursor.year, cursor.month, -1))}>
@@ -93,7 +105,7 @@ export function CalendarPage() {
                 <Button size="sm" variant="secondary" aria-label="Mes siguiente" onClick={() => setCursor(addMonths(cursor.year, cursor.month, 1))}>
                   <ChevronRight size={16} aria-hidden="true" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setCursor(current)}>Hoy</Button>
+                <Button size="sm" variant="secondary" onClick={() => setCursor(current)}>Hoy</Button>
               </>
             ) : (
               <>
@@ -104,36 +116,36 @@ export function CalendarPage() {
                 <Button size="sm" variant="secondary" aria-label="Semanas siguientes" onClick={() => setRange(ganttRange(addDays(range.start, 35)))}>
                   <ChevronRight size={16} aria-hidden="true" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setRange(rangeAround(today))}>Hoy</Button>
+                <Button size="sm" variant="secondary" onClick={() => setRange(rangeAround(today))}>Hoy</Button>
               </>
             )}
-          </div>
-          <div className={styles.filters}>
-            <SegmentedControl
-              label="Mostrar" name="calendar-scope" value={scope} onChange={setScope}
-              options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
-            />
-            <label className={styles.select}>
-              Proyecto
-              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
-                <option value="all">Todos</option>
-                <option value="none">Sin proyecto</option>
-                {projects.filter((p) => !p.archived).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </label>
-            {/* Lector e Invitado nunca ven las hechas: la casilla no tendría efecto. */}
-            {seesDoneTasks(me.role) && (
-              <label className={styles.check}>
-                <input type="checkbox" checked={hideDone === 'yes'} onChange={(e) => setHideDone(e.target.checked ? 'yes' : 'no')} />
-                Ocultar hechas
+            <FiltersPopover activeCount={activeFilters} onClear={clearFilters}>
+              <SegmentedControl
+                label="Mostrar" name="calendar-scope" value={scope} onChange={setScope}
+                options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
+              />
+              <label className={styles.field}>
+                Proyecto
+                <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+                  <option value="all">Todos</option>
+                  <option value="none">Sin proyecto</option>
+                  {projects.filter((p) => !p.archived).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </label>
-            )}
-            {view === 'gantt' && (
-              <label className={styles.check}>
-                <input type="checkbox" checked={withArchived} onChange={(e) => setWithArchived(e.target.checked)} />
-                Incluir archivados
-              </label>
-            )}
+              {/* Lector e Invitado nunca ven las hechas: la casilla no tendría efecto. */}
+              {seesDoneTasks(me.role) && (
+                <label className={styles.check}>
+                  <input type="checkbox" checked={hideDone === 'yes'} onChange={(e) => setHideDone(e.target.checked ? 'yes' : 'no')} />
+                  Ocultar hechas
+                </label>
+              )}
+              {view === 'gantt' && (
+                <label className={styles.check}>
+                  <input type="checkbox" checked={withArchived} onChange={(e) => setWithArchived(e.target.checked)} />
+                  Incluir archivados
+                </label>
+              )}
+            </FiltersPopover>
           </div>
         </div>
       </StickyHeader>
