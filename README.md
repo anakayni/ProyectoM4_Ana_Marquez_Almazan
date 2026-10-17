@@ -325,7 +325,16 @@ No depende de que la app "se acuerde" de auditar: las **Security Rules** rechaza
 - **Cada rol pide solo lo que puede ver:** Firestore rechaza una consulta entera si pide algo prohibido, así que el Invitado pide sus proyectos (`memberIds array-contains`) y las tareas proyecto por proyecto (`subscribeFanOut`).
 - **Lector e Invitado no ven tareas hechas** (decisión de privacidad): las reglas solo les dejan leer tareas pendientes o en curso y su historial; en lugar del avance ven "N tareas abiertas"; el Invitado confirma antes de marcar una tarea como hecha. El email de resumen tampoco les cuenta las hechas.
 - **Tareas terminadas:** para quien sí las ve, tachadas, en gris (sin transparencias, contraste ≥ 4.5:1 vigilado por un test) y al final de la lista.
+- **Compartir proyecto:** las tarjetas de Proyectos y la página de cada proyecto muestran las caras de sus personas; el admin toca el "+" (o las caras) y abre "Compartir proyecto": enlace para copiar, buscador para agregar a alguien del espacio o invitar un email nuevo como Invitado, y la lista "En este proyecto" con "Hacer responsable" y "Quitar". Al crear un proyecto, el admin ve este diálogo directamente ("¡Proyecto creado!").
+- **Acceso del Invitado por proyecto:** cada Invitado es "Solo ver" o "Puede editar" en cada proyecto (`guestAccess`, solo lo cambia el admin y queda auditado). Los nuevos empiezan en "Solo ver"; las reglas no le dejan crear, editar, cambiar estados ni borrar donde solo ve.
 - **Índice de tarjetas:** buscar las tarjetas de una persona (`collectionGroup('people')` por `uid`) necesita una exención de campo único, declarada en `firestore.indexes.json` (`fieldOverrides`).
+
+### Rediseño visual (etapa 10, en curso)
+
+Para que la app se vea como un producto hecho a mano: se rediseña por partes a partir de referencias visuales de la usuaria y maquetas aprobadas.
+
+- **10A — Tareas:** el **tablero es la vista principal**; las vistas son pestañas con ícono (Tablero · Lista · Tabla); se quitaron las tarjetas de números; buscador y un botón **"Filtros · N"** con un panel (Mostrar, Prioridad, Proyecto, Solo vencidas, Ordenar por). Cada tarjeta muestra número, prioridad, título, descripción, avance de subtareas, responsable, fecha (roja si venció) y proyecto; "+ Agregar tarea" al pie de cada columna crea la tarea en ese estado.
+- Siguen: 10B (Proyectos y su página) y 10C (Calendario, Equipo y Ajustes).
 
 ### Comandos nuevos
 

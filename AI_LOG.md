@@ -149,10 +149,21 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué pedí:** poder sumar a alguien externo que solo vea un proyecto ("yo soy admin y puedo ver todo, pero quiero agregar a alguien que solo vea un proyecto"). En el camino pedí también que las tareas terminadas se noten (tachadas, en gris y al final), que Lector e Invitado no vean las tareas hechas, y un README en inglés para postularme a empleos, con una demo pública y su cuenta de solo lectura, hecho con pull requests.
 - **Qué generó / propuso:** preguntas de a una con recomendación; un rol nuevo (Invitado) en lugar de volver privados todos los proyectos; una lista de personas por proyecto que solo maneja el admin; "tarjetas" con nombre y foto que las reglas comparan con el perfil real, para que el Invitado no lea emails ni roles sin necesitar funciones pagas; consultas distintas según el rol, porque Firestore rechaza una consulta entera si pide algo prohibido. La etapa se dividió en 9A (rol, datos y reglas), 9B (pantallas) y 9C (Lector e Invitado sin tareas hechas).
 - **Qué revisé o cambié yo:** elegí que el Invitado trabaje como un Miembro dentro de sus proyectos, que solo vea a las personas de esos proyectos y que solo el admin maneje la lista. Para las tareas hechas primero elegí ocultarlas solo en pantalla y después cambié de opinión: que nunca puedan verlas (privacidad), con "N tareas abiertas" en lugar del avance. Creé los índices en la consola de Firebase, abrí la preview al público, creé la cuenta demo y fusioné mi primer pull request.
+- **Después (9D):** pedí ver las personas en las tarjetas de proyectos (con referencias visuales), un diálogo para compartir el proyecto parecido a uno que compartí, y poder ajustar roles. Elegí un acceso por proyecto solo para Invitados ("Solo ver" / "Puede editar", empezando en "Solo ver"), buscar o invitar desde el diálogo, y que el diálogo se abra al crear un proyecto.
 - **Qué aprendí:** _(pendiente, lo escribo yo)_
 - **Qué no funcionó o tuve que corregir:**
+  - Al agregar el aviso de "proyecto creado" escribí `onCreated?.(await createProject(...))`: si no había quien escuchara el aviso, JavaScript ni siquiera llamaba a `createProject`. Un test que ya existía lo atrapó antes de la preview.
   - No encontraba la opción "campo único" para el índice de tarjetas en la consola nueva de Firebase: se hizo la consulta que lo necesitaba y Firebase devolvió el enlace directo para crearlo.
   - El chequeo de tipos del servidor marcó que, al filtrar las tareas del email, la lista perdía sus campos; se corrigió armando cada tarea con su tipo.
   - Un test de reglas de una etapa anterior ("todos leen todas las tareas") dejó de ser cierto con la decisión nueva y se actualizó a la regla nueva.
   - Al probar como la cuenta demo (Lector) no aparecía cómo agregar personas: es solo para el admin, y el botón "Personas del proyecto" hay que hacerlo más visible (queda pendiente).
+
+## v2 — Etapa 10: Rediseño visual
+- **Qué pedí:** que la app no parezca hecha con inteligencia artificial, con referencias visuales (un tablero tipo "Design Tasks", tarjetas con caras de personas, un botón de filtros, una fila de íconos al pie de las tarjetas): sacar las tarjetas de números, el tablero como vista principal y los filtros detrás de un botón.
+- **Qué generó / propuso:** preguntas de a una y maquetas en el navegador de cada pantalla (tareas, proyectos, página de proyecto con "Compartir", calendario, equipo y ajustes) antes de construir; dividir el rediseño en tres partes con preview; componentes reutilizables para pestañas y filtros; mostrar solo datos reales en lugar de adjuntos y comentarios que la app no tiene.
+- **Qué revisé o cambié yo:** elegí rediseñar toda la app por partes, mantener el menú azul oscuro, que "Vencidas" sea un filtro y que arriba queden solo las pestañas, el buscador y "Filtros". Aprobé cada maqueta.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - El panel de filtros no se cerraba con Escape porque el foco quedaba en el botón, fuera del panel; se escucha la tecla en todo el componente y el foco entra al panel al abrirlo.
+  - El lint avisó que el tablero calculaba "hoy" con `new Date()` al dibujarse; ahora lo recibe desde afuera.
 
