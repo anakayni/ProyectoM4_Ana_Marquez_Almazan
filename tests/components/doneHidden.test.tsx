@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
-import { TaskStats } from '@/components/tasks/TaskStats';
 import type { Task } from '@/types/task';
 
 const setStatus = vi.hoisted(() => vi.fn());
@@ -22,15 +21,8 @@ vi.mock('@/hooks/useProjects', () => ({
 
 import { TaskWorkspace } from '@/components/tasks/TaskWorkspace';
 
-const stats = { todo: 1, doing: 0, done: 0, overdue: 0 };
 
 describe('sin tareas hechas', () => {
-  it('las tarjetas no muestran "Hechas"', () => {
-    render(<TaskStats stats={stats} selected={null} onSelect={vi.fn()} showDone={false} />);
-    expect(screen.queryByRole('button', { name: /Hechas/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Pendientes/ })).toBeInTheDocument();
-  });
-
   it('el tablero no tiene la columna "Hecha"', () => {
     render(<TaskBoard tasks={[]} nameOf={() => null} personOf={() => null} projectOf={() => null} canEdit onStatusChange={vi.fn()} onOpen={vi.fn()} showDone={false} />);
     expect(screen.queryByRole('region', { name: /Hecha/ })).not.toBeInTheDocument();

@@ -51,10 +51,7 @@ export type TaskView = 'list' | 'table' | 'board';
 
 export type TaskScope = 'mine' | 'team' | 'unassigned';
 
-/** Tarjetas de arriba: un estado o "vencidas". */
-export type StatCard = TaskStatus | 'overdue';
 
-export type TaskStats = Record<StatCard, number>;
 
 export const PRIORITIES: readonly Priority[] = ['alta', 'media', 'baja'];
 

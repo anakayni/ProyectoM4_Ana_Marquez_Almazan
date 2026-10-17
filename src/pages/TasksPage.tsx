@@ -19,6 +19,7 @@ export function TasksPage() {
         renderHeader={(newTaskButton) => (
           <PageHeader
             title="Mis tareas"
+            description="Lo que tienes asignado y lo que mueve el equipo, en un solo tablero."
             actions={
               <>
                 <SendSummaryButton onResult={setToast} />

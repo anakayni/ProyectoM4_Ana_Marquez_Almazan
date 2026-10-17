@@ -2,15 +2,16 @@ import { LayoutGrid, List, Table2 } from 'lucide-react';
 import { useCallback, useState, type ReactNode } from 'react';
 import { TaskBoard } from './TaskBoard';
 import { TaskDialogs } from './TaskDialogs';
-import { TaskStats } from './TaskStats';
 import { TaskTable } from './TaskTable';
 import { TodoList } from './TodoList';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { FiltersPopover } from '@/components/ui/FiltersPopover';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { Toast, type ToastMessage } from '@/components/ui/Toast';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import { can, seesDoneTasks } from '@/features/auth/permissions';
 import { canEditInProject } from '@/features/projects/projectAccess';
 import { makeProjectOf } from '@/features/projects/projectOf';
@@ -18,14 +19,14 @@ import { makeNameOf, makePersonOf, unknownPersonFor } from '@/features/team/memb
 import { scopeTasks } from '@/features/tasks/scopeTasks';
 import { filterByPriority, filterByProject, searchTasks, type PriorityFilter, type ProjectFilter } from '@/features/tasks/searchTasks';
 import { sortTasks } from '@/features/tasks/sortTasks';
-import { countTasks, filterByCard } from '@/features/tasks/taskStats';
+import { isOverdue } from '@/features/tasks/taskStats';
 import { usePreference } from '@/hooks/usePreference';
 import { useWorkspaceSettings } from '@/hooks/useWorkspaceSettings';
 import { useProjects } from '@/hooks/useProjects';
 import { useTasks } from '@/hooks/useTasks';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import type { UserProfile } from '@/types/auth';
-import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type StatCard, type NewTask, type TaskScope, type Task, type TaskStatus, type TaskView } from '@/types/task';
+import { PRIORITIES, PRIORITY_LABEL, SCOPES, SCOPE_LABEL, type SortMode, type NewTask, type TaskScope, type Task, type TaskStatus, type TaskView } from '@/types/task';
 import { toDateInputValue } from '@/utils/formatDate';
 import { StickyHeader } from '@/components/layout/StickyHeader';
 import { NoProjectsYet } from '@/components/projects/NoProjectsYet';
@@ -61,8 +62,9 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const [scope, setScope] = usePreference<TaskScope>(
     projectId ? 'matecode.scope.project' : 'matecode.scope', canEdit && !projectId ? 'mine' : 'team', SCOPES,
   );
-  const [view, setView] = usePreference<TaskView>('matecode.view', 'list', ['list', 'table', 'board']);
-  const [card, setCard] = useState<StatCard | null>(null);
+  // Clave nueva (etapa 10): todos arrancan en el tablero, la vista principal.
+  const [view, setView] = usePreference<TaskView>('matecode.view.v2', 'board', ['board', 'list', 'table']);
+  const [onlyOverdue, setOnlyOverdue] = useState(false);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<PriorityFilter>('all');
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>('all');
@@ -76,10 +78,17 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
   const canEditTask = (task: Task) => canEditInProject(profile.role, profile.uid, projectOf(task.projectId));
   const inProject = projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
   const scoped = scopeTasks(inProject, scope, profile.uid);
-  // Las tarjetas cuentan lo que queda tras buscar y filtrar, así coinciden con lo que se ve.
   const filtered = filterByProject(filterByPriority(searchTasks(scoped, query, taskPrefix), priority), projectId ? 'all' : projectFilter);
-  const stats = countTasks(filtered, today);
-  const visibleTasks = sortTasks(filterByCard(filtered, card, today), sort);
+  const visibleTasks = sortTasks(onlyOverdue ? filtered.filter((t) => isOverdue(t, today)) : filtered, sort);
+  // Cuántos filtros recortan la lista (el alcance y el orden no cuentan: son la forma de mirar).
+  const activeFilters = Number(priority !== 'all') + Number(!projectId && projectFilter !== 'all') + Number(onlyOverdue);
+
+  function clearFilters() {
+    setPriority('all');
+    setProjectFilter('all');
+    setOnlyOverdue(false);
+    setSort('recent');
+  }
 
   async function safely(action: () => Promise<void>, success?: string) {
     try {
@@ -102,58 +111,58 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
       <StickyHeader>
         {renderHeader(canCreate && !withoutProjects ? <Button size="sm" onClick={() => setCreating(projectId ? { projectId } : {})}>+ Nueva tarea</Button> : null)}
         {!withoutProjects && (
-        <div className={styles.bars}>
-          <div className={styles.filters}>
-            <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
-            <input
-              id="task-search" type="search" className={styles.search} value={query}
-              placeholder={`Buscar por título, descripción o ${taskPrefix}-…`} onChange={(e) => setQuery(e.target.value)}
-            />
-            <label className={styles.sort}>
-              Prioridad
-              <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityFilter)}>
-                <option value="all">Todas</option>
-                {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
-              </select>
-            </label>
-            {!projectId && (
-              <label className={styles.sort}>
-                Proyecto
-                <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
-                  <option value="all">Todos</option>
-                  <option value="none">Sin proyecto</option>
-                  {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
-                </select>
-              </label>
-            )}
-          </div>
-          <div className={styles.toolbar}>
-            <SegmentedControl
-              label="Mostrar" name="scope" value={scope}
-              onChange={(next) => {
-                setScope(next);
-                setCard(null);
-              }}
-              options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
-            />
-            <SegmentedControl
+          <div className={styles.bar}>
+            <ViewTabs
               label="Vista" name="view" value={view} onChange={setView}
               options={[
+                { value: 'board', label: 'Tablero', icon: LayoutGrid },
                 { value: 'list', label: 'Lista', icon: List },
                 { value: 'table', label: 'Tabla', icon: Table2 },
-                { value: 'board', label: 'Tablero', icon: LayoutGrid },
               ]}
             />
-            <label className={styles.sort}>
-              Ordenar por
-              <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
-                <option value="recent">Más recientes</option>
-                <option value="due">Vencimiento</option>
-                <option value="priority">Prioridad</option>
-              </select>
-            </label>
+            <div className={styles.tools}>
+              <label className="visually-hidden" htmlFor="task-search">Buscar tareas</label>
+              <input
+                id="task-search" type="search" className={styles.search} value={query}
+                placeholder={`Buscar o ${taskPrefix}-…`} onChange={(e) => setQuery(e.target.value)}
+              />
+              <FiltersPopover activeCount={activeFilters} onClear={clearFilters}>
+                <SegmentedControl
+                  label="Mostrar" name="scope" value={scope} onChange={setScope}
+                  options={SCOPES.map((s) => ({ value: s, label: SCOPE_LABEL[s] }))}
+                />
+                <label className={styles.field}>
+                  Prioridad
+                  <select value={priority} onChange={(e) => setPriority(e.target.value as PriorityFilter)}>
+                    <option value="all">Todas</option>
+                    {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
+                  </select>
+                </label>
+                {!projectId && (
+                  <label className={styles.field}>
+                    Proyecto
+                    <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
+                      <option value="all">Todos</option>
+                      <option value="none">Sin proyecto</option>
+                      {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
+                    </select>
+                  </label>
+                )}
+                <label className={styles.check}>
+                  <input type="checkbox" checked={onlyOverdue} onChange={(e) => setOnlyOverdue(e.target.checked)} />
+                  Solo vencidas
+                </label>
+                <label className={styles.field}>
+                  Ordenar por
+                  <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)}>
+                    <option value="recent">Más recientes</option>
+                    <option value="due">Vencimiento</option>
+                    <option value="priority">Prioridad</option>
+                  </select>
+                </label>
+              </FiltersPopover>
+            </div>
           </div>
-        </div>
         )}
       </StickyHeader>
 
@@ -173,10 +182,11 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
           )}
           {!loading && !error && (
             <>
-              <TaskStats stats={stats} selected={card} onSelect={setCard} showDone={showDone} />
               {view === 'board' ? (
                 <TaskBoard
                   showDone={showDone}
+                  today={today}
+                  onAdd={canCreate ? (status) => setCreating({ ...(projectId && { projectId }), status }) : undefined}
                   tasks={visibleTasks}
                   nameOf={nameOf}
                   personOf={personOf}
@@ -207,8 +217,8 @@ export function TaskWorkspace({ profile, projectId, renderHeader }: TaskWorkspac
                   canEditTask={canEditTask}
                   {...(query.trim()
                     ? { emptyTitle: 'No encontramos tareas', emptyHint: 'Prueba con otras palabras o con el número (MC-…).' }
-                    : card !== null
-                      ? { emptyTitle: 'No hay tareas en este filtro', emptyHint: 'Haz clic de nuevo en la tarjeta para ver todas.' }
+                    : onlyOverdue
+                      ? { emptyTitle: 'No hay tareas vencidas', emptyHint: 'Desactiva "Solo vencidas" en Filtros para ver todas.' }
                       : scope === 'mine'
                         ? { emptyTitle: 'No tienes tareas asignadas', emptyHint: 'Prueba con "Todo el equipo".' }
                         : !canCreate && { emptyHint: 'Cuando el equipo cree tareas, aparecerán aquí.' })}

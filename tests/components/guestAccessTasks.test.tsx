@@ -34,7 +34,9 @@ describe('Invitado: tareas según su acceso en cada proyecto', () => {
   it('"Solo ver" no cambia estados; "Puede editar" sí, y solo ahí crea tareas', async () => {
     state.projects = [project('p1', 'Portal', 'view'), project('p2', 'Web')];
     render(<TaskWorkspace profile={guest} renderHeader={(button) => <header>{button}</header>} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Filtros' }));
     await userEvent.click(screen.getByRole('radio', { name: 'Todo el equipo' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }));
     expect(screen.queryByLabelText('Estado de "Tarea 1"')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Estado de "Tarea 2"')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: '+ Nueva tarea' }));

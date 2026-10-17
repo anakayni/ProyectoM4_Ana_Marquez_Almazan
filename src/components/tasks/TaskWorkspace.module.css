@@ -1,25 +1,28 @@
-.main { display: flex; flex-direction: column; gap: var(--space-6); padding: var(--space-5) var(--space-4) var(--space-12); }
-.bars { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
+.main { display: flex; flex-direction: column; gap: var(--space-5); padding: var(--space-5) var(--space-4) var(--space-12); background: var(--color-surface-canvas); min-height: 100%; }
 .tasks { display: flex; flex-direction: column; gap: var(--space-3); }
 
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.sort { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); color: var(--color-text-secondary); }
-.sort select {
-  flex: 1; min-height: 36px; padding: 0 var(--space-2);
-  border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-default);
+/* Barra bajo el encabezado: pestañas a la izquierda; buscador y "Filtros" a la derecha */
+.bar {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: var(--space-2) var(--space-4);
+  padding: 0 var(--space-4); background: var(--color-surface-default); border-bottom: 1px solid var(--color-border-default);
 }
-
-@media (min-width: 640px) {
-  .sort select { flex: none; }
-}
-
-@media (min-width: 640px) {
-  .main { max-width: 960px; margin: 0 auto; padding: var(--space-8); }
-  .bars { max-width: 960px; margin: 0 auto; padding: var(--space-3) var(--space-8); }
-}
-.filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tools { display: flex; align-items: center; gap: var(--space-2); padding-bottom: var(--space-2); }
 .search {
-  flex: 1 1 260px; min-height: 36px; padding: 0 var(--space-3);
+  width: min(260px, 52vw); min-height: 36px; padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: var(--color-surface-default);
+}
+
+/* Campos dentro del panel de filtros */
+.field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-text-secondary); }
+.field select {
+  min-height: 36px; padding: 0 var(--space-2); font-size: var(--text-md); font-weight: var(--weight-regular); color: var(--color-text-primary);
   border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-default);
 }
+.check { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); color: var(--color-text-primary); }
+
 .confirmActions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-4); }
+
+@media (min-width: 768px) {
+  .bar { padding: 0 var(--space-8); }
+  .main { padding: var(--space-6) var(--space-8) var(--space-12); }
+}
