@@ -91,10 +91,8 @@ export function ShareProjectDialog({ project, members, tasks, actorId, canManage
         </>
       );
     }
-    const role = roleOf(r.uid);
     return (
       <>
-        <span className={styles.tag}>{role ? ROLE_LABEL[role] : 'Equipo'}</span>
         {canManage && (
           <>
             <Button size="sm" variant="ghost" aria-label={`Hacer responsable a ${r.name}`} onClick={() => setConfirm({ kind: 'owner', row: r })}>
@@ -176,9 +174,12 @@ export function ShareProjectDialog({ project, members, tasks, actorId, canManage
           {rows.map((r) => (
             <li key={r.uid} className={styles.row}>
               <Avatar name={r.name} photo={r.photo} inactive={!r.active} />
-              <span className={styles.name}>
-                {r.name}
-                {r.uid === actorId && <span className={styles.you}>Tú</span>}
+              <span className={styles.who}>
+                <span className={styles.name}>
+                  {r.name}
+                  {r.uid === actorId && <span className={styles.you}>Tú</span>}
+                </span>
+                <small className={styles.role}>{roleOf(r.uid) ? ROLE_LABEL[roleOf(r.uid)!] : 'Equipo'}</small>
               </span>
               <span className={styles.control}>{control(r)}</span>
             </li>

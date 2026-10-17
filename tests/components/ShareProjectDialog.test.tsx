@@ -99,4 +99,11 @@ describe('ShareProjectDialog', () => {
     renderDialog();
     expect(screen.getByText(/pendiente@x\.com/)).toHaveTextContent('Podrás agregarla cuando cree su cuenta.');
   });
+
+  it('debajo de cada nombre se ve su rol', () => {
+    renderDialog();
+    const list = screen.getByRole('list', { name: 'En este proyecto' });
+    expect(within(list).getByText('Gus').closest('li')?.querySelector('small')).toHaveTextContent('Invitado');
+    expect(within(list).getByText('Mar').closest('li')?.querySelector('small')).toHaveTextContent('Miembro');
+  });
 });
