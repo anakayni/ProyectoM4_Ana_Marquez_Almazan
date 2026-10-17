@@ -16,7 +16,12 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { updateMember } from '@/services/team.service';
 import type { Role, UserProfile } from '@/types/auth';
 import { StickyHeader } from '@/components/layout/StickyHeader';
+import { ViewTabs } from '@/components/ui/ViewTabs';
+import { usePendingInvitations } from '@/hooks/usePendingInvitations';
+import { normalizeText } from '@/utils/text';
 import styles from './TeamPage.module.css';
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function TeamPage() {
   const { profile } = useAuth();
@@ -40,6 +45,11 @@ function TeamView({ me }: { me: UserProfile }) {
     (a, b) => Number(b.active) - Number(a.active) || a.displayName.localeCompare(b.displayName),
   );
   const activeCount = members.filter((m) => m.active).length;
+  const pending = usePendingInvitations(isAdmin);
+  const [tab, setTab] = useState<'members' | 'invitations'>('members');
+  const [query, setQuery] = useState('');
+  const q = normalizeText(query);
+  const shown = q ? sorted.filter((m) => normalizeText(m.displayName).includes(q) || m.email.toLowerCase().includes(q)) : sorted;
 
   async function change(member: UserProfile, patch: { role?: Role; active?: boolean }, message: string) {
     try {
@@ -52,9 +62,9 @@ function TeamView({ me }: { me: UserProfile }) {
   }
 
   const projectsLabel = (member: UserProfile) => {
-    if (member.role !== 'guest') return undefined;
+    if (member.role !== 'guest') return 'Todos';
     const names = projectsOfGuest(projects, member.uid).map((p) => p.name);
-    return names.length > 0 ? `Proyectos: ${names.join(', ')}` : 'Sin proyectos';
+    return names.length > 0 ? names.join(', ') : 'Sin proyectos';
   };
 
   // Un Invitado no puede ser responsable de un proyecto: primero hay que cambiar el responsable.
@@ -73,31 +83,57 @@ function TeamView({ me }: { me: UserProfile }) {
       <StickyHeader>
         <PageHeader
           title="Equipo"
-          subtitle={`${activeCount} ${activeCount === 1 ? 'integrante activo' : 'integrantes activos'}`}
+          description={`${plural(activeCount, 'integrante activo', 'integrantes activos')}${
+            pending.length > 0 ? ` · ${plural(pending.length, 'invitación pendiente', 'invitaciones pendientes')}` : ''
+          }`}
           actions={isAdmin && <Button size="sm" onClick={() => setInviting(true)}>+ Invitar</Button>}
         />
+        <div className={styles.bar}>
+          <ViewTabs
+            label="Sección" name="team-tab" value={tab} onChange={setTab}
+            options={[
+              { value: 'members', label: 'Integrantes' },
+              ...(isAdmin ? [{ value: 'invitations' as const, label: 'Invitaciones', count: pending.length }] : []),
+            ]}
+          />
+          {tab === 'members' && (
+            <div className={styles.tools}>
+              <label className="visually-hidden" htmlFor="team-search">Buscar persona</label>
+              <input
+                id="team-search" type="search" className={styles.search} placeholder="Buscar persona…"
+                value={query} onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
       </StickyHeader>
       <main className={styles.page}>
-        <section aria-labelledby="members-title" className={styles.section}>
-          <h2 id="members-title" className={styles.title}>Integrantes</h2>
-          <ul className={styles.list}>
-            {sorted.map((member) => (
-              <MemberRow
-                key={member.uid}
-                member={member}
-                isMe={member.uid === me.uid}
-                canManage={isAdmin && member.uid !== me.uid}
-                openTasks={openTasks.get(member.uid) ?? 0}
-                projectsLabel={projectsLabel(member)}
-                onRoleChange={(role) => changeRole(member, role)}
-                onActiveChange={(active) =>
-                  void change(member, { active }, `Acceso ${active ? 'reactivado' : 'desactivado'} para ${member.displayName}.`)
-                }
-              />
-            ))}
-          </ul>
-        </section>
-        {isAdmin && <PendingInvitations adminUid={me.uid} />}
+        {tab === 'members' ? (
+          <section aria-label="Integrantes" className={styles.table}>
+            <div className={styles.head} aria-hidden="true">
+              <span>Persona</span><span>Rol</span><span>Tareas</span><span>Proyectos</span><span />
+            </div>
+            <ul className={styles.list}>
+              {shown.map((member) => (
+                <MemberRow
+                  key={member.uid}
+                  member={member}
+                  isMe={member.uid === me.uid}
+                  canManage={isAdmin && member.uid !== me.uid}
+                  openTasks={openTasks.get(member.uid) ?? 0}
+                  projectsLabel={projectsLabel(member)}
+                  onRoleChange={(role) => changeRole(member, role)}
+                  onActiveChange={(active) =>
+                    void change(member, { active }, `Acceso ${active ? 'reactivado' : 'desactivado'} para ${member.displayName}.`)
+                  }
+                />
+              ))}
+            </ul>
+            {shown.length === 0 && <p className={styles.empty}>No encontramos a nadie con ese nombre o email.</p>}
+          </section>
+        ) : (
+          <PendingInvitations adminUid={me.uid} />
+        )}
       </main>
       {inviting && <InviteDialog adminUid={me.uid} onClose={() => setInviting(false)} />}
       {toast && <Toast toast={toast} onDismiss={dismissToast} />}

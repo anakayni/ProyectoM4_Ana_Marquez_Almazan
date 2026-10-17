@@ -56,15 +56,30 @@ describe('TeamPage', () => {
       expect(within(row('Luis')).getByText('3 tareas abiertas')).toBeInTheDocument();
       expect(within(row('Mario')).getByText('Inactiva')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: '+ Invitar' })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Invitaciones pendientes' })).not.toBeInTheDocument();
+    });
+
+    it('las invitaciones están en su pestaña', async () => {
+      render(<TeamPage />);
+      expect(screen.getByRole('radio', { name: 'Integrantes' })).toBeChecked();
+      await userEvent.click(screen.getByRole('radio', { name: /^Invitaciones/ }));
       expect(screen.getByRole('heading', { name: 'Invitaciones pendientes' })).toBeInTheDocument();
+    });
+
+    it('el buscador filtra por nombre o email', async () => {
+      render(<TeamPage />);
+      await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar persona' }), 'luis@');
+      expect(screen.getByText('Luis')).toBeInTheDocument();
+      expect(screen.queryByText('Mario')).not.toBeInTheDocument();
     });
 
     it('muestra los proyectos de cada Invitado', () => {
       state.members = [...state.members, person('gus', 'Gus', 'guest'), person('tom', 'Tom', 'guest')];
       state.projects = [{ id: 'p1', name: 'Portal', ownerId: 'ana', memberIds: ['gus'] } as unknown as Project];
       render(<TeamPage />);
-      expect(row('Gus')).toHaveTextContent('Proyectos: Portal');
+      expect(row('Gus')).toHaveTextContent('Portal');
       expect(row('Tom')).toHaveTextContent('Sin proyectos');
+      expect(row('Luis')).toHaveTextContent('Todos');
     });
 
     it('no pasa a Invitado a alguien que es responsable de un proyecto', async () => {

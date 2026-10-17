@@ -13,8 +13,8 @@ type Props = {
   /** Admin mirando a otra persona */
   canManage: boolean;
   openTasks: number;
-  /** Solo para Invitados: en qué proyectos está. */
-  projectsLabel?: string;
+  /** Columna Proyectos: los del Invitado (o "Sin proyectos"); para el resto, "Todos". */
+  projectsLabel: string;
   onRoleChange: (role: Role) => void;
   onActiveChange: (active: boolean) => void;
 };
@@ -30,39 +30,43 @@ export function MemberRow({ member, isMe, canManage, openTasks, projectsLabel, o
 
   return (
     <li className={`${styles.row} ${member.active ? '' : styles.inactive}`}>
-      <Avatar name={name} photo={member.photo} inactive={!member.active} />
-      <div className={styles.info}>
-        <p className={styles.name}>
-          {name}
-          {isMe && <span className={`${styles.tag} ${styles.me}`}>Tú</span>}
-          {!member.active && <span className={styles.tag}>Inactiva</span>}
-        </p>
-        <p className={styles.email}>{member.email}</p>
-        {projectsLabel && <p className={styles.projects}>{projectsLabel}</p>}
+      <div className={styles.person}>
+        <Avatar name={name} photo={member.photo} inactive={!member.active} />
+        <div className={styles.info}>
+          <p className={styles.name}>
+            {name}
+            {isMe && <span className={`${styles.tag} ${styles.me}`}>Tú</span>}
+            {!member.active && <span className={styles.tag}>Inactiva</span>}
+          </p>
+          <p className={styles.email}>{member.email}</p>
+        </div>
       </div>
-      <span className={styles.count}>{openLabel(openTasks)}</span>
-      {canManage && member.active ? (
-        <div className={styles.controls}>
+      <div className={styles.cell}>
+        {canManage && member.active ? (
           <select
             className={styles.select} aria-label={`Rol de ${name}`} value={member.role}
             onChange={(e) => onRoleChange(e.target.value as Role)}
           >
             {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
           </select>
-          {!confirming && <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>Desactivar</Button>}
-        </div>
-      ) : canManage ? (
-        <div className={styles.controls}>
+        ) : (
           <span className={styles.role}>{ROLE_LABEL[member.role]}</span>
+        )}
+      </div>
+      <span className={`${styles.cell} ${styles.count}`}>{openLabel(openTasks)}</span>
+      <span className={`${styles.cell} ${styles.projects}`}>{projectsLabel}</span>
+      <div className={styles.actions}>
+        {canManage && member.active && !confirming && (
+          <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>Desactivar</Button>
+        )}
+        {canManage && !member.active && (
           <Button size="sm" variant="secondary" onClick={() => onActiveChange(true)}>Reactivar</Button>
-        </div>
-      ) : (
-        <span className={styles.role}>{ROLE_LABEL[member.role]}</span>
-      )}
+        )}
+      </div>
       {confirming && (
         <div className={styles.confirm}>
           <p>{deactivateMessage(name, openTasks)}</p>
-          <div className={styles.controls}>
+          <div className={styles.actions}>
             <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Button>
             <Button
               size="sm" variant="danger"
