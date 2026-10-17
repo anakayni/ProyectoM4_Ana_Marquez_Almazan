@@ -49,4 +49,16 @@ describe('migrateTask', () => {
     }, 50);
     expect(result?.data).toMatchObject({ number: 7, subtasks: [] });
   });
+
+  it('formato de producción: el dueño queda como responsable si todavía tiene cuenta', () => {
+    const known = new Set(['ana']);
+    expect(migrateTask({ ...base, userId: 'ana', completed: false }, 1, known)?.data.assigneeId).toBe('ana');
+    const orphan = migrateTask({ ...base, userId: 'borrado', completed: false }, 1, known);
+    expect(orphan?.data.assigneeId).toBeNull();
+    expect(orphan?.data.createdBy).toBe('borrado');
+  });
+
+  it('sin la lista de cuentas, como antes: sin responsable', () => {
+    expect(migrateTask({ ...base, userId: 'ana', completed: false }, 1)?.data.assigneeId).toBeNull();
+  });
 });

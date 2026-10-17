@@ -11,8 +11,10 @@ const OLD_FIELDS = ['completed', 'userId'];
 /**
  * Convierte una tarea de formatos anteriores al actual. Devuelve null si ya está al día.
  * `nextNumber` se usa solo si la tarea todavía no tiene número.
+ * `knownUsers`: cuentas que siguen existiendo; en el formato del M4 (cada tarea era de su `userId`)
+ * el dueño queda como responsable si está acá; si no, "Sin asignar".
  */
-export function migrateTask(doc: RawTask, nextNumber: number): Migration {
+export function migrateTask(doc: RawTask, nextNumber: number, knownUsers?: ReadonlySet<string>): Migration {
   const upToDate = CURRENT_FIELDS.every((f) => f in doc) && !OLD_FIELDS.some((f) => f in doc);
   if (upToDate) return null;
 
@@ -31,7 +33,7 @@ export function migrateTask(doc: RawTask, nextNumber: number): Migration {
       updatedBy,
       rev: hadRev ? (rest.rev as number) + 1 : 1,
       status,
-      assigneeId: rest.assigneeId ?? null,
+      assigneeId: rest.assigneeId ?? (typeof userId === 'string' && knownUsers?.has(userId) ? userId : null),
       projectId: rest.projectId ?? null,
       number: typeof rest.number === 'number' ? rest.number : nextNumber,
       subtasks: rest.subtasks ?? [],
