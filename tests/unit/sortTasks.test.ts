@@ -4,7 +4,7 @@ import type { Task } from '@/types/task';
 
 function task(id: string, overrides: Partial<Task> = {}): Task {
   return {
-    id, userId: 'u', title: id, description: '', completed: false,
+    id, createdBy: 'u', updatedBy: 'u', rev: 1, title: id, description: '', status: 'todo', assigneeId: null, completedBy: null, completedAt: null, projectId: null, number: 1, subtasks: [],
     priority: 'media', dueDate: null, createdAt: 0, ...overrides,
   };
 }
@@ -15,6 +15,13 @@ describe('sortTasks', () => {
   it('"recent" ordena por creación, la más nueva primero', () => {
     const list = [task('a', { createdAt: 1 }), task('b', { createdAt: 3 }), task('c', { createdAt: 2 })];
     expect(ids(sortTasks(list, 'recent'))).toEqual(['b', 'c', 'a']);
+  });
+
+  it('"recent" deja las hechas al final, cada grupo de la más nueva a la más vieja', () => {
+    const list = [
+      task('a', { createdAt: 3, status: 'done' }), task('b', { createdAt: 1 }), task('c', { createdAt: 2 }), task('d', { createdAt: 4, status: 'done' }),
+    ];
+    expect(ids(sortTasks(list, 'recent'))).toEqual(['c', 'b', 'd', 'a']);
   });
 
   it('"due" ordena por vencimiento y deja sin fecha al final', () => {
@@ -32,7 +39,7 @@ describe('sortTasks', () => {
   });
 
   it('en "due" y "priority" las completadas van al final', () => {
-    const list = [task('hecha', { priority: 'alta', completed: true }), task('pendiente', { priority: 'baja' })];
+    const list = [task('hecha', { priority: 'alta', status: 'done' }), task('pendiente', { priority: 'baja' })];
     expect(ids(sortTasks(list, 'priority'))).toEqual(['pendiente', 'hecha']);
   });
 

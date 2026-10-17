@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { Project } from '@/types/project';
 import { TodoForm } from '@/components/tasks/TodoForm';
 
 describe('TodoForm', () => {
@@ -23,6 +24,8 @@ describe('TodoForm', () => {
       description: 'Pedir cotización',
       priority: 'media',
       dueDate: null,
+      assigneeId: null,
+      projectId: null,
     });
     expect(screen.getByLabelText('Título')).toHaveValue('');
   });
@@ -41,7 +44,7 @@ describe('TodoForm', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(
       <TodoForm
-        initialValues={{ title: 'Original', description: '', priority: 'baja', dueDate: '2026-10-01' }}
+        initialValues={{ title: 'Original', description: '', priority: 'baja', dueDate: '2026-10-01', assigneeId: null, projectId: null }}
         submitLabel="Guardar cambios"
         onSubmit={onSubmit}
       />,
@@ -53,7 +56,7 @@ describe('TodoForm', () => {
     await userEvent.clear(title);
     await userEvent.type(title, 'Editada');
     await userEvent.click(screen.getByRole('button', { name: /guardar cambios/i }));
-    expect(onSubmit).toHaveBeenCalledWith({ title: 'Editada', description: '', priority: 'baja', dueDate: '2026-10-01' });
+    expect(onSubmit).toHaveBeenCalledWith({ title: 'Editada', description: '', priority: 'baja', dueDate: '2026-10-01', assigneeId: null, projectId: null });
     expect(title).toHaveValue('Editada');
   });
 
@@ -65,5 +68,49 @@ describe('TodoForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos guardar la tarea');
     expect(screen.getByLabelText('Título')).toHaveValue('Tarea');
+  });
+
+  it('permite elegir responsable', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<TodoForm onSubmit={onSubmit} assignees={[{ uid: 'ana', label: 'Ana' }, { uid: 'luis', label: 'Luis' }]} />);
+    await userEvent.type(screen.getByLabelText('Título'), 'Llamar');
+    expect(screen.getByLabelText('Responsable')).toHaveValue('');
+    await userEvent.selectOptions(screen.getByLabelText('Responsable'), 'luis');
+    await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ assigneeId: 'luis' }));
+  });
+
+  it('permite elegir proyecto', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const portal = {
+      id: 'p1', name: 'Portal', description: '', color: '#4D7C8A', ownerId: 'a', startDate: '2026-10-01',
+      endDate: '2026-11-30', archived: false, createdBy: 'a', createdAt: 1, rev: 1,
+    };
+    render(<TodoForm onSubmit={onSubmit} projects={[portal]} />);
+    await userEvent.type(screen.getByLabelText('Título'), 'Llamar');
+    expect(screen.getByLabelText('Proyecto')).toHaveValue('');
+    await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'p1');
+    await userEvent.click(screen.getByRole('button', { name: /agregar tarea/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'p1' }));
+  });
+  it('con proyecto obligatorio no ofrece "Sin proyecto" y pide elegir uno', async () => {
+    const onSubmit = vi.fn();
+    const projects = [{ id: 'p1', name: 'Portal', archived: false } as Project];
+    render(<TodoForm projects={projects} projectRequired onSubmit={onSubmit} />);
+    expect(screen.queryByRole('option', { name: 'Sin proyecto' })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Título'), 'Tarea');
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar tarea' }));
+    expect(screen.getByText('Elige un proyecto.')).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('los responsables cambian según el proyecto elegido', async () => {
+    const projects = [{ id: 'p1', name: 'Portal', archived: false } as Project, { id: 'p2', name: 'Web', archived: false } as Project];
+    const assigneesFor = (id: string | null) => (id === 'p1' ? [{ uid: 'gus', label: 'Gus' }] : [{ uid: 'ana', label: 'Ana' }]);
+    render(<TodoForm projects={projects} assigneesFor={assigneesFor} onSubmit={vi.fn()} />);
+    await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'Portal');
+    expect(screen.getByRole('option', { name: 'Gus' })).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Proyecto'), 'Web');
+    expect(screen.queryByRole('option', { name: 'Gus' })).not.toBeInTheDocument();
   });
 });

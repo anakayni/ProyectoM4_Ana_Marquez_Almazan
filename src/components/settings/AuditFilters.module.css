@@ -1,0 +1,7 @@
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.field { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); color: var(--color-text-secondary); }
+.field select, .field input {
+  min-height: 36px; padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-strong); border-radius: var(--radius-md);
+  background: var(--color-surface-default); color: var(--color-text-primary);
+}

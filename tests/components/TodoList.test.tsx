@@ -4,23 +4,48 @@ import { describe, expect, it, vi } from 'vitest';
 import { TodoList } from '@/components/tasks/TodoList';
 import type { Task } from '@/types/task';
 
+const base = { createdBy: 'u', updatedBy: 'u', rev: 1, priority: 'media' as const, dueDate: null, createdAt: 1 };
 const tasks: Task[] = [
-  { id: '1', userId: 'u', title: 'Comprar yerba', description: 'Dos kilos', completed: false, priority: 'media', dueDate: null, createdAt: 2 },
-  { id: '2', userId: 'u', title: 'Pagar luz', description: '', completed: true, priority: 'media', dueDate: null, createdAt: 1 },
+  { ...base, id: '1', title: 'Comprar yerba', description: 'Dos kilos', status: 'todo', assigneeId: 'ana', completedBy: null, completedAt: null, projectId: null, number: 1, subtasks: [] },
+  { ...base, id: '2', title: 'Pagar luz', description: '', status: 'done', assigneeId: null, completedBy: 'ana', completedAt: new Date(2026, 9, 8).getTime(), projectId: null, number: 1, subtasks: [] },
 ];
+const nameOf = (uid: string | null) => (uid === 'ana' ? 'Ana' : null);
+const portal = {
+  id: 'p1', name: 'Portal', description: '', color: '#4D7C8A', ownerId: 'a', startDate: '2026-10-01', endDate: '2026-11-30',
+  archived: false, createdBy: 'a', createdAt: 1, rev: 1,
+};
+const projectOf = (id: string | null) => (id === 'p1' ? portal : null);
+const personOf = (uid: string | null) =>
+  uid === 'ana' ? { name: 'Ana', photo: null, active: true } : uid === 'mario' ? { name: 'Mario', photo: null, active: false } : null;
 
-function setup(list: Task[] = tasks) {
-  const handlers = { onToggle: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() };
-  render(<TodoList tasks={list} {...handlers} />);
+function setup(list: Task[] = tasks, props: Partial<Parameters<typeof TodoList>[0]> = {}) {
+  const handlers = { onStatusChange: vi.fn(), onOpen: vi.fn() };
+  render(<TodoList tasks={list} nameOf={nameOf} personOf={personOf} projectOf={projectOf} {...handlers} {...props} />);
   return handlers;
 }
 
 describe('TodoList', () => {
-  it('muestra cada tarea con su estado', () => {
+  it('muestra cada tarea con su responsable', () => {
     setup();
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.getByText('Dos kilos')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /completar "pagar luz"/i })).toBeChecked();
+    expect(screen.getByText('Responsable: Ana')).toBeInTheDocument();
+    expect(screen.getByText('Sin asignar')).toBeInTheDocument();
+  });
+
+  it('el avatar de un responsable inactivo se ve atenuado', () => {
+    setup([{ ...tasks[0], assigneeId: 'mario' }]);
+    expect(document.querySelector('.inactive')).not.toBeNull();
+  });
+
+  it('muestra la etiqueta del proyecto', () => {
+    setup([{ ...tasks[0], projectId: 'p1' }]);
+    expect(screen.getByText('Portal')).toBeInTheDocument();
+  });
+
+  it('muestra quién completó y cuándo', () => {
+    setup();
+    expect(screen.getByText(/Hecha por Ana · 8 oct/)).toBeInTheDocument();
   });
 
   it('muestra prioridad y vencimiento', () => {
@@ -29,41 +54,31 @@ describe('TodoList', () => {
     expect(screen.getByText(/vencida/i)).toBeInTheDocument();
   });
 
-  it('muestra un estado vacío', () => {
-    setup([]);
-    expect(screen.getByText('Todavía no tienes tareas')).toBeInTheDocument();
+  it('cambia el estado', async () => {
+    const { onStatusChange } = setup();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Estado de "Comprar yerba"' }), 'doing');
+    expect(onStatusChange).toHaveBeenCalledWith('1', 'doing');
   });
 
-  it('acepta un mensaje vacío personalizado (p. ej. para filtros)', () => {
-    render(<TodoList tasks={[]} emptyTitle="No hay tareas en este filtro" onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />);
+  it('muestra un estado vacío personalizado', () => {
+    setup([], { emptyTitle: 'No hay tareas en este filtro' });
     expect(screen.getByText('No hay tareas en este filtro')).toBeInTheDocument();
   });
 
-  it('marca una tarea como completada', async () => {
-    const { onToggle } = setup();
-    await userEvent.click(screen.getByRole('checkbox', { name: /completar "comprar yerba"/i }));
-    expect(onToggle).toHaveBeenCalledWith('1', true);
+  it('abre el detalle al hacer clic en el título', async () => {
+    const { onOpen } = setup();
+    await userEvent.click(screen.getByRole('button', { name: 'Comprar yerba' }));
+    expect(onOpen).toHaveBeenCalledWith(tasks[0]);
   });
 
-  it('pide editar la tarea', async () => {
-    const { onEdit } = setup();
-    await userEvent.click(screen.getByRole('button', { name: /editar "comprar yerba"/i }));
-    expect(onEdit).toHaveBeenCalledWith(tasks[0]);
+  it('un lector no puede cambiar el estado', () => {
+    setup(tasks, { canEdit: false });
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('pide confirmación antes de eliminar', async () => {
-    const { onDelete } = setup();
-    await userEvent.click(screen.getByRole('button', { name: /eliminar "comprar yerba"/i }));
-    expect(onDelete).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: /sí, eliminar/i }));
-    expect(onDelete).toHaveBeenCalledWith('1');
-  });
-
-  it('permite cancelar la eliminación', async () => {
-    const { onDelete } = setup();
-    await userEvent.click(screen.getByRole('button', { name: /eliminar "comprar yerba"/i }));
-    await userEvent.click(screen.getByRole('button', { name: /cancelar/i }));
-    expect(onDelete).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /eliminar "comprar yerba"/i })).toBeInTheDocument();
+  it('muestra el número y el avance de subtareas', () => {
+    setup([{ ...tasks[0], number: 42, subtasks: [{ id: 'a', title: 'A', done: true }, { id: 'b', title: 'B', done: false }] }]);
+    expect(screen.getByText('MC-42')).toBeInTheDocument();
+    expect(screen.getByText('☑ 1 de 2')).toBeInTheDocument();
   });
 });

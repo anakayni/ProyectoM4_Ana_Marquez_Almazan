@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import styles from './Toast.module.css';
 
 export type ToastMessage = {
-  kind: 'success' | 'error';
+  kind: 'success' | 'error' | 'info';
   message: string;
   action?: { label: string; onClick: () => void };
 };

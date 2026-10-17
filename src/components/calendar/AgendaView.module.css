@@ -1,0 +1,19 @@
+.agenda { display: flex; flex-direction: column; gap: var(--space-4); }
+.empty { color: var(--color-text-secondary); }
+.day { display: flex; flex-direction: column; gap: var(--space-2); }
+.head { display: flex; justify-content: space-between; align-items: center; }
+.title { font-size: var(--text-lg); font-weight: var(--weight-semibold); color: var(--color-text-heading); }
+.title::first-letter { text-transform: uppercase; }
+.add { width: 32px; height: 32px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-default); color: var(--color-action-primary); font-weight: var(--weight-semibold); }
+.item {
+  display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-3); text-align: left;
+  background: var(--color-surface-default); border: 1px solid var(--color-border-default); border-left: 4px solid; border-radius: var(--radius-md); cursor: pointer;
+}
+.itemTitle { font-weight: var(--weight-medium); color: var(--color-text-primary); }
+.itemMeta { font-size: var(--text-sm); color: var(--color-text-secondary); }
+.done .itemTitle { text-decoration: line-through; color: var(--color-text-muted); }
+.overdue { background: var(--color-status-danger-surface); }
+
+@media (min-width: 768px) {
+  .agenda { display: none; }
+}

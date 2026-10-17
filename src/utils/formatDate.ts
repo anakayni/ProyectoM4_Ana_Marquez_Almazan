@@ -40,3 +40,30 @@ export function toDateInputValue(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
+
+/** "8 oct" a partir de milisegundos (p. ej. cuándo se completó). */
+export function formatDay(ms: number): string {
+  return shortDate.format(new Date(ms));
+}
+
+/** "8 oct" a partir de 'YYYY-MM-DD'. */
+export function formatDateLabel(value: string): string {
+  return shortDate.format(parseLocalDate(value));
+}
+
+const dateTime = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const fullDateTime = new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+/** "13 oct 2026, 18:30" (para la auditoría, donde importa el año). */
+export function formatDateTime(ms: number): string {
+  return fullDateTime.format(new Date(ms));
+}
+
+/** "hace un momento", "hace 5 min", "hace 3 h" o "3 oct, 18:30". */
+export function formatRelative(ms: number, now: number = Date.now()): string {
+  const minutes = Math.floor((now - ms) / 60000);
+  if (minutes < 1) return 'hace un momento';
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 24 * 60) return `hace ${Math.floor(minutes / 60)} h`;
+  return dateTime.format(new Date(ms));
+}

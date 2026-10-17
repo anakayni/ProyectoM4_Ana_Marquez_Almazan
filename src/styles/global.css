@@ -26,3 +26,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+/* Placeholders con el mismo contraste que el texto atenuado (el gris del navegador no siempre llega a 4.5:1). */
+::placeholder { color: var(--color-text-muted); opacity: 1; }

@@ -8,7 +8,7 @@ export const PASSWORD_MIN = 6;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateEmail(email: string): string | undefined {
+export function validateEmail(email: string): string | undefined {
   const value = email.trim();
   if (!value) return 'Ingresa tu email.';
   if (!EMAIL_PATTERN.test(value)) return 'El email no tiene un formato válido.';

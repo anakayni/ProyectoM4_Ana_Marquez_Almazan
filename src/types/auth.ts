@@ -1,8 +1,33 @@
-export interface AppUser {
+export type Role = 'admin' | 'member' | 'viewer' | 'guest';
+
+/** Quién mira: define qué datos se piden (el Invitado, solo los de sus proyectos). */
+export type Viewer = { uid: string; role: Role };
+
+export const ROLE_LABEL: Record<Role, string> = { admin: 'Administrador', member: 'Miembro', viewer: 'Lector', guest: 'Invitado' };
+
+/** Usuario de Firebase Auth (la sesión). */
+export interface AuthUser {
   uid: string;
   email: string;
   displayName: string;
+  emailVerified: boolean;
 }
+
+/** Perfil del equipo en Firestore (users/{uid}). */
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  /** Foto 128×128 (data URL JPEG) o null; los perfiles creados antes de la etapa 4 no la tienen */
+  photo?: string | null;
+  role: Role;
+  active: boolean;
+  invitedBy: string | null;
+  rev: number;
+}
+
+/** Qué puede ver la persona según su sesión, su email y su perfil. */
+export type Access = 'loading' | 'signed-out' | 'unverified' | 'no-invitation' | 'inactive' | 'active';
 
 export interface RegisterInput {
   name: string;
@@ -15,11 +40,15 @@ export interface RegisterFormValues extends RegisterInput {
 }
 
 export interface AuthContextValue {
-  user: AppUser | null;
-  /** true mientras Firebase resuelve si ya había una sesión */
-  loading: boolean;
+  user: AuthUser | null;
+  /** Perfil del equipo; null si todavía no existe o no se sabe */
+  profile: UserProfile | null;
+  access: Access;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
+  resendVerification: () => Promise<void>;
+  /** Recarga el usuario para detectar si ya confirmó el email. Devuelve si está verificado. */
+  refreshVerification: () => Promise<boolean>;
 }

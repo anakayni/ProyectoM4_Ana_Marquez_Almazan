@@ -6,9 +6,10 @@ A task and project management app for small teams: invite-only access with roles
 
 It started as my final project for **Module 4 at Soy Henry** and grew into a portfolio project, built with an AI assistant (Claude Code) through a design → plan → test-first workflow.
 
-## Live demo
+## Live app and demo
 
-**https://matecode-tasks-dev.vercel.app**
+- **Production:** https://matecode-tasks-sandy.vercel.app — invite-only, with real data.
+- **Demo:** **https://matecode-tasks-dev.vercel.app** — a separate development database with sample data.
 
 | Demo account (read-only) | |
 |---|---|
@@ -20,8 +21,8 @@ The demo account has the **Viewer** role: it can explore everything but not chan
 ## What it does
 
 - **Invite-only access with roles.** An admin invites people by email as Admin, Member, Viewer or **Guest**. Guests (a client, a supplier) only see and work on the projects they were added to; they never see the rest of the team.
-- **Tasks:** status (to do / in progress / done), assignee, priority, due date, numbered IDs (`MC-12`), subtasks with progress, search and filters, and three views: list, table and board. Finished tasks are visibly crossed out and greyed.
-- **Projects:** color, dates, owner, real progress and "late" warning, archive, and a people list managed by the admin.
+- **Tasks:** status (to do / in progress / done), assignee, priority, due date, numbered IDs (`MC-12`), subtasks with progress, search and a "Filters" panel, and three views with the **board as the main one**: list, table and board. Finished tasks are visibly crossed out and greyed; viewers and guests never see them.
+- **Projects:** color, dates, owner, real progress and "late" warning, archive, and a people list managed by the admin from a **"Share project"** dialog (search, invite by email, and per-project access for guests: *View only* or *Can edit*).
 - **Calendar:** month view (agenda on mobile) and a Gantt view of projects and due dates.
 - **Team and profile:** members with photo or initial, open tasks per person, deactivation without losing their tasks.
 - **Settings (admin):** workspace name, logo and color palette with a live preview and a **contrast check that blocks saving** unreadable colors; custom task prefix.
@@ -35,7 +36,7 @@ The demo account has the **Viewer** role: it can explore everything but not chan
 - **Privacy without a backend.** Guests read "person cards" (name and photo only) that the rules verify are exact copies of the real profile; they never read emails or roles.
 - **Accessibility:** all text meets 4.5:1 contrast (checked by a test that recomputes the CSS `color-mix()` formulas), labelled controls, keyboard support, no drag-only interactions.
 - **Zero cost:** Firebase Spark, Vercel Hobby, no Cloud Functions or Storage (profile photos and the logo are resized in the browser and stored in Firestore).
-- **Tested:** 400+ app tests (Vitest + React Testing Library) and 80+ Firestore rules tests.
+- **Tested:** 470+ app tests (Vitest + React Testing Library) and 90+ Firestore rules tests.
 
 ## Stack
 
@@ -48,31 +49,32 @@ The demo account has the **Viewer** role: it can explore everything but not chan
 | Testing | Vitest, React Testing Library, Firestore emulator |
 | Lint and deploy | oxlint, Vercel |
 
-## Branches
+## Repository
 
-| Branch | What it contains |
+| Where | What |
 |---|---|
-| [`v2`](https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan/tree/v2) | The portfolio version shown in the live demo (in active development). |
-| `main` | The original Module 4 delivery: [documentation](docs/m4/README.md) · [en español](docs/m4/README.es.md) · production at https://matecode-tasks-sandy.vercel.app |
+| `main` | The current app, deployed to production. |
+| [`docs/README-tecnico.md`](docs/README-tecnico.md) | Full technical documentation (in Spanish): roles, audit, rules, every stage. |
+| [`docs/specs/`](docs/specs) · [`docs/plans/`](docs/plans) | The design and the plan of each stage. |
+| [`docs/m4/`](docs/m4/README.md) | The original Module 4 delivery ([en español](docs/m4/README.es.md)). |
 
 ## How I worked with AI
 
 I built this project with **Claude Code** as a pair programmer, with a process I kept for every stage:
 
 1. **Questions before code.** For each stage the assistant asked me one question at a time, each with a recommendation, and showed mockups when the question was visual. I made the product decisions (for example: guests as a role scoped to projects, keeping completed tasks for traceability, accessible contrast as a hard rule).
-2. **Written design and plan.** Every stage has a design document (`docs/specs/`) and a plan of small tasks with the exact tests and code (`docs/plans/`) — both in the `v2` branch.
+2. **Written design and plan.** Every stage has a design document (`docs/specs/`) and a plan of small tasks with the exact tests and code (`docs/plans/`).
 3. **Test first.** For each task we wrote the test, watched it fail for the right reason, implemented, and committed: one commit per task.
 4. **I test every stage** in a preview deployment before moving on, and I handled every console and credential (Firebase, AWS, Vercel) myself — secrets never went into the chat.
 5. **Root cause before fixes.** When something broke (wrong rules published, IAM permissions, ESM incompatibilities, contrast below 4.5:1 found by measuring) we found the cause before changing code.
 
-The full log of what I asked, what the AI proposed, what I changed and what went wrong is in [`AI_LOG.md`](https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan/blob/v2/AI_LOG.md) (in Spanish).
+The full log of what I asked, what the AI proposed, what I changed and what went wrong is in [`AI_LOG.md`](AI_LOG.md) (in Spanish).
 
 ## Run it locally
 
 ```bash
 git clone https://github.com/anakayni/ProyectoM4_Ana_Marquez_Almazan.git
 cd ProyectoM4_Ana_Marquez_Almazan
-git checkout v2
 npm install
 cp .env.example .env   # Firebase web config + service account, AWS SES (see docs)
 npm test               # app tests

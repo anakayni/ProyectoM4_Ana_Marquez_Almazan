@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { BrandMark } from '@/components/layout/BrandMark';
+import { CreditsFooter } from '@/components/layout/CreditsFooter';
 import styles from './AuthLayout.module.css';
 
 // Clases compartidas por LoginPage y RegisterPage.
@@ -7,21 +9,34 @@ export const authFormClass = styles.form;
 // eslint-disable-next-line react/only-export-components
 export const authDividerClass = styles.divider;
 
-type AuthLayoutProps = { title: string; subtitle: string; children: ReactNode; footer: ReactNode };
+type AuthLayoutProps = { title: string; subtitle: string; children: ReactNode; footer?: ReactNode };
 
+/** Pantalla dividida: panel de marca a la izquierda (franja arriba en celular) y formulario. */
 export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProps) {
   return (
-    <main className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.brand}>
-          <span className={styles.logo} aria-hidden="true">M</span>
-          <span>MateCode <span className={styles.muted}>Tasks</span></span>
+    <div className={styles.page}>
+      <aside className={styles.panel}>
+        <BrandMark inverse />
+        <div className={styles.pitch}>
+          <p className={styles.headline}>Las tareas de tu equipo, en un solo lugar.</p>
+          <p className={styles.note}>Acceso solo con invitación del administrador.</p>
         </div>
-        <h1 className={styles.title}>{title}</h1>
-        <p className={styles.subtitle}>{subtitle}</p>
-        {children}
-        <p className={styles.footer}>{footer}</p>
+        <div className={styles.swatches} aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+      </aside>
+      <div className={styles.side}>
+        <main className={styles.main}>
+          <div className={styles.card}>
+            <h1 className={styles.title}>{title}</h1>
+            <p className={styles.subtitle}>{subtitle}</p>
+            {children}
+            {footer && <p className={styles.footer}>{footer}</p>}
+          </div>
+        </main>
+        {/* Fuera de <main> para que sea el pie de la página (landmark contentinfo) */}
+        <CreditsFooter />
       </div>
-    </main>
+    </div>
   );
 }

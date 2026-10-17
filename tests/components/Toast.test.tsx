@@ -21,4 +21,9 @@ describe('Toast', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it('un aviso informativo se anuncia como estado', () => {
+    render(<Toast toast={{ kind: 'info', message: 'Proyectos: próximamente.' }} onDismiss={vi.fn()} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Proyectos: próximamente.');
+  });
 });

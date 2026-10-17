@@ -74,3 +74,96 @@ Registro de cómo usé IA (Claude Code) durante el desarrollo. Base para la secc
 - **Qué generó / propuso:** funciones puras `filterTasks`, `sortTasks` y `formatDate` con tests, componente `TaskFilters`, campos de prioridad y fecha en el formulario y reglas de Firestore que aceptan los campos nuevos sin romper las tareas existentes.
 - **Qué revisé o cambié yo:** publiqué las reglas nuevas en Firebase y probé los filtros y el orden. Decidí no hacer el drag & drop para priorizar una entrega estable.
 - **Qué no funcionó o tuve que corregir:** la primera vez las reglas nuevas no quedaron publicadas y las tareas con prioridad eran rechazadas; se detectó con una prueba automática antes de desplegar, así producción nunca dejó de funcionar.
+
+## v2 — Etapa 1: roles, invitaciones y auditoría
+- **Qué pedí:** a partir de unos mockups, convertir la app en un espacio de equipo: un administrador que registra los emails que pueden entrar, roles, y un registro para auditar quién mueve o edita qué. Solo funciones reales, sin costos hasta tener un cliente, y en el mismo repositorio.
+- **Qué generó / propuso:** dividir la v2 en 8 etapas con su diseño y plan; un Firebase y una URL de desarrollo separados de producción; tres roles (Administrador, Miembro, Lector); invitaciones por email con link de registro y confirmación de email; auditoría obligada por las Security Rules (cada cambio guarda quién, cuándo, el antes y el después); tests de reglas con el emulador de Firestore y un script para crear el primer admin.
+- **Qué revisé o cambié yo:** elegí las opciones del diseño (un solo espacio, tres roles, que todos vean todo pero quede registro, que lo obliguen las reglas). Creé el proyecto `matecode-tasks-dev` en Firebase, instalé Java para el emulador y probé el flujo completo: entrar como admin, invitar, registrarme como Lector, intentar entrar sin invitación y revisar el `auditLog`.
+- **Qué aprendí:** Pensaba que los permisos se resolvían escribiendo funciones con `if/else` en el código de la app. Aprendí que con Firebase es más fácil y más seguro: las reglas de Firestore deciden en el servidor quién puede hacer qué, aunque alguien modifique los botones en el navegador.
+  La auditoría me pareció muy útil pensando en un cliente real: permite saber si alguien altera información a su conveniencia, dar seguimiento a las actividades de cada persona y ver qué usuarios están activos.
+  También aprendí que no basta con probar que algo funcione: hay que probar que falle cuando alguien intenta hacer trampa. Así se detectan problemas de vulnerabilidad antes de que lleguen a producción.
+- **Qué no funcionó o tuve que corregir:**
+  - Los primeros tests de "trampa" podían fallar por el motivo equivocado (la hora no era la del servidor); se reescribieron con controles positivos: la misma escritura, pero honesta, sí debe pasar.
+  - `firebase deploy` devolvía 403 por un permiso del proyecto; las reglas de desarrollo se publicaron con la API de Firebase Rules desde un script temporal que solo acepta el proyecto de desarrollo.
+  - La preview de Vercel está protegida con login de Vercel, así que el registro de personas invitadas se probó en local.
+
+## v2 — Etapa 2: estructura, paleta y login
+- **Qué pedí:** el diseño nuevo a partir de los mockups: menú lateral con Mis tareas, Proyectos, Calendario, Equipo y Ajustes, mi paleta de colores y el login en pantalla dividida.
+- **Qué generó / propuso:** preguntas una por una y maquetas en el navegador para comparar opciones (tres formas de aplicar la paleta y dos de login). Después, un marco común para todas las páginas, la lista de secciones como una función con tests, la paleta como 5 variables que en la etapa 8 se podrán cambiar desde Ajustes, e íconos con lucide-react.
+- **Qué revisé o cambié yo:** elegí mostrar las 5 secciones desde ya con "Próximamente", pestañas abajo en el celular (cambié mi primera elección), el menú azul oscuro y el login con mensaje. Revisé el resultado en la computadora y en vista de celular.
+- **Qué aprendí:** Elegir con maquetas en el navegador fue mucho más fácil que describirlo con palabras: ver las opciones una al lado de la otra me ayudó a decidir.
+  Al principio elegí el menú ☰ para el celular, pero cambié a pestañas abajo porque así la app se parece a una app nativa (como una PWA) y es más accesible desde el teléfono.
+- **Qué no funcionó o tuve que corregir:**
+  - El test de la paleta fallaba por el motivo equivocado: Vitest entrega los archivos CSS vacíos para ir más rápido. Se configuró para que lea `tokens.css` y así el test comprueba los colores de verdad.
+  - Al elegir pestañas abajo en el celular, mis datos y "Cerrar sesión" se quedaban sin lugar: se resolvió con un menú en la inicial, arriba a la derecha.
+
+## v2 — Etapa 3: Mis tareas v2
+- **Qué pedí:** que "Mis tareas" sirviera para trabajar en equipo: tres estados, un responsable por tarea, números reales arriba, ver las tareas en lista o en tablero y un historial de quién cambió qué.
+- **Qué generó / propuso:** preguntas de a una y maquetas de la lista, el tablero y el panel. Después, un plan en dos partes: primero el modelo de datos con sus reglas y una migración auditada de las tareas existentes, la lista con tarjetas y el selector Mías / Equipo; luego el tablero, las frases del historial a partir de la auditoría y el panel de detalle.
+- **Qué revisé o cambié yo:** elegí tener las dos vistas, un responsable opcional, empezar en "Mías", tarjetas que filtran y el panel de detalle. Al leer el diseño pedí que no se perdiera el registro de quién completa cada tarea: eso agregó `completedBy` y `completedAt`, con reglas que impiden atribuir el completado a otra persona o cambiar la fecha. También pedí íconos en lugar de texto para cambiar de vista. Probé cada parte en local y en la preview.
+- **Qué aprendí:** Al revisar el documento de diseño me di cuenta de que, al reemplazar "completada" por el estado, se perdía quién completaba cada tarea. Ese registro es importante: permite ver qué se terminó y quién está más libre de trabajo. Revisar el diseño antes de que se programe me permitió corregirlo a tiempo, sin rehacer código.
+- **Qué no funcionó o tuve que corregir:**
+  - El diseño original reemplazaba `completed` por el estado sin guardar quién completaba: lo noté al revisar el documento y se corrigió antes de programar.
+  - La herramienta de calidad (oxlint) avisó que calcular la fecha de "hoy" en cada render podía dar resultados inestables; se calcula una vez al abrir la página.
+  - Los tests del panel no encontraban su contenido: el navegador simulado de los tests no tiene `showModal()` y la ventana quedaba cerrada. Se comprobó con una prueba mínima y `Modal` ahora se abre igual cuando esa función no existe.
+
+## v2 — Etapa 4: Equipo y Mi perfil
+- **Qué pedí:** la sección Equipo para ver a los integrantes y gestionarlos, y que cuando alguien se desactiva sus tareas no se pierdan.
+- **Qué generó / propuso:** preguntas de a una y maquetas de Equipo (vista admin y vista miembro) y de Mi perfil. Después, un plan de 6 tareas: foto protegida por las reglas, funciones puras (recorte cuadrado, tareas abiertas por persona, texto del aviso), avatar con foto y estado inactivo en toda la app, la pantalla Equipo y Mi perfil.
+- **Qué revisé o cambié yo:** elegí que todos vean Equipo pero solo el admin lo gestione, y que las tareas de quien se desactiva queden a su nombre con un aviso. Propuse agregar un avatar con foto y que se note quién está desactivado; para no pagar Firebase Storage, la foto se achica en el navegador y se guarda en Firestore. Probé todo como admin y como lector.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Un test fallaba con el mismo error que simulaba el servicio, aunque el componente lo capturaba bien. Se investigó paso a paso con pruebas mínimas: el `beforeEach` de una sola línea devolvía el mock, y Vitest ejecuta como "limpieza" cualquier función que devuelva un hook. Se corrigió escribiéndolo con llaves.
+  - Al abrir Equipo para todos, `navItems` dejó de usar el perfil; se mantuvo el parámetro (como `_profile`) porque Ajustes, en la etapa 8, va a depender del rol.
+
+## v2 — Etapa 5: Proyectos y tareas en tabla
+- **Qué pedí:** proyectos con su progreso, y que las tareas se vieran como en un mockup que compartí: tabla, número de tarea, subtareas y un panel lateral para editar.
+- **Qué generó / propuso:** separó del mockup lo que tiene datos reales de lo decorativo (latencia, almacenamiento, SLA, "PRO" quedaron fuera) y dividió la etapa en dos partes con su propio plan: 5A (proyectos y contraste) y 5B (número, subtareas, búsqueda, tabla y panel editable). Propuso un contador con transacción para que los números nunca se repitan, y que Mis tareas se volviera un componente reutilizable para la página de cada proyecto.
+- **Qué revisé o cambié yo:** pedí que solo el admin pueda eliminar proyectos y que todo pida confirmación, un selector de color libre para cada proyecto, mantener tres vistas (Lista, Tabla y Tablero) y, sobre todo, **mejorar la accesibilidad**: noté que el texto gris y los placeholders se leían poco. Probé cada parte en local y en la preview.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Al medir el contraste, el gris atenuado de la app daba 3.48:1 (por debajo de 4.5:1): se oscureció y un test lo vigila.
+  - El color de letra de las etiquetas: el azul oscuro elegido al principio no llegaba a 4.5:1 con algunos colores medios. Se probaron todos los colores posibles y solo el negro (junto con el blanco) lo garantiza.
+  - Un reemplazo automático en los datos de prueba se cortó en una coma dentro de `new Date(...)`; el build lo detectó y en la parte siguiente se usaron reemplazos exactos.
+
+## v2 — Etapa 6: Calendario (Mes y Gantt)
+- **Qué pedí:** el calendario, y al ver la maqueta del mes pregunté si se podía tener también la vista Gantt de mi mockup: quedaron las dos, con pestañas.
+- **Qué generó / propuso:** usar solo datos que ya existen (vencimiento de tareas y fechas de proyectos) sin crear "hitos" nuevos; maquetas del mes, la agenda del celular y el Gantt; funciones puras para la grilla del mes y las semanas del Gantt (con casos difíciles como febrero bisiesto y la semana 53); y separar el panel y "Nueva tarea" en un componente reutilizable para no duplicar código.
+- **Qué revisé o cambié yo:** elegí crear con "+" en cada día y cambiar fechas desde el panel (sin arrastrar), ver las hechas tachadas con opción de ocultarlas, y hacer Mes y Gantt juntos en dos partes. Probé ambas vistas en computadora y celular.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Un test del Gantt fallaba porque el nombre del proyecto aparece dos veces a propósito (en la columna fija y dentro de la barra); se ajustó el test para buscarlo en la columna.
+  - Para no gastar tanto contexto en sesiones largas, se creó `CLAUDE.md` con el estado del proyecto y la forma de trabajar.
+
+## v2 — Etapa 8: Ajustes y auditoría
+- **Qué pedí:** que el admin personalice el espacio (logo, colores, prefijo del número) y pueda revisar toda la auditoría; un pie "Desarrollado por Imago Design"; y que en todas las secciones el título y los filtros queden fijos al desplazar.
+- **Qué generó / propuso:** preguntas de a una con recomendación y la etapa en dos partes con su plan: 8A (contraste, ajustes, tema en vivo, logo, prefijo, pie y encabezados fijos) y 8B (frases para cada tipo de cambio, lista paginada con filtros, detalle antes → después y CSV). Propuso medir el contraste de la paleta antes de guardar con las mismas fórmulas que usa el CSS, y proteger el CSV contra fórmulas escondidas en un título.
+- **Qué revisé o cambié yo:** elegí colores libres pero con control de contraste que bloquea guardar, que el prefijo solo cambie cómo se muestra, que Ajustes sea solo del admin y exportar la auditoría a CSV. Pedí los encabezados y filtros fijos. Creé los índices en la consola de Firebase y probé todo en la preview.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Al medir la paleta original aparecieron dos contrastes bajo 4.5:1 que nadie había notado (texto informativo 3.97 y la inicial del avatar 4.13); se oscurecieron y quedaron vigilados por un test.
+  - El pie del login se iba a convertir en una tercera columna; se envolvieron el formulario y el pie en una columna propia.
+  - La cuenta de servicio no tiene permiso para crear índices (403), así que se crearon a mano en la consola de Firebase y después se comprobó con una consulta que los tres respondieran.
+
+## v2 — Etapa 9: Invitados por proyecto
+- **Qué pedí:** poder sumar a alguien externo que solo vea un proyecto ("yo soy admin y puedo ver todo, pero quiero agregar a alguien que solo vea un proyecto"). En el camino pedí también que las tareas terminadas se noten (tachadas, en gris y al final), que Lector e Invitado no vean las tareas hechas, y un README en inglés para postularme a empleos, con una demo pública y su cuenta de solo lectura, hecho con pull requests.
+- **Qué generó / propuso:** preguntas de a una con recomendación; un rol nuevo (Invitado) en lugar de volver privados todos los proyectos; una lista de personas por proyecto que solo maneja el admin; "tarjetas" con nombre y foto que las reglas comparan con el perfil real, para que el Invitado no lea emails ni roles sin necesitar funciones pagas; consultas distintas según el rol, porque Firestore rechaza una consulta entera si pide algo prohibido. La etapa se dividió en 9A (rol, datos y reglas), 9B (pantallas) y 9C (Lector e Invitado sin tareas hechas).
+- **Qué revisé o cambié yo:** elegí que el Invitado trabaje como un Miembro dentro de sus proyectos, que solo vea a las personas de esos proyectos y que solo el admin maneje la lista. Para las tareas hechas primero elegí ocultarlas solo en pantalla y después cambié de opinión: que nunca puedan verlas (privacidad), con "N tareas abiertas" en lugar del avance. Creé los índices en la consola de Firebase, abrí la preview al público, creé la cuenta demo y fusioné mi primer pull request.
+- **Después (9D):** pedí ver las personas en las tarjetas de proyectos (con referencias visuales), un diálogo para compartir el proyecto parecido a uno que compartí, y poder ajustar roles. Elegí un acceso por proyecto solo para Invitados ("Solo ver" / "Puede editar", empezando en "Solo ver"), buscar o invitar desde el diálogo, y que el diálogo se abra al crear un proyecto.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - Al agregar el aviso de "proyecto creado" escribí `onCreated?.(await createProject(...))`: si no había quien escuchara el aviso, JavaScript ni siquiera llamaba a `createProject`. Un test que ya existía lo atrapó antes de la preview.
+  - No encontraba la opción "campo único" para el índice de tarjetas en la consola nueva de Firebase: se hizo la consulta que lo necesitaba y Firebase devolvió el enlace directo para crearlo.
+  - El chequeo de tipos del servidor marcó que, al filtrar las tareas del email, la lista perdía sus campos; se corrigió armando cada tarea con su tipo.
+  - Un test de reglas de una etapa anterior ("todos leen todas las tareas") dejó de ser cierto con la decisión nueva y se actualizó a la regla nueva.
+  - Al probar como la cuenta demo (Lector) no aparecía cómo agregar personas: es solo para el admin, y el botón "Personas del proyecto" hay que hacerlo más visible (queda pendiente).
+
+## v2 — Etapa 10: Rediseño visual
+- **Qué pedí:** que la app no parezca hecha con inteligencia artificial, con referencias visuales (un tablero tipo "Design Tasks", tarjetas con caras de personas, un botón de filtros, una fila de íconos al pie de las tarjetas): sacar las tarjetas de números, el tablero como vista principal y los filtros detrás de un botón.
+- **Qué generó / propuso:** preguntas de a una y maquetas en el navegador de cada pantalla (tareas, proyectos, página de proyecto con "Compartir", calendario, equipo y ajustes) antes de construir; dividir el rediseño en tres partes con preview; componentes reutilizables para pestañas y filtros; mostrar solo datos reales en lugar de adjuntos y comentarios que la app no tiene.
+- **Qué revisé o cambié yo:** elegí rediseñar toda la app por partes, mantener el menú azul oscuro, que "Vencidas" sea un filtro y que arriba queden solo las pestañas, el buscador y "Filtros". Aprobé cada maqueta.
+- **Qué aprendí:** _(pendiente, lo escribo yo)_
+- **Qué no funcionó o tuve que corregir:**
+  - El panel de filtros no se cerraba con Escape porque el foco quedaba en el botón, fuera del panel; se escucha la tecla en todo el componente y el foco entra al panel al abrirlo.
+  - El lint avisó que el tablero calculaba "hoy" con `new Date()` al dibujarse; ahora lo recibe desde afuera.
+

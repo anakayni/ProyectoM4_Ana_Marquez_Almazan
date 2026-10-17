@@ -9,17 +9,24 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:rules": "PATH=\"/opt/homebrew/opt/openjdk@21/bin:$PATH\" firebase emulators:exec --only firestore --project demo-matecode \"vitest run --config vitest.rules.config.ts\"",
+    "bootstrap-admin": "node --env-file=.env scripts/bootstrap-admin.mjs",
+    "migrate-tasks": "node --env-file=.env scripts/migrate-tasks.mjs",
+    "migrate-users": "node --env-file=.env scripts/migrate-users.mjs",
+    "backup": "node --env-file=.env scripts/backup-firestore.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.1142.0",
     "firebase": "^12.19.0",
     "firebase-admin": "^13.10.0",
+    "lucide-react": "^1.53.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.4.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
@@ -28,6 +35,7 @@
     "@types/react-dom": "^19.2.7",
     "@vercel/node": "^16.0.2",
     "@vitejs/plugin-react": "^6.1.1",
+    "firebase-tools": "^15.33.0",
     "jsdom": "^29.1.1",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",

@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Field, fieldInputClass } from '@/components/ui/Field';
+import type { AssigneeOption } from '@/features/team/members';
+import type { Project } from '@/types/project';
 import { PRIORITIES, PRIORITY_LABEL, type Priority, type TaskInput } from '@/types/task';
 import { DESCRIPTION_MAX, hasErrors, validateTask, type FieldErrors } from '@/utils/validators';
 import styles from './TodoForm.module.css';
@@ -10,23 +12,37 @@ type TodoFormProps = {
   /** Si se pasa, el formulario funciona en modo edición y no se limpia al guardar. */
   initialValues?: TaskInput;
   submitLabel?: string;
+  /** Personas que se pueden elegir como responsable */
+  assignees?: AssigneeOption[];
+  /** Proyectos elegibles (activos + el actual) */
+  projects?: Project[];
+  /** Responsables según el proyecto elegido (si no se pasa, se usa `assignees`). */
+  assigneesFor?: (projectId: string | null) => AssigneeOption[];
+  /** El Invitado siempre trabaja dentro de un proyecto. */
+  projectRequired?: boolean;
   onSubmit: (values: TaskInput) => Promise<void>;
   onCancel?: () => void;
 };
 
-const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null };
+const EMPTY: TaskInput = { title: '', description: '', priority: 'media', dueDate: null, assigneeId: null, projectId: null };
 
-export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmit, onCancel }: TodoFormProps) {
+export function TodoForm({
+  initialValues, submitLabel = 'Agregar tarea', assignees = [], projects = [], assigneesFor, projectRequired = false, onSubmit, onCancel,
+}: TodoFormProps) {
   const [values, setValues] = useState<TaskInput>(initialValues ?? EMPTY);
   const [errors, setErrors] = useState<FieldErrors<'title' | 'description'>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const options = assigneesFor ? assigneesFor(values.projectId) : assignees;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const nextErrors = validateTask(values);
     setErrors(nextErrors);
-    if (hasErrors(nextErrors)) return;
+    const missingProject = projectRequired && !values.projectId;
+    setProjectError(missingProject ? 'Elige un proyecto.' : null);
+    if (hasErrors(nextErrors) || missingProject) return;
 
     setSubmitError(null);
     setSubmitting(true);
@@ -76,6 +92,32 @@ export function TodoForm({ initialValues, submitLabel = 'Agregar tarea', onSubmi
           />
         </Field>
       </div>
+      <Field id="task-project" label="Proyecto" error={projectError ?? undefined}>
+        <select
+          id="task-project" className={fieldInputClass} value={values.projectId ?? ''}
+          aria-invalid={Boolean(projectError)} aria-describedby={projectError ? 'task-project-error' : undefined}
+          onChange={(e) => {
+            const projectId = e.target.value || null;
+            // Si el responsable elegido no puede estar en el nuevo proyecto, se quita.
+            setValues((v) => {
+              const allowed = !assigneesFor || v.assigneeId === null || assigneesFor(projectId).some((a) => a.uid === v.assigneeId);
+              return { ...v, projectId, assigneeId: allowed ? v.assigneeId : null };
+            });
+          }}
+        >
+          {projectRequired ? <option value="" disabled>Elige un proyecto</option> : <option value="">Sin proyecto</option>}
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}{p.archived ? ' (archivado)' : ''}</option>)}
+        </select>
+      </Field>
+      <Field id="task-assignee" label="Responsable">
+        <select
+          id="task-assignee" className={fieldInputClass}
+          value={values.assigneeId ?? ''} onChange={(e) => setValues((v) => ({ ...v, assigneeId: e.target.value || null }))}
+        >
+          <option value="">Sin asignar</option>
+          {options.map((a) => <option key={a.uid} value={a.uid}>{a.label}</option>)}
+        </select>
+      </Field>
       <div className={styles.actions}>
         {onCancel && <Button variant="ghost" onClick={onCancel}>Cancelar</Button>}
         <Button type="submit" loading={submitting}>{submitLabel}</Button>

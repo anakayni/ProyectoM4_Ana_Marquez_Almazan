@@ -1,0 +1,27 @@
+/* Una fila de la tabla de Equipo; en celular, las celdas se apilan */
+.row {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4); border-top: 1px solid var(--color-gray-100);
+}
+.inactive { color: var(--color-text-muted); }
+.person { display: flex; align-items: center; gap: var(--space-3); min-width: 0; grid-column: 1 / -1; }
+.info { min-width: 0; }
+.name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-weight: var(--weight-semibold); }
+.email { font-size: var(--text-sm); color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.tag { padding: 1px var(--space-2); border-radius: var(--radius-pill); font-size: var(--text-2xs); font-weight: var(--weight-semibold); background: var(--color-status-neutral-surface); color: var(--color-status-neutral); }
+.me { background: var(--color-status-info-surface); color: var(--color-status-info); }
+.cell { font-size: var(--text-md); }
+.role { color: var(--color-text-secondary); }
+.count { color: var(--color-text-primary); }
+.projects { color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.select { min-height: 32px; padding: 0 var(--space-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-default); }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.confirm {
+  grid-column: 1 / -1; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3);
+  border-radius: var(--radius-md); background: var(--color-status-warning-surface); color: var(--color-text-primary);
+}
+
+@media (min-width: 900px) {
+  .row { grid-template-columns: var(--team-columns); }
+  .person { grid-column: auto; }
+}

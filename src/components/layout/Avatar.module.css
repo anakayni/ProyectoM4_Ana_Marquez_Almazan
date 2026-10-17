@@ -1,0 +1,8 @@
+.avatar {
+  width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%; overflow: hidden;
+  background: var(--color-avatar-bg); color: var(--color-avatar-text); font-weight: var(--weight-semibold); font-size: var(--text-lg);
+}
+.photo { width: 100%; height: 100%; object-fit: cover; }
+.lg { width: 88px; height: 88px; font-size: var(--text-4xl); }
+.inactive { filter: grayscale(1); opacity: 0.5; }
+.muted { filter: grayscale(1); }

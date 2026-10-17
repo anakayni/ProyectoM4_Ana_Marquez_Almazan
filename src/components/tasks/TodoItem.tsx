@@ -1,55 +1,64 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { PRIORITY_LABEL, type Task } from '@/types/task';
-import { dueStatus, formatDueDate } from '@/utils/formatDate';
+import { Avatar } from '@/components/layout/Avatar';
+import { ProjectTag } from '@/components/projects/ProjectTag';
+import type { ProjectOf } from '@/features/projects/projectOf';
+import { subtaskProgress } from '@/features/tasks/subtasks';
+import type { NameOf, PersonOf } from '@/features/team/members';
+import { PRIORITY_LABEL, type Task, type TaskStatus } from '@/types/task';
+import { dueStatus, formatDay, formatDueDate } from '@/utils/formatDate';
+import { useTaskNumberFormat } from '@/hooks/useWorkspaceSettings';
+import { StatusSelect } from './StatusSelect';
 import styles from './TodoItem.module.css';
 
 export type TodoItemHandlers = {
-  onToggle: (id: string, completed: boolean) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
+  onStatusChange: (id: string, status: TaskStatus) => void;
+  /** Abre el panel de detalle (ahí están Editar, Eliminar y el historial) */
+  onOpen: (task: Task) => void;
 };
 
-type TodoItemProps = TodoItemHandlers & { task: Task };
+type TodoItemProps = TodoItemHandlers & {
+  task: Task;
+  nameOf: NameOf;
+  personOf: PersonOf;
+  projectOf: ProjectOf;
+  /** Puede cambiar el estado (admin y miembro) */
+  canEdit: boolean;
+};
 
-export function TodoItem({ task, onToggle, onEdit, onDelete }: TodoItemProps) {
-  // Confirmación dentro de la tarjeta, en vez de window.confirm.
-  const [confirming, setConfirming] = useState(false);
+export function TodoItem({ task, nameOf, personOf, projectOf, canEdit, onStatusChange, onOpen }: TodoItemProps) {
+  const formatNumber = useTaskNumberFormat();
+  const done = task.status === 'done';
+  const assignee = nameOf(task.assigneeId);
+  const person = personOf(task.assigneeId);
+  const project = projectOf(task.projectId);
+  const sub = subtaskProgress(task.subtasks);
 
   return (
-    <li className={`${styles.item} ${task.completed ? styles.completed : ''}`}>
-      <input
-        type="checkbox"
-        className={styles.checkbox}
-        checked={task.completed}
-        onChange={(e) => onToggle(task.id, e.target.checked)}
-        aria-label={`Completar "${task.title}"`}
-      />
+    <li className={`${styles.item} ${done ? styles.done : ''}`}>
+      <span className={styles.assignee} title={assignee ?? 'Sin asignar'}>
+        <Avatar name={assignee ?? ''} photo={person?.photo} inactive={person ? !person.active : false} muted={done} />
+        <span className="visually-hidden">{assignee ? `Responsable: ${assignee}` : 'Sin asignar'}</span>
+      </span>
       <div className={styles.body}>
-        <h3 className={styles.title}>{task.title}</h3>
+        <h3 className={styles.title}>
+          {done && <span className="visually-hidden">Hecha: </span>}
+          <button type="button" className={styles.titleButton} onClick={() => onOpen(task)}>{task.title}</button>
+        </h3>
         {task.description && <p className={styles.description}>{task.description}</p>}
         <p className={styles.meta}>
+          <span className={styles.number}>{formatNumber(task.number)}</span>
           <span className={`${styles.badge} ${styles[task.priority]}`}>{PRIORITY_LABEL[task.priority]}</span>
-          {task.dueDate && (
-            <span className={`${styles.due} ${task.completed ? '' : styles[dueStatus(task.dueDate)]}`}>
-              {formatDueDate(task.dueDate)}
-            </span>
+          {project && <ProjectTag project={project} muted={done} />}
+          {sub.total > 0 && <span className={styles.sub}>☑ {sub.done} de {sub.total}</span>}
+          {task.dueDate && !done && (
+            <span className={`${styles.due} ${styles[dueStatus(task.dueDate)]}`}>{formatDueDate(task.dueDate)}</span>
+          )}
+          {done && task.completedAt !== null && (
+            <span className={styles.doneBy}>✓ Hecha por {nameOf(task.completedBy) ?? 'alguien'} · {formatDay(task.completedAt)}</span>
           )}
         </p>
       </div>
-      <div className={styles.actions}>
-        {confirming ? (
-          <>
-            <span className={styles.confirmText}>¿Eliminar?</span>
-            <Button size="sm" variant="danger" onClick={() => onDelete(task.id)}>Sí, eliminar</Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Button>
-          </>
-        ) : (
-          <>
-            <Button size="sm" variant="ghost" onClick={() => onEdit(task)} aria-label={`Editar "${task.title}"`}>Editar</Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(true)} aria-label={`Eliminar "${task.title}"`}>Eliminar</Button>
-          </>
-        )}
+      <div className={styles.side}>
+        <StatusSelect status={task.status} taskTitle={task.title} canEdit={canEdit} onChange={(s) => onStatusChange(task.id, s)} />
       </div>
     </li>
   );
